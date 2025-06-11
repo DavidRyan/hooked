@@ -4,3 +4,8 @@ local.properties
 .idea
 /gradle
 .gradle
+**/build/
+.idea/
+*.iml
+*.log
+.kotlin/

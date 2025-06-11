@@ -1,11 +1,12 @@
 plugins {
-    kotlin("multiplatform")
+    kotlin("multiplatform") version "2.1.0"
     id("com.android.library")
-    id("org.jetbrains.compose")
+    id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
 }
 
 kotlin {
-    android()
+    jvmToolchain(17)
+    androidTarget()
     iosX64()
     iosArm64()
     iosSimulatorArm64()
@@ -13,19 +14,17 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(compose.runtime)
-                implementation(compose.foundation)
-                implementation(compose.material3)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.jetbrains.compose.runtime:runtime:1.6.10")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
                 implementation("media.kamel:kamel-image-default:1.0.5")
             }
         }
 
         val androidMain by getting {
             dependencies {
-                implementation("androidx.compose.ui:ui:1.6.0")
-                implementation("androidx.compose.material3:material3:1.1.2")
-                implementation("androidx.activity:activity-compose:1.8.2")
+                implementation("androidx.compose.ui:ui:1.8.2")
+                implementation("androidx.compose.material3:material3:1.3.2")
+                implementation("androidx.activity:activity-compose:1.10.1")
             }
         }
 
@@ -34,10 +33,6 @@ kotlin {
         val iosSimulatorArm64Main by getting
 
         val iosMain by creating {
-            dependsOn(commonMain)
-            iosX64Main.dependsOn(this)
-            iosArm64Main.dependsOn(this)
-            iosSimulatorArm64Main.dependsOn(this)
         }
     }
 }
