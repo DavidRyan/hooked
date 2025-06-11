@@ -15,6 +15,7 @@ class CatchGridViewModel : HookedViewModel<CatchGridIntent, CatchGridState, Catc
                     CatchModel(1, "Catch 1", ""),
                     CatchModel(2, "Catch 1", ""),
                     CatchModel(3, "Catch 1", ""),
+                    CatchModel(4, "Catch 1", ""),
                     CatchModel(5, "Catch 1", ""),
                 ))
             }

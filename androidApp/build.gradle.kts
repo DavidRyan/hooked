@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId = "com.hooked"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = 1
     }
