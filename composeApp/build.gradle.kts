@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20" // Or your Kotlin version
 }
 
 kotlin {
@@ -23,9 +24,11 @@ kotlin {
                 //noinspection UseTomlInstead
                 implementation("media.kamel:kamel-image-default:1.0.5")
                 implementation(libs.navigation.compose)
+                implementation(libs.navigation.compose.beta)
                 api(libs.koin.core)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
+                implementation(libs.kotlinx.serialization.json) // Or the latest version
 
             }
         }

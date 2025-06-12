@@ -20,21 +20,35 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import core.components.AsyncImage
+import core.nav.Screens
+import grid.model.CatchGridEffect
 import grid.model.CatchGridIntent
 import grid.model.CatchModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collectLatest
 import theme.HookedTheme
-
 
 @Composable
 fun CatchGridScreen(
     modifier: Modifier = Modifier,
-    viewModel: CatchGridViewModel
+    viewModel: CatchGridViewModel,
+    navigate : (Screens) -> Unit
 ) {
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
+
         viewModel.sendIntent(CatchGridIntent.LoadCatches(true))
+
+        viewModel.effect.collectLatest {
+            when (it) {
+                is CatchGridEffect.NavigateCatchDetails ->
+                    navigate(Screens.CatchDetails(it.id.toString()))
+            }
+        }
+
     }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),

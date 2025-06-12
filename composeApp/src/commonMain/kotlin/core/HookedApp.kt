@@ -1,11 +1,14 @@
 package core
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.navigation.toRoute
 import core.nav.Screens
 import grid.CatchGridScreen
 import grid.CatchGridViewModel
@@ -16,26 +19,36 @@ import org.koin.core.annotation.KoinExperimentalAPI
 import theme.HookedTheme
 
 @Composable
-fun HookedApp() {
+fun HookedApp(
+) {
     HookedTheme {
         KoinContext {
+            val navController = rememberNavController()
             NavHost(
-                navController = rememberNavController(),
-                startDestination = Screens.CatchGrid.route
+                navController = navController,
+                startDestination = Screens.CatchGrid
             ) {
-                composable(route = Screens.CatchGrid.route) {
+                composable<Screens.CatchGrid> {
                     CatchGridScreen(
-                        viewModel = koinViewModel<CatchGridViewModel>()
+                        viewModel = koinViewModel<CatchGridViewModel>(),
+                        navigate = { screen ->
+                            navController.navigate(screen)
+                        }
                     )
                 }
-                composable(
-                    route = Screens.CatchDetails("{catchId}").route,
-                    arguments = listOf(navArgument("catchId") { type = NavType.StringType })
+                composable<Screens.CatchDetails>(
                 ) { backStackEntry ->
+                    val details = backStackEntry.toRoute<Screens.CatchDetails>()
                     //val catchId = backStackEntry.arguments?.getString("catchId") ?: return@composable
                     //CatchDetailsScreen(catchId, koinViewModel<CatchDetailsViewModel>()
+                    CatchDetails()
                 }
             }
         }
     }
+}
+
+@Composable
+fun CatchDetails() {
+    Box {  }
 }

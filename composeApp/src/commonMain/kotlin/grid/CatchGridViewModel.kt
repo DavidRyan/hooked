@@ -20,7 +20,9 @@ class CatchGridViewModel() : HookedViewModel<CatchGridIntent, CatchGridState, Ca
                 ))
             }
 
-            is CatchGridIntent.NavigateCatchDetails -> TODO()
+            is CatchGridIntent.NavigateCatchDetails -> sendEffect {
+                CatchGridEffect.NavigateCatchDetails(intent.id)
+            }
         }
     }
 
