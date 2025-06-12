@@ -2,7 +2,7 @@
 local.properties
 .env
 .idea
-/gradle
+/gradle/wrapper
 .gradle
 **/build/
 .idea/
