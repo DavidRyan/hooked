@@ -6,5 +6,5 @@ sealed class Screens() {
     @Serializable
     object CatchGrid : Screens()
     @Serializable
-    data class CatchDetails(val catchId: String) : Screens()
+    data class CatchDetails(val catchId: Long) : Screens()
 }

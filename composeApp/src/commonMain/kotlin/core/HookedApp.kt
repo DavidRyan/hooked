@@ -10,6 +10,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.toRoute
 import core.nav.Screens
+import details.CatchDetailsScreen
+import details.CatchDetailsViewModel
 import grid.CatchGridScreen
 import grid.CatchGridViewModel
 import org.koin.compose.KoinContext
@@ -39,16 +41,12 @@ fun HookedApp(
                 composable<Screens.CatchDetails>(
                 ) { backStackEntry ->
                     val details = backStackEntry.toRoute<Screens.CatchDetails>()
-                    //val catchId = backStackEntry.arguments?.getString("catchId") ?: return@composable
-                    //CatchDetailsScreen(catchId, koinViewModel<CatchDetailsViewModel>()
-                    CatchDetails()
+                    CatchDetailsScreen(
+                        viewModel = koinViewModel<CatchDetailsViewModel>(),
+                        catchId = details.catchId
+                    )
                 }
             }
         }
     }
-}
-
-@Composable
-fun CatchDetails() {
-    Box {  }
 }

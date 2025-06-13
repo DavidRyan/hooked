@@ -1,6 +1,5 @@
 package grid
 
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +44,7 @@ fun CatchGridScreen(
         viewModel.effect.collectLatest {
             when (it) {
                 is CatchGridEffect.NavigateCatchDetails ->
-                    navigate(Screens.CatchDetails(it.id.toString()))
+                    navigate(Screens.CatchDetails(it.id))
             }
         }
 
