@@ -1,0 +1,13 @@
+CREATE TABLE Catch (
+    id INTEGER NOT NULL PRIMARY KEY,
+    species TEXT NOT NULL,
+    weight REAL NOT NULL,
+    length REAL NOT NULL,
+    photoUrl TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM Catch;
+
+insert:
+INSERT OR REPLACE INTO Catch(id, species, weight, length, photoUrl) VALUES (?, ?, ?, ?, ?);

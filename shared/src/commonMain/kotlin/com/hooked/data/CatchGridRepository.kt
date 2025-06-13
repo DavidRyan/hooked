@@ -1,17 +1,27 @@
 package com.hooked.data
 
-import grid.model.CatchModel
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.hooked.database.HookedDatabase
+import com.hooked.domain.CatchModel
 
-class CatchGridRepository(private val httpClient: HttpClient) {
+class CatchGridRepository(
+    private val httpClient: HttpClient,
+    private val database: HookedDatabase
+) {
+
+    private val queries = database.catchQueries
 
     suspend fun getCatches(): List<CatchModel> {
-        return withContext(Dispatchers.Default) {
-            httpClient.get("http://10.0.2.2:8080/catches").body()
+        val cachedCatches = queries.selectAll().executeAsList().map {
+            CatchModel(it.id, it.species, it.weight, it.length, it.photoUrl)
         }
+        if (cachedCatches.isNotEmpty()) {
+            return cachedCatches
+        }
+
+        val remoteCatches = httpClient.get("http://10.0.2.2:8080/catches").body<List<CatchModel>>()
+        remoteCatches.forEach {
+            queries.insert(it.id, it.species, it.weight, it.length, it.photoUrl)
+        }
+        return remoteCatches
     }
 }
