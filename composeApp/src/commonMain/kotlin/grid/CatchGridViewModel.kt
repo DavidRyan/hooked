@@ -1,23 +1,20 @@
 package grid
 
 import core.HookedViewModel
-import grid.model.CatchGridEffect
-import grid.model.CatchGridIntent
-import grid.model.CatchGridState
-import grid.model.CatchModel
+import com.hooked.domain.model.CatchGridEffect
+import com.hooked.domain.model.CatchGridIntent
+import com.hooked.domain.model.CatchGridState
+import com.hooked.domain.model.CatchModel
+import com.hooked.data.repository.CatchGridRepository
 
-class CatchGridViewModel() : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
+class CatchGridViewModel(
+    private val catchGridRepository: CatchGridRepository
+) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
 
     override fun handleIntent(intent: CatchGridIntent) {
         when (intent) {
-            is CatchGridIntent.LoadCatches -> setState {
-                copy(isLoading = false, catches = listOf(
-                    CatchModel(1, "Catch 1", ""),
-                    CatchModel(2, "Catch 1", ""),
-                    CatchModel(3, "Catch 1", ""),
-                    CatchModel(4, "Catch 1", ""),
-                    CatchModel(5, "Catch 1", ""),
-                ))
+            is CatchGridIntent.LoadCatches -> {
+                loadCatches()
             }
 
             is CatchGridIntent.NavigateCatchDetails -> sendEffect {
@@ -26,7 +23,18 @@ class CatchGridViewModel() : HookedViewModel<CatchGridIntent, CatchGridState, Ca
         }
     }
 
+    private fun loadCatches() {
+        viewModelScope.launch {
+            try {
+                val catches = catchGridRepository.getCatches()
+                setState { copy(catches = catches, isLoading = false) }
+            } catch (e: Exception) {
+                sendEffect { CatchGridEffect.OnError(e.message ?: "An unknown error occurred") }
+            }
+        }
+    }
+
     override fun createInitialState(): CatchGridState {
-        return CatchGridState.Empty
+        return CatchGridState()
     }
 }
