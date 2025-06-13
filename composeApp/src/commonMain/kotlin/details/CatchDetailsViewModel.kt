@@ -1,13 +1,13 @@
 package details
 
 import core.HookedViewModel
-import com.hooked.domain.model.CatchDetailsEffect
-import com.hooked.domain.model.CatchDetailsIntent
-import com.hooked.domain.model.CatchDetailsState
-import com.hooked.data.repository.CatchDetailsRepository
+import com.hooked.domain.CatchDetailsEffect
+import com.hooked.domain.CatchDetailsIntent
+import com.hooked.domain.CatchDetailsState
+import com.hooked.domain.usecase.GetCatchDetailsUseCase
 
 class CatchDetailsViewModel(
-    private val catchDetailsRepository: CatchDetailsRepository
+    private val getCatchDetailsUseCase: GetCatchDetailsUseCase
 ) : HookedViewModel<CatchDetailsIntent, CatchDetailsState, CatchDetailsEffect>() {
 
     override fun handleIntent(intent: CatchDetailsIntent) {
@@ -21,7 +21,7 @@ class CatchDetailsViewModel(
     private fun loadCatchDetails(catchId: Long) {
         viewModelScope.launch {
             try {
-                val catchDetails = catchDetailsRepository.getCatchDetails(catchId)
+                val catchDetails = getCatchDetailsUseCase(catchId)
                 setState { copy(catchDetails = catchDetails, isLoading = false) }
             } catch (e: Exception) {
                 sendEffect { CatchDetailsEffect.OnError(e.message ?: "An unknown error occurred") }

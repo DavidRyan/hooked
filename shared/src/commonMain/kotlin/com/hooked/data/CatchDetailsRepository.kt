@@ -1,4 +1,4 @@
-package com.hooked.data.repository
+package com.hooked.data
 
 import details.model.CatchDetailsModel
 import io.ktor.client.HttpClient

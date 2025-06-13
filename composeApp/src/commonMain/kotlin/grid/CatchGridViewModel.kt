@@ -1,14 +1,14 @@
 package grid
 
 import core.HookedViewModel
-import com.hooked.domain.model.CatchGridEffect
-import com.hooked.domain.model.CatchGridIntent
-import com.hooked.domain.model.CatchGridState
-import com.hooked.domain.model.CatchModel
-import com.hooked.data.repository.CatchGridRepository
+import com.hooked.domain.CatchGridEffect
+import com.hooked.domain.CatchGridIntent
+import com.hooked.domain.CatchGridState
+import com.hooked.domain.CatchModel
+import com.hooked.domain.usecase.GetCatchesUseCase
 
 class CatchGridViewModel(
-    private val catchGridRepository: CatchGridRepository
+    private val getCatchesUseCase: GetCatchesUseCase
 ) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
 
     override fun handleIntent(intent: CatchGridIntent) {
@@ -26,7 +26,7 @@ class CatchGridViewModel(
     private fun loadCatches() {
         viewModelScope.launch {
             try {
-                val catches = catchGridRepository.getCatches()
+                val catches = getCatchesUseCase()
                 setState { copy(catches = catches, isLoading = false) }
             } catch (e: Exception) {
                 sendEffect { CatchGridEffect.OnError(e.message ?: "An unknown error occurred") }
