@@ -1,4 +1,4 @@
-package grid.repository
+package com.hooked.data
 
 import grid.model.CatchModel
 import io.ktor.client.HttpClient

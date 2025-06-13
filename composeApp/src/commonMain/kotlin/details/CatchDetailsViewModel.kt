@@ -1,10 +1,10 @@
 package details
 
 import core.HookedViewModel
-import com.hooked.domain.CatchDetailsEffect
-import com.hooked.domain.CatchDetailsIntent
-import com.hooked.domain.CatchDetailsState
-import com.hooked.domain.usecase.GetCatchDetailsUseCase
+import details.model.CatchDetailsEffect
+import details.model.CatchDetailsIntent
+import details.model.CatchDetailsState
+import usecase.GetCatchDetailsUseCase
 
 class CatchDetailsViewModel(
     private val getCatchDetailsUseCase: GetCatchDetailsUseCase

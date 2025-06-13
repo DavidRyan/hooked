@@ -1,7 +1,7 @@
 package di
 
-import com.hooked.data.repository.CatchDetailsRepository
-import com.hooked.data.repository.CatchGridRepository
+import com.hooked.data.CatchDetailsRepository
+import com.hooked.data.CatchGridRepository
 import com.hooked.domain.usecase.GetCatchDetailsUseCase
 import com.hooked.domain.usecase.GetCatchesUseCase
 import grid.CatchGridViewModel

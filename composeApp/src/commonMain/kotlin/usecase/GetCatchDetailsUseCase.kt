@@ -1,4 +1,4 @@
-package com.hooked.domain.usecase
+package usecase
 
 import com.hooked.data.repository.CatchDetailsRepository
 import com.hooked.domain.model.CatchDetailsModel

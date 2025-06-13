@@ -15,10 +15,10 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 implementation(libs.kotlinx.coroutines.core)
-                implementation(libs.ktor.client.core)
-                implementation(libs.ktor.client.contentnegotiation)
-                implementation(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.koin.core)
+                api(libs.ktor.client.core)
+                api(libs.ktor.client.contentnegotiation)
+                api(libs.ktor.serialization.kotlinx.json)
+                api(libs.koin.core)
             }
         }
         val androidMain by getting

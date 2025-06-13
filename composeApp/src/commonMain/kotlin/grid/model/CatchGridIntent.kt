@@ -1,6 +1,6 @@
 package grid.model
 
 sealed class CatchGridIntent {
-    data class LoadCatches(val forceRefresh: Boolean = false) : CatchGridIntent()
-    data class NavigateCatchDetails(val id: Long) : CatchGridIntent()
+    data object LoadCatches : CatchGridIntent()
+    data class NavigateToCatchDetails(val catchId: Long) : CatchGridIntent()
 }

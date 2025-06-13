@@ -1,4 +1,4 @@
-package com.hooked.domain
+package details.model
 
 @Serializable
 data class CatchDetailsModel(

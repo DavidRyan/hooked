@@ -1,4 +1,4 @@
-package com.hooked.domain
+package details.model
 
 data class CatchDetailsState(
     val catchDetails: CatchDetailsModel? = null,

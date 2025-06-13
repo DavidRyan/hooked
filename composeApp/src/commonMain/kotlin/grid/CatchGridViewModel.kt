@@ -1,11 +1,11 @@
 package grid
 
 import core.HookedViewModel
-import com.hooked.domain.CatchGridEffect
-import com.hooked.domain.CatchGridIntent
-import com.hooked.domain.CatchGridState
-import com.hooked.domain.CatchModel
-import com.hooked.domain.usecase.GetCatchesUseCase
+import grid.model.CatchGridEffect
+import grid.model.CatchGridIntent
+import grid.model.CatchGridState
+import grid.model.CatchModel
+import usecase.GetCatchesUseCase
 
 class CatchGridViewModel(
     private val getCatchesUseCase: GetCatchesUseCase
