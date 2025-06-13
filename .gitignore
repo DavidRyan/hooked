@@ -1,6 +1,9 @@
+# Rust
+/target/
+Cargo.lock
+.env
 .DS_Store
 local.properties
-.env
 .idea
 /gradle/wrapper
 .gradle
