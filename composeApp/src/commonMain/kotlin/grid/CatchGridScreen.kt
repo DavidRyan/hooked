@@ -21,13 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import core.components.AsyncImage
-import core.nav.Screens
-import grid.model.CatchGridEffect
-import grid.model.CatchGridIntent
-import grid.model.CatchModel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.collectLatest
-import theme.HookedTheme
+import com.hooked.domain.model.CatchGridEffect
+import com.hooked.domain.model.CatchGridIntent
+import com.hooked.domain.model.CatchModel
+import com.hooked.domain.model.Screens
 
 @Composable
 fun CatchGridScreen(
@@ -38,16 +35,13 @@ fun CatchGridScreen(
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
-
-        viewModel.sendIntent(CatchGridIntent.LoadCatches(true))
-
+        viewModel.sendIntent(CatchGridIntent.LoadCatches)
         viewModel.effect.collectLatest {
             when (it) {
-                is CatchGridEffect.NavigateCatchDetails ->
-                    navigate(Screens.CatchDetails(it.id))
+                is CatchGridEffect.NavigateToCatchDetails ->
+                    navigate(Screens.CatchDetails(it.catchId))
             }
         }
-
     }
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -63,7 +57,7 @@ fun CatchGridScreen(
             CatchGridItem(
                 catch = catch,
                 onClick = {
-                    viewModel.sendIntent(CatchGridIntent.NavigateCatchDetails(it))
+                    viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(it))
                 }
             )
         }
@@ -85,7 +79,7 @@ fun CatchGridItem(
         colors = CardDefaults.cardColors(containerColor = HookedTheme.tertiary)
     ) {
         AsyncImage(
-            imageUrl = catch.imageUrl,
+            url = catch.photoUrl,
             modifier = Modifier.fillMaxSize()
         )
     }

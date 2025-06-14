@@ -4,16 +4,32 @@ import core.HookedViewModel
 import details.model.CatchDetailsEffect
 import details.model.CatchDetailsIntent
 import details.model.CatchDetailsState
+import usecase.GetCatchDetailsUseCase
 
-class CatchDetailsViewModel : HookedViewModel<CatchDetailsIntent, CatchDetailsState, CatchDetailsEffect>() {
+class CatchDetailsViewModel(
+    private val getCatchDetailsUseCase: GetCatchDetailsUseCase
+) : HookedViewModel<CatchDetailsIntent, CatchDetailsState, CatchDetailsEffect>() {
 
     override fun handleIntent(intent: CatchDetailsIntent) {
         when (intent) {
-            else -> {}
+            is CatchDetailsIntent.LoadCatchDetails -> {
+                loadCatchDetails(intent.catchId)
+            }
+        }
+    }
+
+    private fun loadCatchDetails(catchId: Long) {
+        viewModelScope.launch {
+            try {
+                val catchDetails = getCatchDetailsUseCase(catchId)
+                setState { copy(catchDetails = catchDetails, isLoading = false) }
+            } catch (e: Exception) {
+                sendEffect { CatchDetailsEffect.OnError(e.message ?: "An unknown error occurred") }
+            }
         }
     }
 
     override fun createInitialState(): CatchDetailsState {
-        return CatchDetailsState.Empty
+        return CatchDetailsState()
     }
 }

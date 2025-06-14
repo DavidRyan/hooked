@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 abstract class HookedViewModel<I, S, E> : ViewModel() {
-    protected val viewModelScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    protected val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     private val _state = MutableStateFlow(createInitialState())
     val state: StateFlow<S> = _state.asStateFlow()

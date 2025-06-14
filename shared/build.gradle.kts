@@ -1,6 +1,8 @@
 plugins {
-    kotlin("multiplatform") version "2.1.0"
+    kotlin("multiplatform")
     id("com.android.library")
+    kotlin("plugin.serialization")
+    id("app.cash.sqldelight") version "2.0.0"
 }
 
 kotlin {
@@ -13,25 +15,36 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.compose.runtime:runtime:1.6.10")
-                implementation("org.jetbrains.compose.foundation:foundation:1.6.10")
-                implementation("org.jetbrains.compose.material3:material3:1.6.10")
-            }        }
-        val androidMain by getting
+                implementation(libs.kotlinx.coroutines.core)
+                api(libs.ktor.client.core)
+                api(libs.ktor.client.contentnegotiation)
+                api(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.sqldelight.runtime)
+                implementation(libs.sqldelight.coroutines.extensions)
+            }
+        }
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.sqldelight.android.driver)
+            }
+        }
         val iosX64Main by getting
         val iosArm64Main by getting
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
+            dependencies {
+                implementation(libs.sqldelight.native.driver)
+            }
         }
     }
 }
 dependencies {
     // Add this to enable the Compose dependency helper
 }
-android {
-    namespace = "com.hooked.shared"
-    compileSdk = 34
-    defaultConfig {
-        minSdk = 24
+sqldelight {
+    databases {
+        create("HookedDatabase") {
+            packageName.set("com.hooked.database")
+        }
     }
 }
