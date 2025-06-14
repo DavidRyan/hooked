@@ -4,6 +4,7 @@ import core.HookedViewModel
 import details.model.CatchDetailsEffect
 import details.model.CatchDetailsIntent
 import details.model.CatchDetailsState
+import kotlinx.coroutines.launch
 import usecase.GetCatchDetailsUseCase
 
 class CatchDetailsViewModel(

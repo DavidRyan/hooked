@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
+import core.components.AsyncImage
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,10 +22,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import core.components.AsyncImage
-import com.hooked.domain.model.CatchGridEffect
-import com.hooked.domain.model.CatchGridIntent
-import com.hooked.domain.model.CatchModel
-import com.hooked.domain.model.Screens
+import core.nav.Screens
+import grid.model.CatchGridEffect
+import grid.model.CatchGridIntent
+import grid.model.CatchModel
+import kotlinx.coroutines.flow.collectLatest
+import theme.HookedTheme
 
 @Composable
 fun CatchGridScreen(
@@ -40,6 +43,8 @@ fun CatchGridScreen(
             when (it) {
                 is CatchGridEffect.NavigateToCatchDetails ->
                     navigate(Screens.CatchDetails(it.catchId))
+
+                else -> {}
             }
         }
     }
@@ -79,7 +84,7 @@ fun CatchGridItem(
         colors = CardDefaults.cardColors(containerColor = HookedTheme.tertiary)
     ) {
         AsyncImage(
-            url = catch.photoUrl,
+            imageUrl = catch.imageUrl,
             modifier = Modifier.fillMaxSize()
         )
     }

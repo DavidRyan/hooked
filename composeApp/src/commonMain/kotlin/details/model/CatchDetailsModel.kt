@@ -1,5 +1,7 @@
 package details.model
 
+import kotlinx.serialization.Serializable
+
 @Serializable
 data class CatchDetailsModel(
     val id: Long,

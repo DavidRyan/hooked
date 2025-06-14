@@ -6,9 +6,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.Text
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,12 +25,12 @@ fun CatchDetailsScreen(viewModel: CatchDetailsViewModel, catchId: Long) {
     }
 
     if (state.isLoading) {
-        CircularProgressIndicator()
+        //CircularProgressIndicator()
     } else {
         state.catchDetails?.let { details ->
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
                 AsyncImage(
-                    url = details.photoUrl,
+                    imageUrl = details.photoUrl,
                     modifier = Modifier.fillMaxWidth().height(200.dp)
                 )
                 Spacer(modifier = Modifier.height(16.dp))

@@ -1,8 +1,18 @@
 plugins {
-    kotlin("multiplatform")
+    kotlin("multiplatform") version "2.1.0"
     id("com.android.library")
-    kotlin("plugin.serialization")
+    kotlin("plugin.serialization") version "2.1.0"
     id("app.cash.sqldelight") version "2.0.0"
+}
+
+android {
+    namespace = "com.hooked.shared"
+
+    compileSdk = 35
+
+    defaultConfig {
+        minSdk = 24
+    }
 }
 
 kotlin {
@@ -15,17 +25,17 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(libs.kotlinx.coroutines.core)
-                api(libs.ktor.client.core)
-                api(libs.ktor.client.contentnegotiation)
-                api(libs.ktor.serialization.kotlinx.json)
-                implementation(libs.sqldelight.runtime)
-                implementation(libs.sqldelight.coroutines.extensions)
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
+                api("io.ktor:ktor-client-core:2.3.10")
+                api("io.ktor:ktor-client-content-negotiation:2.3.10")
+                api("io.ktor:ktor-serialization-kotlinx-json:2.3.10")
+                implementation("app.cash.sqldelight:runtime:2.0.0")
+                implementation("app.cash.sqldelight:coroutines-extensions:2.0.0")
             }
         }
         val androidMain by getting {
             dependencies {
-                implementation(libs.sqldelight.android.driver)
+                implementation("app.cash.sqldelight:android-driver:2.0.0")
             }
         }
         val iosX64Main by getting
@@ -33,14 +43,12 @@ kotlin {
         val iosSimulatorArm64Main by getting
         val iosMain by creating {
             dependencies {
-                implementation(libs.sqldelight.native.driver)
+                implementation("app.cash.sqldelight:native-driver:2.0.0")
             }
         }
     }
 }
-dependencies {
-    // Add this to enable the Compose dependency helper
-}
+
 sqldelight {
     databases {
         create("HookedDatabase") {

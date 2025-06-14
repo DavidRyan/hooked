@@ -1,6 +1,7 @@
 package grid
 
 import core.HookedViewModel
+import kotlinx.coroutines.launch
 import grid.model.CatchGridEffect
 import grid.model.CatchGridIntent
 import grid.model.CatchGridState
@@ -17,9 +18,11 @@ class CatchGridViewModel(
                 loadCatches()
             }
 
-            is CatchGridIntent.NavigateCatchDetails -> sendEffect {
-                CatchGridEffect.NavigateCatchDetails(intent.id)
+            is CatchGridIntent.NavigateToCatchDetails -> sendEffect {
+                CatchGridEffect.NavigateToCatchDetails(intent.catchId)
             }
+
+            is CatchGridIntent.NavigateToCatchDetails -> TODO()
         }
     }
 
@@ -29,7 +32,7 @@ class CatchGridViewModel(
                 val catches = getCatchesUseCase()
                 setState { copy(catches = catches, isLoading = false) }
             } catch (e: Exception) {
-                sendEffect { CatchGridEffect.OnError(e.message ?: "An unknown error occurred") }
+                sendEffect { CatchGridEffect.ShowError(e.message ?: "An unknown error occurred") }
             }
         }
     }

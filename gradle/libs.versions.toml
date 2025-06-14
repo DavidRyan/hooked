@@ -12,11 +12,13 @@ androidx-material = "1.12.0"
 androidx-test-junit = "1.1.5"
 compose-plugin = "1.6.10"
 junit = "4.13.2"
+koinTest = "3.5.3"
 kotlin = "2.1.0"
 
 koin = "3.6.0-Beta4"
 koinComposeMultiplatform = "1.2.0-Beta4"
 kotlinxCoroutinesCore = "1.10.2"
+kotlinxCoroutinesTest = "1.7.3"
 kotlinxSerializationJson = "1.6.3"
 navigationCompose = "2.8.0-alpha02"
 lifecycleViewModel = "2.8.2"
@@ -26,6 +28,7 @@ compose-navigation-beta= "2.9.0-beta01"
 
 [libraries]
 androidx-ui = { module = "androidx.compose.ui:ui", version.ref = "ui" }
+koin-test = { module = "io.insert-koin:koin-test", version.ref = "koinTest" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -38,6 +41,7 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel", version.ref = "lifecycleViewModel"}
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }

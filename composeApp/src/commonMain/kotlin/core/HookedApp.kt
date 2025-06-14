@@ -1,24 +1,18 @@
 package core
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.toRoute
-import core.nav.Screens
 import details.CatchDetailsScreen
 import details.CatchDetailsViewModel
 import grid.CatchGridScreen
 import grid.CatchGridViewModel
 import org.koin.compose.KoinContext
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
-import org.koin.core.annotation.KoinExperimentalAPI
 import theme.HookedTheme
+import core.nav.Screens
 
 @Composable
 fun HookedApp(
