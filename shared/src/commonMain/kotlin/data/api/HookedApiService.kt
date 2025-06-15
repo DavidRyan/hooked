@@ -11,7 +11,7 @@ import io.ktor.client.request.get
 class HookedApiService(
     private val httpClient: HttpClient,
 ) {
-    fun getCatches(): List<CatchDto> {
+    suspend fun getCatches(): List<CatchDto> {
         val remoteCatches = httpClient.get("http://10.0.2.2:8080/catches").body<List<CatchDto>>()
         return remoteCatches
     }
