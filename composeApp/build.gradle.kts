@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
@@ -21,14 +18,11 @@ kotlin {
             dependencies {
                 implementation(libs.runtime)
                 implementation(libs.kotlinx.coroutines.core)
-                //noinspection UseTomlInstead
                 implementation("media.kamel:kamel-image-default:1.0.5")
-                implementation(libs.navigation.compose)
-                implementation(libs.navigation.compose.beta)
-                api(libs.koin.core)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
                 implementation(libs.kotlinx.serialization.json) // Or the latest version
+                implementation(project(":shared"))
 
             }
         }

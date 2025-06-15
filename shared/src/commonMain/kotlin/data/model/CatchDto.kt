@@ -1,9 +1,9 @@
-package com.hooked.domain
+package data.model
 
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CatchModel(
+data class CatchDto(
     val id: Long,
     val species: String,
     val weight: Double,

@@ -9,7 +9,7 @@ import grid.model.CatchModel
 import usecase.GetCatchesUseCase
 
 class CatchGridViewModel(
-    private val getCatchesUseCase: GetCatchesUseCase
+    private val getCatchesUseCase: GetC
 ) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
 
     override fun handleIntent(intent: CatchGridIntent) {
@@ -21,8 +21,6 @@ class CatchGridViewModel(
             is CatchGridIntent.NavigateToCatchDetails -> sendEffect {
                 CatchGridEffect.NavigateToCatchDetails(intent.catchId)
             }
-
-            is CatchGridIntent.NavigateToCatchDetails -> TODO()
         }
     }
 

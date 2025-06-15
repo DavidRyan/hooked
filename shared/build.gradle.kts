@@ -1,5 +1,5 @@
 plugins {
-    kotlin("multiplatform") version "2.1.0"
+    kotlin("multiplatform") version "2.1.20"
     id("com.android.library")
     kotlin("plugin.serialization") version "2.1.0"
     id("app.cash.sqldelight") version "2.0.0"
