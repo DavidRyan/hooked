@@ -3,6 +3,8 @@ package data.repo
 import data.api.HookedApiService
 import data.model.CatchDto
 import data.db.Database
+import data.model.CatchResult
+import domain.model.NetworkResult
 import domain.repository.CatchRepositoy
 
 class CatchRepository(
@@ -12,8 +14,13 @@ class CatchRepository(
 
     //private val queries = database.catchQueries
 
-    suspend fun getCatches(): List<CatchDto> {
-        return hookedApiService.getCatches()
+    suspend fun getCatches(): CatchResult {
+        val result = hookedApiService.getCatches()
+        return when(result) {
+            is NetworkResult.Success -> CatchResult.Success(result.data)
+            is NetworkResult.Error -> CatchResult.Error(result.error.message ?: "Unknown error")
+            NetworkResult.Loading -> TODO()
+        }
 /*
         val cachedCatches = queries.selectAll().executeAsList().map {
             CatchDto(it.id, it.species, it.weight, it.length, it.photoUrl)

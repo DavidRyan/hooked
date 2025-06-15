@@ -10,3 +10,9 @@ data class CatchDto(
     val length: Double,
     val photoUrl: String
 )
+
+sealed class CatchResult {
+    data class Success(val catches: List<CatchDto>) : CatchResult()
+    data class Error(val message: String) : CatchResult()
+    object Loading : CatchResult()
+}

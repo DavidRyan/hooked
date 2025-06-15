@@ -1,6 +1,7 @@
 package data.api
 
 import data.model.CatchDto
+import domain.model.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -11,8 +12,10 @@ import io.ktor.client.request.get
 class HookedApiService(
     private val httpClient: HttpClient,
 ) {
-    suspend fun getCatches(): List<CatchDto> {
-        val remoteCatches = httpClient.get("http://10.0.2.2:8080/catches").body<List<CatchDto>>()
-        return remoteCatches
+    suspend fun getCatches(): NetworkResult<List<CatchDto>> {
+        val remoteCatches = httpClient
+            .get("http://10.0.2.2:8080/catches")
+            .body<List<CatchDto>>()
+        return NetworkResult.Success(remoteCatches)
     }
 }
