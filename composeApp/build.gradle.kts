@@ -21,6 +21,7 @@ kotlin {
                 implementation("media.kamel:kamel-image-default:1.0.5")
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
+                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
                 implementation(libs.kotlinx.serialization.json) // Or the latest version
                 implementation(project(":shared"))
 

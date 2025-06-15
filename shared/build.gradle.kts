@@ -31,6 +31,8 @@ kotlin {
                 api("io.ktor:ktor-serialization-kotlinx-json:2.3.10")
                 implementation("app.cash.sqldelight:runtime:2.0.0")
                 implementation("app.cash.sqldelight:coroutines-extensions:2.0.0")
+                implementation(libs.koin.compose)
+                implementation(libs.koin.compose.viewmodel)
             }
         }
         val androidMain by getting {

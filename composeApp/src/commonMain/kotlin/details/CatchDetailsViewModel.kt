@@ -5,10 +5,8 @@ import details.model.CatchDetailsEffect
 import details.model.CatchDetailsIntent
 import details.model.CatchDetailsState
 import kotlinx.coroutines.launch
-import usecase.GetCatchDetailsUseCase
 
 class CatchDetailsViewModel(
-    private val getCatchDetailsUseCase: GetCatchDetailsUseCase
 ) : HookedViewModel<CatchDetailsIntent, CatchDetailsState, CatchDetailsEffect>() {
 
     override fun handleIntent(intent: CatchDetailsIntent) {
@@ -20,6 +18,7 @@ class CatchDetailsViewModel(
     }
 
     private fun loadCatchDetails(catchId: Long) {
+/*
         viewModelScope.launch {
             try {
                 val catchDetails = getCatchDetailsUseCase(catchId)
@@ -28,6 +27,7 @@ class CatchDetailsViewModel(
                 sendEffect { CatchDetailsEffect.OnError(e.message ?: "An unknown error occurred") }
             }
         }
+*/
     }
 
     override fun createInitialState(): CatchDetailsState {

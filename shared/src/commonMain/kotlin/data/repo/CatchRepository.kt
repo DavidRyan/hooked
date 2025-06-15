@@ -8,7 +8,6 @@ import domain.model.NetworkResult
 import domain.repository.CatchRepositoy
 
 class CatchRepository(
-    private val database: Database,
     private val hookedApiService: HookedApiService
 ) : CatchRepositoy {
 
