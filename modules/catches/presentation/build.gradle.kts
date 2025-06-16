@@ -19,6 +19,7 @@ kotlin {
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:core:presentation"))
                 implementation(project(":modules:catches:domain"))
+                implementation(project(":modules:catches:data"))
                 
                 // Compose dependencies
                 implementation(compose.runtime)

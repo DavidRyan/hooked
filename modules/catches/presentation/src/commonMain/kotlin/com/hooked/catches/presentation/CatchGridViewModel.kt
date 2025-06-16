@@ -1,8 +1,8 @@
 package com.hooked.catches.presentation
 
 import com.hooked.core.HookedViewModel
-import domain.usecase.GetCatchesUseCase
-import domain.usecase.GetCatchesUseCaseResult
+import com.hooked.catches.data.usecases.GetCatchesUseCase
+import com.hooked.catches.data.usecases.GetCatchesUseCaseResult
 import kotlinx.coroutines.launch
 import com.hooked.catches.presentation.model.CatchGridEffect
 import com.hooked.catches.presentation.model.CatchGridIntent

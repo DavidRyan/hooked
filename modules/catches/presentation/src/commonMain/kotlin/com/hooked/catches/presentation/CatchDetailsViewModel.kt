@@ -5,8 +5,8 @@ import com.hooked.catches.presentation.model.CatchDetailsEffect
 import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchDetailsState
 import com.hooked.catches.presentation.model.toCatchDetailsModel
-import domain.usecase.GetCatchDetailsUseCase
-import domain.usecase.GetCatchDetailsUseCaseResult
+import com.hooked.catches.data.usecases.GetCatchDetailsUseCase
+import com.hooked.catches.data.usecases.GetCatchDetailsUseCaseResult
 import kotlinx.coroutines.launch
 
 class CatchDetailsViewModel(

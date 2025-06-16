@@ -1,6 +1,6 @@
 package com.hooked.catches.presentation.model
 
-import domain.model.CatchEntity
+import com.hooked.catches.domain.entities.CatchEntity
 
 data class CatchModel(
     val id: Long,
