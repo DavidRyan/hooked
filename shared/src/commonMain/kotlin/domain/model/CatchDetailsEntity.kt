@@ -26,7 +26,7 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
         timestamp = timestamp,
         photoUrl = photoUrl,
         location = if (latitude != null && longitude != null) {
-            "${latitude.toString().take(6)}, ${longitude.toString().take(6)}"
+            "${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}"
         } else "Unknown location",
         dateCaught = timestamp?.let { 
             // Convert timestamp to readable date - simplified for KMP compatibility

@@ -9,8 +9,6 @@ import details.CatchDetailsScreen
 import details.CatchDetailsViewModel
 import grid.CatchGridScreen
 import grid.CatchGridViewModel
-import submit.SubmitCatchScreen
-import submit.SubmitCatchViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import theme.HookedTheme
@@ -40,14 +38,6 @@ fun HookedApp(
                     CatchDetailsScreen(
                         viewModel = koinViewModel<CatchDetailsViewModel>(),
                         catchId = details.catchId
-                    )
-                }
-                composable<Screens.SubmitCatch> {
-                    SubmitCatchScreen(
-                        viewModel = koinViewModel<SubmitCatchViewModel>(),
-                        navigate = { screen ->
-                            navController.navigate(screen)
-                        }
                     )
                 }
             }
