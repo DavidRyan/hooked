@@ -18,4 +18,15 @@ class HookedApiService(
             .body<List<CatchDto>>()
         return NetworkResult.Success(remoteCatches)
     }
+    
+    suspend fun getCatchDetails(catchId: Long): NetworkResult<CatchDto> {
+        try {
+            val catchDetails = httpClient
+                .get("http://10.0.2.2:8080/catches/$catchId")
+                .body<CatchDto>()
+            return NetworkResult.Success(catchDetails)
+        } catch (e: Exception) {
+            return NetworkResult.Error(Exception("Failed to fetch catch details: ${e.message}"))
+        }
+    }
 }

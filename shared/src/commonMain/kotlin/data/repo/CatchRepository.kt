@@ -4,6 +4,7 @@ import data.api.HookedApiService
 import data.model.CatchDto
 import data.db.Database
 import data.model.CatchResult
+import data.model.CatchDetailsResult
 import domain.model.NetworkResult
 import domain.repository.CatchRepositoy
 
@@ -29,5 +30,14 @@ class CatchRepository(
         }
 */
 
+    }
+    
+    suspend fun getCatchDetails(catchId: Long): CatchDetailsResult {
+        val result = hookedApiService.getCatchDetails(catchId)
+        return when(result) {
+            is NetworkResult.Success -> CatchDetailsResult.Success(result.data)
+            is NetworkResult.Error -> CatchDetailsResult.Error(result.error.message ?: "Unknown error")
+            NetworkResult.Loading -> TODO()
+        }
     }
 }

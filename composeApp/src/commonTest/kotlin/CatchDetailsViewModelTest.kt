@@ -2,45 +2,45 @@ package com.hooked.test
 
 import details.CatchDetailsViewModel
 import details.model.CatchDetailsIntent
+import details.model.CatchDetailsModel
+import domain.usecase.GetCatchDetailsUseCase
+import domain.usecase.GetCatchDetailsUseCaseResult
+import domain.model.CatchDetailsEntity
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import org.koin.test.KoinTest
-import org.koin.test.inject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.test.assertFalse
 
 @ExperimentalCoroutinesApi
-class CatchDetailsViewModelTest : KoinTest {
+class CatchDetailsViewModelTest {
 
-    private val viewModel: CatchDetailsViewModel by inject()
+    private lateinit var mockUseCase: GetCatchDetailsUseCase
+    private lateinit var viewModel: CatchDetailsViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single { CatchDetailsViewModel() }
-                }
-            )
-        }
+        mockUseCase = mockk()
+        viewModel = CatchDetailsViewModel(mockUseCase)
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
-        stopKoin()
     }
 
     @Test
@@ -51,18 +51,87 @@ class CatchDetailsViewModelTest : KoinTest {
     }
 
     @Test
-    fun `test load catch details intent`() = runTest {
+    fun `test load catch details success`() = runTest {
         val catchId = 123L
+        val testEntity = CatchDetailsEntity(
+            id = catchId,
+            species = "Bass",
+            weight = 2.5,
+            length = 30.0,
+            latitude = 40.7128,
+            longitude = -74.0060,
+            timestamp = 1640995200000L,
+            photoUrl = "test-url",
+            location = "Test Lake",
+            dateCaught = "Jan 1, 2022"
+        )
+        
+        coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Success(testEntity)
         
         viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // Since the implementation is commented out, state should remain unchanged
         val state = viewModel.state.value
-        assertNull(state.catchDetails)
-        assertTrue(state.isLoading)
+        assertFalse(state.isLoading)
+        assertNotNull(state.catchDetails)
+        assertEquals(catchId, state.catchDetails?.id)
+        assertEquals("Bass", state.catchDetails?.species)
+        assertEquals(2.5, state.catchDetails?.weight)
     }
 
-    // Note: createInitialState() is protected, so we can't test it directly
-    // The initial state is already tested in the "test initial state" test
+    @Test
+    fun `test load catch details error`() = runTest {
+        val catchId = 123L
+        val errorMessage = "Network error"
+        
+        coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Error(errorMessage)
+        
+        // Collect effects to verify error emission
+        val effects = mutableListOf<details.model.CatchDetailsEffect>()
+        val job = launch {
+            viewModel.effect.collect { effects.add(it) }
+        }
+        
+        viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        val state = viewModel.state.value
+        assertFalse(state.isLoading)
+        assertNull(state.catchDetails)
+        
+        // Verify error effect was emitted
+        assertEquals(1, effects.size)
+        assertTrue(effects[0] is details.model.CatchDetailsEffect.OnError)
+        assertEquals(errorMessage, (effects[0] as details.model.CatchDetailsEffect.OnError).message)
+        
+        job.cancel()
+    }
+
+    @Test
+    fun `test loading state during fetch`() = runTest {
+        val catchId = 123L
+        
+        coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Success(
+            CatchDetailsEntity(
+                id = catchId,
+                species = "Test",
+                weight = 1.0,
+                length = 10.0,
+                latitude = null,
+                longitude = null,
+                timestamp = null,
+                photoUrl = "url"
+            )
+        )
+        
+        viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
+        
+        // Before advancing, loading should be true
+        assertTrue(viewModel.state.value.isLoading)
+        
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // After completion, loading should be false
+        assertFalse(viewModel.state.value.isLoading)
+    }
 }
