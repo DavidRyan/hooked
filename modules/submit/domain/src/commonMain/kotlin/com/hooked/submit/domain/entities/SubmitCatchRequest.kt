@@ -1,0 +1,14 @@
+package com.hooked.submit.domain.entities
+
+/**
+ * Entity representing a catch submission request
+ */
+data class SubmitCatchRequest(
+    val species: String,
+    val weight: Double,
+    val length: Double,
+    val latitude: Double?,
+    val longitude: Double?,
+    val photoBase64: String? = null,
+    val timestamp: Long = 0L // Will be set by platform-specific code
+)
