@@ -14,5 +14,11 @@ dependencyResolutionManagement {
 
 rootProject.name = "hooked"
 
-include(":shared")
 include(":composeApp")
+include(":modules:core:domain")
+include(":modules:core:presentation")
+include(":modules:catches:data")
+include(":modules:catches:domain")
+include(":modules:catches:presentation")
+include(":modules:submit:data")
+include(":modules:submit:presentation")

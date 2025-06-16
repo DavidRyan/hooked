@@ -22,8 +22,16 @@ kotlin {
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
                 implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
-                implementation(libs.kotlinx.serialization.json) // Or the latest version
-                implementation(project(":shared"))
+                implementation(libs.kotlinx.serialization.json)
+                implementation(project(":modules:core:presentation"))
+                implementation(project(":modules:catches:presentation"))
+                implementation(project(":modules:submit:presentation"))
+                implementation(project(":modules:catches:domain"))
+                implementation(project(":modules:catches:data"))
+                implementation(project(":modules:submit:data"))
+                implementation(libs.ktor.client.core)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
 
             }
         }
@@ -37,12 +45,25 @@ kotlin {
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
                 implementation("androidx.exifinterface:exifinterface:1.3.7")
+                implementation(libs.ktor.client.android)
             }
         }
 
-        val iosX64Main by getting
-        val iosArm64Main by getting
-        val iosSimulatorArm64Main by getting
+        val iosX64Main by getting {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+        val iosArm64Main by getting {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+        val iosSimulatorArm64Main by getting {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
+            }
+        }
 
         val commonTest by getting {
             dependencies {
