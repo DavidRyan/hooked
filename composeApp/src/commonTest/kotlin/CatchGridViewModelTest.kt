@@ -1,64 +1,91 @@
 package com.hooked.test
 
-import com.hooked.domain.usecase.GetCatchesUseCase
-import com.hooked.grid.CatchGridViewModel
-import com.hooked.domain.CatchGridIntent
-import com.hooked.domain.CatchModel
+import domain.usecase.GetCatchesUseCase
+import domain.usecase.GetCatchesUseCaseResult
+import domain.model.CatchEntity
+import grid.CatchGridViewModel
+import grid.model.CatchGridIntent
+import io.mockk.coEvery
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
-import org.koin.dsl.module
-import org.koin.test.KoinTest
-import org.koin.test.inject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 @ExperimentalCoroutinesApi
-class CatchGridViewModelTest : KoinTest {
+class CatchGridViewModelTest {
 
-    private val viewModel: CatchGridViewModel by inject()
-    private val getCatchesUseCase: GetCatchesUseCase by inject()
-
+    private lateinit var mockUseCase: GetCatchesUseCase
+    private lateinit var viewModel: CatchGridViewModel
     private val testDispatcher = StandardTestDispatcher()
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        startKoin {
-            modules(
-                module {
-                    single {
-                        GetCatchesUseCase(
-                            mock {
-                                onBlocking { invoke() } doReturn listOf(
-                                    CatchModel(1, "Salmon", 5.0, 20.0, "url")
-                                )
-                            }
-                        )
-                    }
-                    single { CatchGridViewModel(get()) }
-                }
-            )
-        }
+        mockUseCase = mockk()
+        viewModel = CatchGridViewModel(mockUseCase)
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
-        stopKoin()
     }
 
     @Test
-    fun `test load catches`() = runTest {
+    fun `test initial state`() {
+        val state = viewModel.state.value
+        assertTrue(state.catches.isEmpty())
+        assertTrue(state.isLoading) // Initial state should have isLoading = true
+    }
+
+    @Test
+    fun `test load catches success`() = runTest {
+        val testCatches = listOf(
+            CatchEntity(1, "Salmon", "A large salmon", "2023-10-01", "Lake", "url1", 5.0, 20.0),
+            CatchEntity(2, "Trout", "A small trout", "2023-10-02", "River", "url2", 3.0, 15.0)
+        )
+        coEvery { mockUseCase() } returns GetCatchesUseCaseResult.Success(testCatches)
+        
         viewModel.sendIntent(CatchGridIntent.LoadCatches)
         testDispatcher.scheduler.advanceUntilIdle()
-        assertEquals(1, viewModel.state.value.catches.size)
+        
+        val state = viewModel.state.value
+        assertEquals(2, state.catches.size)
+        assertFalse(state.isLoading)
+    }
+    
+    @Test
+    fun `test load catches shows loading state`() = runTest {
+        coEvery { mockUseCase() } returns GetCatchesUseCaseResult.Success(emptyList())
+        
+        viewModel.sendIntent(CatchGridIntent.LoadCatches)
+        
+        // Before advancing the dispatcher, loading should be true
+        assertTrue(viewModel.state.value.isLoading)
+        
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        // After completion, loading should be false
+        assertFalse(viewModel.state.value.isLoading)
+    }
+    
+    @Test
+    fun `test load catches error`() = runTest {
+        coEvery { mockUseCase() } returns GetCatchesUseCaseResult.Error("Network error")
+        
+        viewModel.sendIntent(CatchGridIntent.LoadCatches)
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        val state = viewModel.state.value
+        assertTrue(state.catches.isEmpty())
+        assertFalse(state.isLoading)
     }
 }

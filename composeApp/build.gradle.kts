@@ -47,7 +47,9 @@ kotlin {
             dependencies {
                 implementation(kotlin("test"))
                 implementation(libs.koin.test)
-                implementation(libs.kotlinx.coroutines.test)            }
+                implementation(libs.kotlinx.coroutines.test)
+                implementation("io.mockk:mockk:1.13.12")
+            }
         }
     }
 }

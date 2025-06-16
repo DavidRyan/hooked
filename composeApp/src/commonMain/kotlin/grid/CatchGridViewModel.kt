@@ -29,16 +29,17 @@ class CatchGridViewModel(
 
     private fun loadCatches() {
         viewModelScope.launch {
-            when (val catches = getCatchesUseCase()) {
+            when (val result = getCatchesUseCase()) {
                 is GetCatchesUseCaseResult.Success -> {
-                    setState { copy(catches = catches.catches.map { fromEntity(it) }, isLoading = false) }
+                    setState { copy(catches = result.catches.map { fromEntity(it) }, isLoading = false) }
                 }
 
                 is GetCatchesUseCaseResult.Error -> {
-                    sendEffect { CatchGridEffect.ShowError(catches.message) }
+                    setState { copy(isLoading = false) }
+                    sendEffect { CatchGridEffect.ShowError(result.message) }
                 }
-            }}
-        setState { copy(catches = catches, isLoading = false) }
+            }
+        }
     }
 
     override fun createInitialState(): CatchGridState {
