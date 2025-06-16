@@ -1,6 +1,10 @@
 package submit
 
 import core.HookedViewModel
+import core.photo.ImageProcessor
+import core.photo.PhotoCapture
+import core.photo.PhotoCaptureResult
+import core.photo.encodeBase64
 import domain.model.SubmitCatchRequest
 import domain.usecase.SubmitCatchUseCase
 import domain.usecase.SubmitCatchUseCaseResult
@@ -10,7 +14,9 @@ import submit.model.SubmitCatchIntent
 import submit.model.SubmitCatchState
 
 class SubmitCatchViewModel(
-    private val submitCatchUseCase: SubmitCatchUseCase
+    private val submitCatchUseCase: SubmitCatchUseCase,
+    private val photoCapture: PhotoCapture,
+    private val imageProcessor: ImageProcessor
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
 
     override fun handleIntent(intent: SubmitCatchIntent) {
@@ -37,10 +43,10 @@ class SubmitCatchViewModel(
                 setState { copy(photoUri = intent.photoUri) }
             }
             is SubmitCatchIntent.TakePhoto -> {
-                sendEffect { SubmitCatchEffect.TakePhoto }
+                capturePhoto()
             }
             is SubmitCatchIntent.PickPhoto -> {
-                sendEffect { SubmitCatchEffect.PickPhotoFromGallery }
+                pickPhoto()
             }
             is SubmitCatchIntent.GetCurrentLocation -> {
                 setState { copy(isLocationLoading = true) }
@@ -94,10 +100,51 @@ class SubmitCatchViewModel(
         }
     }
 
+    private fun capturePhoto() {
+        viewModelScope.launch {
+            when (val result = photoCapture.capturePhoto()) {
+                is PhotoCaptureResult.Success -> {
+                    setState { copy(photoUri = result.photo.imageUri) }
+                }
+                is PhotoCaptureResult.Error -> {
+                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
+                }
+                PhotoCaptureResult.Cancelled -> {
+                    // User cancelled, no action needed
+                }
+            }
+        }
+    }
+    
+    private fun pickPhoto() {
+        viewModelScope.launch {
+            when (val result = photoCapture.pickFromGallery()) {
+                is PhotoCaptureResult.Success -> {
+                    setState { copy(photoUri = result.photo.imageUri) }
+                }
+                is PhotoCaptureResult.Error -> {
+                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
+                }
+                PhotoCaptureResult.Cancelled -> {
+                    // User cancelled, no action needed
+                }
+            }
+        }
+    }
+
     private suspend fun convertImageToBase64(imageUri: String): String {
-        // This will be implemented in platform-specific code
-        // IMPORTANT: Preserve EXIF metadata including location and timestamp
-        return imageUri
+        return try {
+            // Load image bytes with EXIF data preserved
+            val imageBytes = imageProcessor.loadImageFromUri(imageUri)
+            
+            // Process image while preserving EXIF metadata
+            val processedBytes = imageProcessor.processImageWithExif(imageBytes)
+            
+            // Convert to Base64 with EXIF intact for backend processing
+            processedBytes.encodeBase64()
+        } catch (e: Exception) {
+            throw IllegalStateException("Failed to process image: ${e.message}")
+        }
     }
 
     override fun createInitialState(): SubmitCatchState {
