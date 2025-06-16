@@ -21,7 +21,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                // Android-specific dependencies if needed
+                
             }
         }
 

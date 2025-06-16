@@ -43,7 +43,7 @@ class CatchGridViewModelTest {
     fun `test initial state`() {
         val state = viewModel.state.value
         assertTrue(state.catches.isEmpty())
-        assertTrue(state.isLoading) // Initial state should have isLoading = true
+        assertTrue(state.isLoading)
     }
 
     @Test
@@ -68,12 +68,10 @@ class CatchGridViewModelTest {
         
         viewModel.sendIntent(CatchGridIntent.LoadCatches)
         
-        // Before advancing the dispatcher, loading should be true
         assertTrue(viewModel.state.value.isLoading)
         
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // After completion, loading should be false
         assertFalse(viewModel.state.value.isLoading)
     }
     

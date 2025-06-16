@@ -30,4 +30,4 @@ object Colors {
     val base = Color(0xFF1E1E2E)
     val mantle = Color(0xFF181825)
     val crust = Color(0xFF11111B)
-}// Placeholder for Colors.kt
+}

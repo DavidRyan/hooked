@@ -24,7 +24,6 @@ class GetCatchesUseCase(private val catchGridRepository: CatchRepository) {
     }
 }
 
-// make this a sealed class
 sealed class GetCatchesUseCaseResult {
     data class Success(val catches: List<CatchEntity>) : GetCatchesUseCaseResult()
     data class Error(val message: String) : GetCatchesUseCaseResult()

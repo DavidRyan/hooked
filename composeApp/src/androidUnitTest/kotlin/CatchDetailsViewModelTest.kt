@@ -1,11 +1,11 @@
 package com.hooked.test
 
-import details.CatchDetailsViewModel
-import details.model.CatchDetailsIntent
-import details.model.CatchDetailsModel
-import domain.usecase.GetCatchDetailsUseCase
-import domain.usecase.GetCatchDetailsUseCaseResult
-import domain.model.CatchDetailsEntity
+import com.hooked.catches.presentation.details.CatchDetailsViewModel
+import com.hooked.catches.presentation.details.model.CatchDetailsIntent
+import com.hooked.catches.presentation.details.model.CatchDetailsModel
+import com.hooked.catches.data.usecases.GetCatchDetailsUseCase
+import com.hooked.catches.data.usecases.GetCatchDetailsUseCaseResult
+import com.hooked.catches.domain.model.CatchDetailsEntity
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -86,8 +86,7 @@ class CatchDetailsViewModelTest {
         
         coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Error(errorMessage)
         
-        // Collect effects to verify error emission
-        val effects = mutableListOf<details.model.CatchDetailsEffect>()
+        val effects = mutableListOf<com.hooked.catches.presentation.details.model.CatchDetailsEffect>()
         val job = launch {
             viewModel.effect.collect { effects.add(it) }
         }
@@ -99,10 +98,9 @@ class CatchDetailsViewModelTest {
         assertFalse(state.isLoading)
         assertNull(state.catchDetails)
         
-        // Verify error effect was emitted
         assertEquals(1, effects.size)
-        assertTrue(effects[0] is details.model.CatchDetailsEffect.OnError)
-        assertEquals(errorMessage, (effects[0] as details.model.CatchDetailsEffect.OnError).message)
+        assertTrue(effects[0] is com.hooked.catches.presentation.details.model.CatchDetailsEffect.OnError)
+        assertEquals(errorMessage, (effects[0] as com.hooked.catches.presentation.details.model.CatchDetailsEffect.OnError).message)
         
         job.cancel()
     }
@@ -126,12 +124,10 @@ class CatchDetailsViewModelTest {
         
         viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
         
-        // Before advancing, loading should be true
         assertTrue(viewModel.state.value.isLoading)
         
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // After completion, loading should be false
         assertFalse(viewModel.state.value.isLoading)
     }
 }

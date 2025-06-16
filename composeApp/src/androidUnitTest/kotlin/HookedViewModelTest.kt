@@ -16,7 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
-// Test data classes
 data class TestState(
     val counter: Int = 0,
     val isLoading: Boolean = false
@@ -34,7 +33,6 @@ sealed class TestEffect {
     object NavigateAway : TestEffect()
 }
 
-// Test implementation of HookedViewModel
 class TestHookedViewModel : HookedViewModel<TestIntent, TestState, TestEffect>() {
     override fun createInitialState(): TestState = TestState()
 
@@ -107,12 +105,10 @@ class HookedViewModelTest {
 
     @Test
     fun `test decrement intent`() = runTest {
-        // First increment to 2
         viewModel.sendIntent(TestIntent.Increment)
         viewModel.sendIntent(TestIntent.Increment)
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // Then decrement
         viewModel.sendIntent(TestIntent.Decrement)
         testDispatcher.scheduler.advanceUntilIdle()
         
@@ -137,20 +133,17 @@ class HookedViewModelTest {
 
     @Test
     fun `test effect emission on negative counter`() = runTest {
-        // Start collecting effects
         val effects = mutableListOf<TestEffect>()
         val job = launch {
             viewModel.effect.collect { effects.add(it) }
         }
         
-        // Decrement from 0 to trigger negative counter effect
         viewModel.sendIntent(TestIntent.Decrement)
         testDispatcher.scheduler.advanceUntilIdle()
         
         val state = viewModel.state.value
         assertEquals(-1, state.counter)
         
-        // Check that the effect was emitted
         assertEquals(1, effects.size)
         assertTrue(effects[0] is TestEffect.ShowMessage)
         assertEquals("Counter is negative!", (effects[0] as TestEffect.ShowMessage).message)
@@ -181,7 +174,6 @@ class HookedViewModelTest {
             viewModel.state.collect { states.add(it) }
         }
         
-        // Initial state should be collected
         testDispatcher.scheduler.advanceUntilIdle()
         
         viewModel.sendIntent(TestIntent.Increment)
@@ -190,7 +182,6 @@ class HookedViewModelTest {
         viewModel.sendIntent(TestIntent.StartLoading)
         testDispatcher.scheduler.advanceUntilIdle()
         
-        // Should have initial state + 2 updates
         assertEquals(3, states.size)
         assertEquals(0, states[0].counter)
         assertEquals(1, states[1].counter)
@@ -201,7 +192,6 @@ class HookedViewModelTest {
 
     @Test
     fun `test concurrent intent handling`() = runTest {
-        // Send multiple intents rapidly
         viewModel.sendIntent(TestIntent.Increment)
         viewModel.sendIntent(TestIntent.Increment)
         viewModel.sendIntent(TestIntent.Decrement)
@@ -210,6 +200,6 @@ class HookedViewModelTest {
         testDispatcher.scheduler.advanceUntilIdle()
         
         val state = viewModel.state.value
-        assertEquals(2, state.counter) // +1 +1 -1 +1 = 2
+        assertEquals(2, state.counter)
     }
 }

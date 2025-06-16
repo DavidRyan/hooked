@@ -19,7 +19,7 @@ data class SubmitCatchState(
                 
     val locationText: String
         get() = if (latitude != null && longitude != null) {
-            "${String.format("%.4f", latitude)}, ${String.format("%.4f", longitude)}"
+            "${latitude.toString().take(8)}, ${longitude.toString().take(8)}"
         } else {
             "No location set"
         }

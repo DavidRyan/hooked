@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20" // Or your Kotlin version
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20"
 }
 
 kotlin {
@@ -39,7 +39,6 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation(libs.androidx.ui)
-                //noinspection UseTomlInstead
                 implementation("androidx.compose.material3:material3:1.3.2")
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.koin.android)

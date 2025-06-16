@@ -25,7 +25,7 @@ fun CatchDetailsScreen(viewModel: CatchDetailsViewModel, catchId: Long) {
     }
 
     if (state.isLoading) {
-        //CircularProgressIndicator()
+        
     } else {
         state.catchDetails?.let { details ->
             Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {

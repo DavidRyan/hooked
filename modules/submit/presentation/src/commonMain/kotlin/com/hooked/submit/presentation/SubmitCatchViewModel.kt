@@ -51,7 +51,6 @@ class SubmitCatchViewModel(
             is SubmitCatchIntent.GetCurrentLocation -> {
                 setState { copy(isLocationLoading = true) }
                 sendEffect { SubmitCatchEffect.RequestLocationPermission }
-                // Location update will come through UpdateLocation intent
             }
             is SubmitCatchIntent.SubmitCatch -> {
                 submitCatch()
@@ -110,7 +109,6 @@ class SubmitCatchViewModel(
                     sendEffect { SubmitCatchEffect.ShowError(result.message) }
                 }
                 PhotoCaptureResult.Cancelled -> {
-                    // User cancelled, no action needed
                 }
             }
         }
@@ -126,7 +124,6 @@ class SubmitCatchViewModel(
                     sendEffect { SubmitCatchEffect.ShowError(result.message) }
                 }
                 PhotoCaptureResult.Cancelled -> {
-                    // User cancelled, no action needed
                 }
             }
         }
@@ -134,13 +131,10 @@ class SubmitCatchViewModel(
 
     private suspend fun convertImageToBase64(imageUri: String): String {
         return try {
-            // Load image bytes with EXIF data preserved
             val imageBytes = imageProcessor.loadImageFromUri(imageUri)
             
-            // Process image while preserving EXIF metadata
             val processedBytes = imageProcessor.processImageWithExif(imageBytes)
             
-            // Convert to Base64 with EXIF intact for backend processing
             processedBytes.encodeBase64()
         } catch (e: Exception) {
             throw IllegalStateException("Failed to process image: ${e.message}")

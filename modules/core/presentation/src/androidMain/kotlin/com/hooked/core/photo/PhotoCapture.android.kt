@@ -163,10 +163,9 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
     
     private fun handleCameraResult(uri: Uri) {
         try {
-            // Keep EXIF data bundled with image - backend will parse it
             val capturedPhoto = CapturedPhoto(
                 imageUri = uri.toString(),
-                metadata = null // Backend will extract from image
+                metadata = null
             )
             
             captureCallback?.invoke(PhotoCaptureResult.Success(capturedPhoto))
@@ -177,10 +176,9 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
     
     private fun handleGalleryResult(uri: Uri) {
         try {
-            // Keep EXIF data bundled with image - backend will parse it
             val capturedPhoto = CapturedPhoto(
                 imageUri = uri.toString(),
-                metadata = null // Backend will extract from image
+                metadata = null
             )
             
             captureCallback?.invoke(PhotoCaptureResult.Success(capturedPhoto))

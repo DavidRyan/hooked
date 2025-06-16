@@ -21,7 +21,6 @@ kotlin {
                 implementation(project(":modules:catches:domain"))
                 implementation(project(":modules:catches:data"))
                 
-                // Compose dependencies
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
@@ -29,10 +28,8 @@ kotlin {
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
                 
-                // Navigation
                 implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
                 
-                // DI
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
             }

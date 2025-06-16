@@ -38,12 +38,10 @@ fun SubmitCatchScreen(
                     navigate(Screens.CatchGrid)
                 }
                 is SubmitCatchEffect.ShowError -> {
-                    // Handle error display - could show snackbar
                 }
                 is SubmitCatchEffect.CatchSubmittedSuccessfully -> {
                     navigate(Screens.CatchGrid)
                 }
-                // Photo-related effects will be handled by platform-specific implementations
                 else -> {}
             }
         }
@@ -54,7 +52,6 @@ fun SubmitCatchScreen(
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        // Top App Bar
         TopAppBar(
             title = { Text("Submit New Catch") },
             navigationIcon = {
@@ -78,14 +75,12 @@ fun SubmitCatchScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Photo Section
             PhotoSection(
                 photoUri = state.photoUri,
                 onTakePhoto = { viewModel.sendIntent(SubmitCatchIntent.TakePhoto) },
                 onPickPhoto = { viewModel.sendIntent(SubmitCatchIntent.PickPhoto) }
             )
             
-            // Species Input
             OutlinedTextField(
                 value = state.species,
                 onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateSpecies(it)) },
@@ -94,7 +89,6 @@ fun SubmitCatchScreen(
                 singleLine = true
             )
             
-            // Weight Input
             OutlinedTextField(
                 value = state.weight,
                 onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateWeight(it)) },
@@ -104,7 +98,6 @@ fun SubmitCatchScreen(
                 singleLine = true
             )
             
-            // Length Input
             OutlinedTextField(
                 value = state.length,
                 onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateLength(it)) },
@@ -114,7 +107,6 @@ fun SubmitCatchScreen(
                 singleLine = true
             )
             
-            // Location Section
             LocationSection(
                 locationText = state.locationText,
                 isLoading = state.isLocationLoading,
@@ -123,7 +115,6 @@ fun SubmitCatchScreen(
             
             Spacer(modifier = Modifier.height(24.dp))
             
-            // Submit Button
             Button(
                 onClick = { viewModel.sendIntent(SubmitCatchIntent.SubmitCatch) },
                 modifier = Modifier.fillMaxWidth(),

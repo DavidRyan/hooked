@@ -7,13 +7,10 @@ import android.util.Base64
 actual class ImageProcessor(private val context: Context) {
     
     actual suspend fun processImageWithExif(imageBytes: ByteArray): ByteArray {
-        // Return original image bytes to preserve EXIF data
-        // Backend will handle any processing needed
         return imageBytes
     }
     
     actual suspend fun extractMetadata(imageBytes: ByteArray): PhotoMetadata? {
-        // Not needed - backend will handle EXIF parsing
         return null
     }
     

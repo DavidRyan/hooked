@@ -7,5 +7,5 @@ data class SubmitCatchRequest(
     val latitude: Double?,
     val longitude: Double?,
     val photoBase64: String? = null,
-    val timestamp: Long = 0L // Will be set by platform-specific code
+    val timestamp: Long = 0L
 )

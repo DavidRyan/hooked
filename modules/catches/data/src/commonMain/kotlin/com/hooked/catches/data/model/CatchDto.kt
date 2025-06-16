@@ -21,8 +21,8 @@ fun CatchDto.toEntity(): CatchEntity {
         id = id,
         name = species,
         description = "Caught a $species weighing $weight kg and measuring $length cm",
-        dateCaught = "2023-10-01", // Placeholder, replace with actual date logic
-        location = "Unknown", // Placeholder, replace with actual location logic
+        dateCaught = "2023-10-01",
+        location = "Unknown",
         imageUrl = photoUrl,
         weight = weight,
         length = length
@@ -43,7 +43,6 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
             "${latitude.toString().take(6)}, ${longitude.toString().take(6)}"
         } else "Unknown location",
         dateCaught = timestamp?.let { 
-            // Convert timestamp to readable date - simplified for KMP compatibility
             "Date: $it" // TODO: Use kotlinx-datetime for proper date formatting
         } ?: "Unknown date"
     )
