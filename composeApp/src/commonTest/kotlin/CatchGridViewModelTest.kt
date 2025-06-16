@@ -4,7 +4,7 @@ import domain.usecase.GetCatchesUseCase
 import domain.usecase.GetCatchesUseCaseResult
 import domain.model.CatchEntity
 import grid.CatchGridViewModel
-import grid.model.CatchGridIntent
+import com.hooked.features.catches.presentation.model.CatchGridIntent
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

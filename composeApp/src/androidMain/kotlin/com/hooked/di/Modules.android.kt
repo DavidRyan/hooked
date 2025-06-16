@@ -1,10 +1,16 @@
 package com.hooked.di
 
-import org.koin.androidx.viewmodel.dsl.viewModelOf
-import org.koin.core.module.Module
-import org.koin.core.module.dsl.singleOf
+import androidx.activity.ComponentActivity
+import com.hooked.core.photo.ImageProcessor
+import com.hooked.core.photo.PhotoCapture
+import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.module
 
-/*
 actual val platformModule = module {
-}*/
+    single { 
+        PhotoCapture(androidContext() as ComponentActivity) 
+    }
+    single { 
+        ImageProcessor(androidContext()) 
+    }
+}

@@ -1,20 +1,19 @@
 package domain.usecase
 
-import data.repo.CatchRepository
-import data.model.CatchDetailsResult
+import domain.repository.CatchRepository
+import domain.common.Result
 import domain.model.CatchDetailsEntity
-import domain.model.toCatchDetailsEntity
 
 class GetCatchDetailsUseCase(private val catchRepository: CatchRepository) {
     suspend operator fun invoke(catchId: Long): GetCatchDetailsUseCaseResult {
         return when(val result = catchRepository.getCatchDetails(catchId)) {
-            is CatchDetailsResult.Success -> {
-                GetCatchDetailsUseCaseResult.Success(result.catch.toCatchDetailsEntity())
+            is Result.Success -> {
+                GetCatchDetailsUseCaseResult.Success(result.data)
             }
-            is CatchDetailsResult.Error -> {
+            is Result.Error -> {
                 GetCatchDetailsUseCaseResult.Error(result.message)
             }
-            CatchDetailsResult.Loading -> {
+            Result.Loading -> {
                 throw Exception("Loading state is not handled in this use case")
             }
         }

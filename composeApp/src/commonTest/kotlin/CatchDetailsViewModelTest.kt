@@ -1,8 +1,8 @@
 package com.hooked.test
 
-import details.CatchDetailsViewModel
-import details.model.CatchDetailsIntent
-import details.model.CatchDetailsModel
+import com.hooked.features.catches.presentation.CatchDetailsViewModel
+import com.hooked.features.catches.presentation.model.CatchDetailsIntent
+import com.hooked.features.catches.presentation.model.CatchDetailsModel
 import domain.usecase.GetCatchDetailsUseCase
 import domain.usecase.GetCatchDetailsUseCaseResult
 import domain.model.CatchDetailsEntity
@@ -87,7 +87,7 @@ class CatchDetailsViewModelTest {
         coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Error(errorMessage)
         
         // Collect effects to verify error emission
-        val effects = mutableListOf<details.model.CatchDetailsEffect>()
+        val effects = mutableListOf<com.hooked.features.catches.presentation.model.CatchDetailsEffect>()
         val job = launch {
             viewModel.effect.collect { effects.add(it) }
         }
@@ -101,8 +101,8 @@ class CatchDetailsViewModelTest {
         
         // Verify error effect was emitted
         assertEquals(1, effects.size)
-        assertTrue(effects[0] is details.model.CatchDetailsEffect.OnError)
-        assertEquals(errorMessage, (effects[0] as details.model.CatchDetailsEffect.OnError).message)
+        assertTrue(effects[0] is com.hooked.features.catches.presentation.model.CatchDetailsEffect.OnError)
+        assertEquals(errorMessage, (effects[0] as com.hooked.features.catches.presentation.model.CatchDetailsEffect.OnError).message)
         
         job.cancel()
     }

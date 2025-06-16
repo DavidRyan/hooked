@@ -8,21 +8,24 @@ import data.model.CatchResult
 import data.model.CatchDetailsResult
 import data.model.CatchSubmissionResult
 import domain.model.NetworkResult
+import domain.model.toEntity
+import domain.model.toCatchDetailsEntity
+import domain.common.Result
 import domain.model.SubmitCatchRequest
-import domain.repository.CatchRepositoy
+import domain.repository.CatchRepository
 
 class CatchRepository(
     private val hookedApiService: HookedApiService
-) : CatchRepositoy {
+) : CatchRepository {
 
     //private val queries = database.catchQueries
 
-    suspend fun getCatches(): CatchResult {
+    override suspend fun getCatches(): domain.common.Result<List<domain.model.CatchEntity>> {
         val result = hookedApiService.getCatches()
         return when(result) {
-            is NetworkResult.Success -> CatchResult.Success(result.data)
-            is NetworkResult.Error -> CatchResult.Error(result.error.message ?: "Unknown error")
-            NetworkResult.Loading -> TODO()
+            is NetworkResult.Success -> Result.Success(result.data.map { it.toEntity() })
+            is NetworkResult.Error -> Result.Error(result.error, result.error.message ?: "Unknown error")
+            NetworkResult.Loading -> Result.Loading
         }
 /*
         val cachedCatches = queries.selectAll().executeAsList().map {
@@ -35,16 +38,16 @@ class CatchRepository(
 
     }
     
-    suspend fun getCatchDetails(catchId: Long): CatchDetailsResult {
+    override suspend fun getCatchDetails(catchId: Long): domain.common.Result<domain.model.CatchDetailsEntity> {
         val result = hookedApiService.getCatchDetails(catchId)
         return when(result) {
-            is NetworkResult.Success -> CatchDetailsResult.Success(result.data)
-            is NetworkResult.Error -> CatchDetailsResult.Error(result.error.message ?: "Unknown error")
-            NetworkResult.Loading -> TODO()
+            is NetworkResult.Success -> Result.Success(result.data.toCatchDetailsEntity())
+            is NetworkResult.Error -> Result.Error(result.error, result.error.message ?: "Unknown error")
+            NetworkResult.Loading -> Result.Loading
         }
     }
     
-    suspend fun submitCatch(request: SubmitCatchRequest): CatchSubmissionResult {
+    override suspend fun submitCatch(request: SubmitCatchRequest): domain.common.Result<Long> {
         val submitDto = SubmitCatchDto(
             species = request.species,
             weight = request.weight,
@@ -57,9 +60,9 @@ class CatchRepository(
         
         val result = hookedApiService.submitCatch(submitDto)
         return when(result) {
-            is NetworkResult.Success -> CatchSubmissionResult.Success(result.data)
-            is NetworkResult.Error -> CatchSubmissionResult.Error(result.error.message ?: "Unknown error")
-            NetworkResult.Loading -> TODO()
+            is NetworkResult.Success -> Result.Success(result.data)
+            is NetworkResult.Error -> Result.Error(result.error, result.error.message ?: "Unknown error")
+            NetworkResult.Loading -> Result.Loading
         }
     }
 }
