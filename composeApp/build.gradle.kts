@@ -70,6 +70,11 @@ kotlin {
                 implementation(kotlin("test"))
                 implementation(libs.koin.test)
                 implementation(libs.kotlinx.coroutines.test)
+            }
+        }
+        
+        val androidUnitTest by getting {
+            dependencies {
                 implementation("io.mockk:mockk:1.13.12")
             }
         }
