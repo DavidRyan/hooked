@@ -41,7 +41,7 @@ object AnimationConstants {
     const val GRID_SPACING_DP = 8
     const val CONTENT_PADDING_DP = 16
     const val FAB_PADDING_DP = 16
-    const val DETAIL_CARD_TOP_PADDING_DP = 16
+    const val DETAIL_CARD_TOP_PADDING_DP = 4
     const val APP_BAR_HEIGHT_DP = 56 // Standard Material3 TopAppBar height
 }
 

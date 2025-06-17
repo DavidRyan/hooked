@@ -32,7 +32,7 @@ fun AnimatedDetailCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(AnimationConstants.CONTENT_PADDING_DP.dp)
+                .padding(12.dp)
         ) {
             Text(
                 text = label,

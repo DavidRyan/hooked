@@ -1,0 +1,12 @@
+package com.hooked.core.config
+
+object MapConfig {
+    // TODO: Replace with your actual Mapbox access token
+    // Get your token from https://account.mapbox.com/access-tokens/
+    // 1. Sign up at https://www.mapbox.com/
+    // 2. Go to your account dashboard
+    // 3. Create a new access token
+    // 4. Copy the token and replace the placeholder below
+    // 5. Rename this file from MapConfig.kt.template to MapConfig.kt
+    const val MAPBOX_ACCESS_TOKEN = "YOUR_MAPBOX_ACCESS_TOKEN_HERE"
+}

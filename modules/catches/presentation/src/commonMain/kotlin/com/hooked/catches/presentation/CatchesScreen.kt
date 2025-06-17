@@ -13,6 +13,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,6 +53,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.graphics.graphicsLayer
 import kotlinx.coroutines.delay
 import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchGridEffect
@@ -65,6 +67,7 @@ import com.hooked.core.animation.AnimationConstants
 import com.hooked.core.animation.AnimationSpecs
 import com.hooked.catches.presentation.components.CatchGridItem
 import com.hooked.catches.presentation.components.AnimatedDetailCard
+import com.hooked.catches.presentation.components.StaticMapCard
 import com.hooked.catches.presentation.state.rememberCatchesScreenState
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
@@ -297,26 +300,51 @@ fun SharedTransitionScope.CatchDetailsContent(
                         )
                     }
                     
-                    // Species Section
-                    AnimatedDetailCard(
-                        label = "Species",
-                        value = details.species,
-                        translationY = cardsTranslation
-                    )
-                    
-                    // Weight Section
-                    AnimatedDetailCard(
-                        label = "Weight",
-                        value = "${details.weight} kg",
-                        translationY = cardsTranslation
-                    )
-                    
-                    // Length Section
-                    AnimatedDetailCard(
-                        label = "Length",
-                        value = "${details.length} cm",
-                        translationY = cardsTranslation
-                    )
+                    // Metadata and Map Row
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer {
+                                translationY = cardsTranslation
+                            },
+                        horizontalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
+                    ) {
+                        // Left column - Metadata
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
+                        ) {
+                            // Species Section
+                            AnimatedDetailCard(
+                                label = "Species",
+                                value = details.species,
+                                translationY = 0f // Already animated by parent Row
+                            )
+                            
+                            // Weight Section
+                            AnimatedDetailCard(
+                                label = "Weight",
+                                value = "${details.weight} kg",
+                                translationY = 0f // Already animated by parent Row
+                            )
+                            
+                            // Length Section
+                            AnimatedDetailCard(
+                                label = "Length",
+                                value = "${details.length} cm",
+                                translationY = 0f // Already animated by parent Row
+                            )
+                        }
+                        
+                        // Right column - Map
+                        StaticMapCard(
+                            latitude = details.latitude,
+                            longitude = details.longitude,
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(1f)
+                        )
+                    }
                 }
             }
         }
