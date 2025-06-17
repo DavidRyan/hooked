@@ -86,7 +86,7 @@ kotlin {
 android {
 
     namespace = "com.hooked.ui"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
     }
 
@@ -100,6 +100,10 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
         versionName = "1.0"
+        
+        ndk {
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+        }
     }
     packaging {
         resources {

@@ -69,6 +69,7 @@ import com.hooked.catches.presentation.model.CatchModel
 import com.hooked.core.components.AsyncImage
 import com.hooked.core.nav.Screens
 import com.hooked.theme.HookedTheme
+import com.hooked.core.util.BackHandler
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -284,6 +285,13 @@ fun SharedTransitionScope.CatchDetailsContent(
         ),
         label = "cards_translation"
     )
+    
+    // Handle back button press
+    BackHandler {
+        showDetails = false
+        showAppBar = false
+        onBackClick()
+    }
     
     LaunchedEffect(animationKey) {
         // Reset animation state first

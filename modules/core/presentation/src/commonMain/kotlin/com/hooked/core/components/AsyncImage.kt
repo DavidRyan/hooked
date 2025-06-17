@@ -38,10 +38,11 @@ fun AsyncImage(
         contentDescription = contentDescription,
         modifier = if (shape != null) {
             modifier
-                .background(HookedTheme.background, shape)
+                .background(HookedTheme.surface, shape)
                 .clip(shape)
         } else {
             modifier
+                .background(HookedTheme.surface)
         },
         contentScale = contentScale,
         onLoading = { CircularProgressIndicator(it) },
