@@ -25,7 +25,7 @@ fun AsyncImage(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
-    shape: Shape = RoundedCornerShape(20.dp)
+    shape: Shape? = null
 ) {
     val getPainterResource: @Composable (BoxWithConstraintsScope.() -> Resource<Painter>) = {
         asyncPainterResource(
@@ -36,11 +36,13 @@ fun AsyncImage(
     KamelImage(
         resource = getPainterResource,
         contentDescription = contentDescription,
-        modifier = modifier
-            .aspectRatio(1f)
-            .padding(2.dp)
-            .background(HookedTheme.background, shape)
-            .clip(shape),
+        modifier = if (shape != null) {
+            modifier
+                .background(HookedTheme.background, shape)
+                .clip(shape)
+        } else {
+            modifier
+        },
         contentScale = contentScale,
         onLoading = { CircularProgressIndicator(it) },
         onFailure = { exception: Throwable ->
