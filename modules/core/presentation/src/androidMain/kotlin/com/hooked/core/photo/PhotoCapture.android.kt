@@ -23,19 +23,8 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
     private val imageProcessor = ImageProcessor(activity)
     private val permissionFlow = MutableStateFlow(false)
     
-    private lateinit var cameraLauncher: ActivityResultLauncher<Uri>
-    private lateinit var galleryLauncher: ActivityResultLauncher<String>
-    private lateinit var permissionLauncher: ActivityResultLauncher<Array<String>>
-    
-    private var currentPhotoUri: Uri? = null
-    private var captureCallback: ((PhotoCaptureResult) -> Unit)? = null
-    
-    init {
-        initializeLaunchers()
-    }
-    
-    private fun initializeLaunchers() {
-        cameraLauncher = activity.registerForActivityResult(
+    private val cameraLauncher: ActivityResultLauncher<Uri> by lazy {
+        activity.registerForActivityResult(
             ActivityResultContracts.TakePicture()
         ) { success ->
             if (success && currentPhotoUri != null) {
@@ -44,8 +33,10 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
                 captureCallback?.invoke(PhotoCaptureResult.Cancelled)
             }
         }
-        
-        galleryLauncher = activity.registerForActivityResult(
+    }
+    
+    private val galleryLauncher: ActivityResultLauncher<String> by lazy {
+        activity.registerForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri ->
             if (uri != null) {
@@ -54,14 +45,19 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
                 captureCallback?.invoke(PhotoCaptureResult.Cancelled)
             }
         }
-        
-        permissionLauncher = activity.registerForActivityResult(
+    }
+    
+    private val permissionLauncher: ActivityResultLauncher<Array<String>> by lazy {
+        activity.registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             val allGranted = permissions.values.all { it }
             permissionFlow.value = allGranted
         }
     }
+    
+    private var currentPhotoUri: Uri? = null
+    private var captureCallback: ((PhotoCaptureResult) -> Unit)? = null
     
     actual suspend fun capturePhoto(): PhotoCaptureResult {
         if (!hasRequiredPermissions()) {

@@ -11,6 +11,6 @@ actual val platformModule = module {
         PhotoCapture(androidContext() as ComponentActivity) 
     }
     single { 
-        ImageProcessor(androidContext()) 
+        ImageProcessor(androidContext().applicationContext) 
     }
 }
