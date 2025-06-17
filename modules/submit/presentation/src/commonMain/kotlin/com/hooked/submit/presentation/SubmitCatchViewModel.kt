@@ -2,8 +2,6 @@ package com.hooked.submit.presentation
 
 import com.hooked.core.HookedViewModel
 import com.hooked.core.photo.ImageProcessor
-import com.hooked.core.photo.PhotoCapture
-import com.hooked.core.photo.PhotoCaptureResult
 import com.hooked.core.photo.encodeBase64
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
@@ -17,7 +15,6 @@ import com.hooked.core.logging.logError
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
-    private val photoCapture: PhotoCapture,
     private val imageProcessor: ImageProcessor
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
 
@@ -43,9 +40,6 @@ class SubmitCatchViewModel(
             }
             is SubmitCatchIntent.UpdatePhoto -> {
                 setState { copy(photoUri = intent.photoUri) }
-            }
-            is SubmitCatchIntent.PickPhoto -> {
-                pickPhoto()
             }
             is SubmitCatchIntent.GetCurrentLocation -> {
                 setState { copy(isLocationLoading = true) }
@@ -100,35 +94,7 @@ class SubmitCatchViewModel(
         }
     }
 
-    private fun capturePhoto() {
-        viewModelScope.launch {
-            when (val result = photoCapture.capturePhoto()) {
-                is PhotoCaptureResult.Success -> {
-                    setState { copy(photoUri = result.photo.imageUri) }
-                }
-                is PhotoCaptureResult.Error -> {
-                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
-                }
-                PhotoCaptureResult.Cancelled -> {
-                }
-            }
-        }
-    }
     
-    private fun pickPhoto() {
-        viewModelScope.launch {
-            when (val result = photoCapture.pickFromGallery()) {
-                is PhotoCaptureResult.Success -> {
-                    setState { copy(photoUri = result.photo.imageUri) }
-                }
-                is PhotoCaptureResult.Error -> {
-                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
-                }
-                PhotoCaptureResult.Cancelled -> {
-                }
-            }
-        }
-    }
 
     private suspend fun convertImageToBase64(imageUri: String): String {
         return try {

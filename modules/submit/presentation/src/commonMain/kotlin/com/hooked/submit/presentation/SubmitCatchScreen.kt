@@ -77,7 +77,7 @@ fun SubmitCatchScreen(
         ) {
             PhotoSection(
                 photoUri = state.photoUri,
-                onPickPhoto = { viewModel.sendIntent(SubmitCatchIntent.PickPhoto) }
+                onPhotoSelected = { uri -> viewModel.sendIntent(SubmitCatchIntent.UpdatePhoto(uri)) }
             )
             
             OutlinedTextField(
@@ -138,65 +138,24 @@ fun SubmitCatchScreen(
 @Composable
 private fun PhotoSection(
     photoUri: String?,
-    onPickPhoto: () -> Unit
+    onPhotoSelected: (String) -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp).fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            if (photoUri != null) {
-                AsyncImage(
-                    imageUrl = photoUri,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(200.dp)
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    TextButton(onClick = onPickPhoto) {
-                        Text("Choose Different")
-                    }
-                }
-            } else {
-                Icon(
-                    modifier = Modifier.size(40.dp)
-                        .align(Alignment.CenterHorizontally),
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    tint = HookedTheme.primary
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                Text(
-                    modifier = Modifier
-                        .align(Alignment.CenterHorizontally),
-                    text = "Add a photo of your catch",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                Row(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    OutlinedButton(onClick = onPickPhoto) {
-                        Text("Choose from Gallery")
-                    }
-                }
-            }
-        }
+        PhotoSectionContent(
+            photoUri = photoUri,
+            onPhotoSelected = onPhotoSelected
+        )
     }
 }
+
+@Composable
+internal expect fun PhotoSectionContent(
+    photoUri: String?,
+    onPhotoSelected: (String) -> Unit
+)
 
 @Composable
 private fun LocationSection(
