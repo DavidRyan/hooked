@@ -6,7 +6,7 @@ import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchDetailsState
 import com.hooked.catches.presentation.model.toCatchDetailsModel
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
-import com.hooked.catches.domain.usecases.GetCatchDetailsUseCaseResult
+import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
 
 class CatchDetailsViewModel(
@@ -25,15 +25,15 @@ class CatchDetailsViewModel(
         setState { copy(isLoading = true) }
         viewModelScope.launch {
             when (val result = getCatchDetailsUseCase(catchId)) {
-                is GetCatchDetailsUseCaseResult.Success -> {
+                is UseCaseResult.Success -> {
                     setState { 
                         copy(
-                            catchDetails = result.catchDetails.toCatchDetailsModel(),
+                            catchDetails = result.data.toCatchDetailsModel(),
                             isLoading = false
                         )
                     }
                 }
-                is GetCatchDetailsUseCaseResult.Error -> {
+                is UseCaseResult.Error -> {
                     setState { copy(isLoading = false) }
                     sendEffect { CatchDetailsEffect.OnError(result.message) }
                 }

@@ -7,12 +7,13 @@ import com.hooked.core.photo.PhotoCaptureResult
 import com.hooked.core.photo.encodeBase64
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
-import com.hooked.submit.domain.usecases.SubmitCatchUseCaseResult
+import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import com.hooked.submit.presentation.model.SubmitCatchEffect
 import com.hooked.submit.presentation.model.SubmitCatchIntent
 import com.hooked.submit.presentation.model.SubmitCatchState
+import com.hooked.core.logging.logError
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
@@ -82,16 +83,17 @@ class SubmitCatchViewModel(
                 )
                 
                 when (val result = submitCatchUseCase(catchEntity)) {
-                    is SubmitCatchUseCaseResult.Success -> {
+                    is UseCaseResult.Success -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.CatchSubmittedSuccessfully }
                     }
-                    is SubmitCatchUseCaseResult.Error -> {
+                    is UseCaseResult.Error -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.ShowError(result.message) }
                     }
                 }
             } catch (e: Exception) {
+                logError("Failed to submit catch", e)
                 setState { copy(isSubmitting = false) }
                 sendEffect { SubmitCatchEffect.ShowError("Failed to submit catch: ${e.message}") }
             }
@@ -136,6 +138,7 @@ class SubmitCatchViewModel(
             
             processedBytes.encodeBase64()
         } catch (e: Exception) {
+            logError("Failed to process image", e)
             throw IllegalStateException("Failed to process image: ${e.message}")
         }
     }

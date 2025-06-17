@@ -3,7 +3,7 @@ package com.hooked.test
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.repositories.SubmitRepository
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
-import com.hooked.submit.domain.usecases.SubmitCatchUseCaseResult
+import com.hooked.core.domain.UseCaseResult
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -33,8 +33,8 @@ class SubmitCatchUseCaseTest {
 
         val result = useCase(entity)
 
-        assertTrue(result is SubmitCatchUseCaseResult.Success)
-        assertEquals(catchId, (result as SubmitCatchUseCaseResult.Success).catchId)
+        assertTrue(result is UseCaseResult.Success)
+        assertEquals(catchId, (result as UseCaseResult.Success).data)
     }
 
     @Test
@@ -54,8 +54,8 @@ class SubmitCatchUseCaseTest {
 
         val result = useCase(entity)
 
-        assertTrue(result is SubmitCatchUseCaseResult.Error)
-        assertEquals(errorMessage, (result as SubmitCatchUseCaseResult.Error).message)
+        assertTrue(result is UseCaseResult.Error)
+        assertEquals(errorMessage, (result as UseCaseResult.Error).message)
     }
 
     @Test
@@ -75,8 +75,8 @@ class SubmitCatchUseCaseTest {
 
         val result = useCase(entity)
 
-        assertTrue(result is SubmitCatchUseCaseResult.Success)
-        assertEquals(catchId, (result as SubmitCatchUseCaseResult.Success).catchId)
+        assertTrue(result is UseCaseResult.Success)
+        assertEquals(catchId, (result as UseCaseResult.Success).data)
     }
 
     @Test

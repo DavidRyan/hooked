@@ -2,25 +2,26 @@ package com.hooked.submit.domain.usecases
 
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.repositories.SubmitRepository
+import com.hooked.core.domain.UseCaseResult
 
 class SubmitCatchUseCase(private val submitRepository: SubmitRepository) {
-    suspend operator fun invoke(catchEntity: SubmitCatchEntity): SubmitCatchUseCaseResult {
+    suspend operator fun invoke(catchEntity: SubmitCatchEntity): UseCaseResult<Long> {
         return try {
             val result = submitRepository.submitCatch(catchEntity)
             if (result.isSuccess) {
                 result.getOrNull()?.let { catchId ->
-                    SubmitCatchUseCaseResult.Success(catchId)
-                } ?: SubmitCatchUseCaseResult.Error("Failed to submit catch")
+                    UseCaseResult.Success(catchId)
+                } ?: UseCaseResult.Error("Failed to submit catch - no catch ID returned", context = "SubmitCatchUseCase")
             } else {
-                SubmitCatchUseCaseResult.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+                val exception = result.exceptionOrNull()
+                UseCaseResult.Error(
+                    exception?.message ?: "Unknown error", 
+                    exception,
+                    "SubmitCatchUseCase"
+                )
             }
         } catch (e: Exception) {
-            SubmitCatchUseCaseResult.Error(e.message ?: "Unknown error")
+            UseCaseResult.Error(e.message ?: "Unknown error", e, "SubmitCatchUseCase")
         }
     }
-}
-
-sealed class SubmitCatchUseCaseResult {
-    data class Success(val catchId: Long) : SubmitCatchUseCaseResult()
-    data class Error(val message: String) : SubmitCatchUseCaseResult()
 }

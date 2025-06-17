@@ -2,23 +2,24 @@ package com.hooked.catches.domain.usecases
 
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository
+import com.hooked.core.domain.UseCaseResult
 
 class GetCatchesUseCase(private val catchRepository: CatchRepository) {
-    suspend operator fun invoke(): GetCatchesUseCaseResult {
+    suspend operator fun invoke(): UseCaseResult<List<CatchEntity>> {
         return try {
             val result = catchRepository.getCatches()
             if (result.isSuccess) {
-                GetCatchesUseCaseResult.Success(result.getOrNull() ?: emptyList())
+                UseCaseResult.Success(result.getOrNull() ?: emptyList())
             } else {
-                GetCatchesUseCaseResult.Error(result.exceptionOrNull()?.message ?: "Unknown error")
+                val exception = result.exceptionOrNull()
+                UseCaseResult.Error(
+                    exception?.message ?: "Unknown error",
+                    exception,
+                    "GetCatchesUseCase"
+                )
             }
         } catch (e: Exception) {
-            GetCatchesUseCaseResult.Error(e.message ?: "Unknown error")
+            UseCaseResult.Error(e.message ?: "Unknown error", e, "GetCatchesUseCase")
         }
     }
-}
-
-sealed class GetCatchesUseCaseResult {
-    data class Success(val catches: List<CatchEntity>) : GetCatchesUseCaseResult()
-    data class Error(val message: String) : GetCatchesUseCaseResult()
 }

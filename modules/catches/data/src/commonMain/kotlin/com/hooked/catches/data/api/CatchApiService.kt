@@ -10,10 +10,14 @@ class CatchApiService(
     private val httpClient: HttpClient,
 ) {
     suspend fun getCatches(): NetworkResult<List<CatchDto>> {
-        val remoteCatches = httpClient
-            .get("http://10.0.2.2:8080/catches")
-            .body<List<CatchDto>>()
-        return NetworkResult.Success(remoteCatches)
+        return try {
+            val remoteCatches = httpClient
+                .get("http://10.0.2.2:8080/catches")
+                .body<List<CatchDto>>()
+            NetworkResult.Success(remoteCatches)
+        } catch (e: Exception) {
+            NetworkResult.Error(e, "CatchApiService.getCatches")
+        }
     }
     
     suspend fun getCatchDetails(catchId: Long): NetworkResult<CatchDto> {
@@ -23,7 +27,7 @@ class CatchApiService(
                 .body<CatchDto>()
             return NetworkResult.Success(catchDetails)
         } catch (e: Exception) {
-            return NetworkResult.Error(Exception("Failed to fetch catch details: ${e.message}"))
+            return NetworkResult.Error(e, "CatchApiService.getCatchDetails")
         }
     }
 }
