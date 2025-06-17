@@ -2,29 +2,29 @@ package com.hooked.submit.data.repo
 
 import com.hooked.submit.data.api.SubmitApiService
 import com.hooked.submit.data.model.SubmitCatchDto
-import com.hooked.submit.data.model.CatchSubmissionResult
+import com.hooked.submit.domain.entities.SubmitCatchEntity
+import com.hooked.submit.domain.repositories.SubmitRepository
 import com.hooked.core.domain.NetworkResult
-import com.hooked.submit.data.model.SubmitCatchRequest
 
-class CatchRepository(
+class SubmitRepositoryImpl(
     private val submitApiService: SubmitApiService
-) {
-    suspend fun submitCatch(request: SubmitCatchRequest): CatchSubmissionResult {
+) : SubmitRepository {
+    
+    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<Long> {
         val submitDto = SubmitCatchDto(
-            species = request.species,
-            weight = request.weight,
-            length = request.length,
-            latitude = request.latitude,
-            longitude = request.longitude,
-            photoBase64 = request.photoBase64,
-            timestamp = request.timestamp
+            species = catchEntity.species,
+            weight = catchEntity.weight,
+            length = catchEntity.length,
+            latitude = catchEntity.latitude,
+            longitude = catchEntity.longitude,
+            photoBase64 = catchEntity.photoBase64,
+            timestamp = catchEntity.timestamp
         )
         
-        val result = submitApiService.submitCatch(submitDto)
-        return when(result) {
-            is NetworkResult.Success -> CatchSubmissionResult.Success(result.data)
-            is NetworkResult.Error -> CatchSubmissionResult.Error(result.error.message ?: "Unknown error")
-            NetworkResult.Loading -> TODO()
+        return when(val result = submitApiService.submitCatch(submitDto)) {
+            is NetworkResult.Success -> Result.success(result.data)
+            is NetworkResult.Error -> Result.failure(result.error)
+            NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
         }
     }
 }

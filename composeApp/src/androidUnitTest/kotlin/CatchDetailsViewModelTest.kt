@@ -1,11 +1,11 @@
 package com.hooked.test
 
-import com.hooked.catches.presentation.details.CatchDetailsViewModel
-import com.hooked.catches.presentation.details.model.CatchDetailsIntent
-import com.hooked.catches.presentation.details.model.CatchDetailsModel
-import com.hooked.catches.data.usecases.GetCatchDetailsUseCase
-import com.hooked.catches.data.usecases.GetCatchDetailsUseCaseResult
-import com.hooked.catches.domain.model.CatchDetailsEntity
+import com.hooked.catches.presentation.CatchDetailsViewModel
+import com.hooked.catches.presentation.model.CatchDetailsIntent
+import com.hooked.catches.presentation.model.CatchDetailsEffect
+import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
+import com.hooked.catches.domain.usecases.GetCatchDetailsUseCaseResult
+import com.hooked.catches.domain.entities.CatchDetailsEntity
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -86,7 +86,7 @@ class CatchDetailsViewModelTest {
         
         coEvery { mockUseCase(catchId) } returns GetCatchDetailsUseCaseResult.Error(errorMessage)
         
-        val effects = mutableListOf<com.hooked.catches.presentation.details.model.CatchDetailsEffect>()
+        val effects = mutableListOf<CatchDetailsEffect>()
         val job = launch {
             viewModel.effect.collect { effects.add(it) }
         }
@@ -99,8 +99,8 @@ class CatchDetailsViewModelTest {
         assertNull(state.catchDetails)
         
         assertEquals(1, effects.size)
-        assertTrue(effects[0] is com.hooked.catches.presentation.details.model.CatchDetailsEffect.OnError)
-        assertEquals(errorMessage, (effects[0] as com.hooked.catches.presentation.details.model.CatchDetailsEffect.OnError).message)
+        assertTrue(effects[0] is CatchDetailsEffect.OnError)
+        assertEquals(errorMessage, (effects[0] as CatchDetailsEffect.OnError).message)
         
         job.cancel()
     }

@@ -18,7 +18,8 @@ kotlin {
             dependencies {
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:core:presentation"))
-                implementation(project(":modules:submit:data"))
+                implementation(project(":modules:submit:domain"))
+                implementation(libs.kotlinx.datetime)
                 
                 implementation(compose.runtime)
                 implementation(compose.foundation)

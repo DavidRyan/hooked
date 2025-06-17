@@ -5,10 +5,11 @@ import com.hooked.core.photo.ImageProcessor
 import com.hooked.core.photo.PhotoCapture
 import com.hooked.core.photo.PhotoCaptureResult
 import com.hooked.core.photo.encodeBase64
-import com.hooked.submit.data.model.SubmitCatchRequest
-import com.hooked.submit.data.usecases.SubmitCatchUseCase
-import com.hooked.submit.data.usecases.SubmitCatchUseCaseResult
+import com.hooked.submit.domain.entities.SubmitCatchEntity
+import com.hooked.submit.domain.usecases.SubmitCatchUseCase
+import com.hooked.submit.domain.usecases.SubmitCatchUseCaseResult
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import com.hooked.submit.presentation.model.SubmitCatchEffect
 import com.hooked.submit.presentation.model.SubmitCatchIntent
 import com.hooked.submit.presentation.model.SubmitCatchState
@@ -73,16 +74,17 @@ class SubmitCatchViewModel(
         
         viewModelScope.launch {
             try {
-                val request = SubmitCatchRequest(
+                val catchEntity = SubmitCatchEntity(
                     species = currentState.species,
                     weight = currentState.weight.toDouble(),
                     length = currentState.length.toDouble(),
                     latitude = currentState.latitude,
                     longitude = currentState.longitude,
-                    photoBase64 = currentState.photoUri?.let { convertImageToBase64(it) }
+                    photoBase64 = currentState.photoUri?.let { convertImageToBase64(it) },
+                    timestamp = Clock.System.now().toEpochMilliseconds()
                 )
                 
-                when (val result = submitCatchUseCase(request)) {
+                when (val result = submitCatchUseCase(catchEntity)) {
                     is SubmitCatchUseCaseResult.Success -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.CatchSubmittedSuccessfully }

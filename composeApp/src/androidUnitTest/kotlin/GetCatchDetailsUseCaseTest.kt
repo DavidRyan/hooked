@@ -1,10 +1,9 @@
 package com.hooked.test
 
-import data.model.CatchDto
-import data.model.CatchDetailsResult
-import data.repo.CatchRepository
-import domain.usecase.GetCatchDetailsUseCase
-import domain.usecase.GetCatchDetailsUseCaseResult
+import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
+import com.hooked.catches.domain.usecases.GetCatchDetailsUseCaseResult
+import com.hooked.catches.domain.repositories.CatchRepository
+import com.hooked.catches.domain.entities.CatchDetailsEntity
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.test.runTest
@@ -20,7 +19,7 @@ class GetCatchDetailsUseCaseTest {
     @Test
     fun `test invoke success`() = runTest {
         val catchId = 123L
-        val testDto = CatchDto(
+        val testEntity = CatchDetailsEntity(
             id = catchId,
             species = "Bass",
             weight = 2.5,
@@ -28,15 +27,17 @@ class GetCatchDetailsUseCaseTest {
             photoUrl = "test-url",
             latitude = 40.7128,
             longitude = -74.0060,
-            timestamp = 1640995200000L
+            timestamp = 1640995200000L,
+            location = "40.7128, -74.0060",
+            dateCaught = "Jan 1, 2022"
         )
 
-        coEvery { mockRepository.getCatchDetails(catchId) } returns CatchDetailsResult.Success(testDto)
+        coEvery { mockRepository.getCatchDetails(catchId) } returns Result.success(testEntity)
 
         val result = useCase(catchId)
 
         assertTrue(result is GetCatchDetailsUseCaseResult.Success)
-        assertEquals(catchId, result.catchDetails.id)
+        assertEquals(catchId, (result as GetCatchDetailsUseCaseResult.Success).catchDetails.id)
         assertEquals("Bass", result.catchDetails.species)
         assertEquals(2.5, result.catchDetails.weight)
         assertEquals("40.7128, -74.0060", result.catchDetails.location)
@@ -47,18 +48,18 @@ class GetCatchDetailsUseCaseTest {
         val catchId = 123L
         val errorMessage = "Network error"
 
-        coEvery { mockRepository.getCatchDetails(catchId) } returns CatchDetailsResult.Error(errorMessage)
+        coEvery { mockRepository.getCatchDetails(catchId) } returns Result.failure(Exception(errorMessage))
 
         val result = useCase(catchId)
 
         assertTrue(result is GetCatchDetailsUseCaseResult.Error)
-        assertEquals(errorMessage, result.message)
+        assertEquals(errorMessage, (result as GetCatchDetailsUseCaseResult.Error).message)
     }
 
     @Test
     fun `test invoke with null coordinates`() = runTest {
         val catchId = 123L
-        val testDto = CatchDto(
+        val testEntity = CatchDetailsEntity(
             id = catchId,
             species = "Trout",
             weight = 1.5,
@@ -66,15 +67,17 @@ class GetCatchDetailsUseCaseTest {
             photoUrl = "test-url",
             latitude = null,
             longitude = null,
-            timestamp = null
+            timestamp = null,
+            location = "Unknown location",
+            dateCaught = "Unknown date"
         )
 
-        coEvery { mockRepository.getCatchDetails(catchId) } returns CatchDetailsResult.Success(testDto)
+        coEvery { mockRepository.getCatchDetails(catchId) } returns Result.success(testEntity)
 
         val result = useCase(catchId)
 
         assertTrue(result is GetCatchDetailsUseCaseResult.Success)
-        assertEquals("Unknown location", result.catchDetails.location)
+        assertEquals("Unknown location", (result as GetCatchDetailsUseCaseResult.Success).catchDetails.location)
         assertEquals("Unknown date", result.catchDetails.dateCaught)
     }
 }

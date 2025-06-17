@@ -28,6 +28,7 @@ kotlin {
                 implementation(project(":modules:submit:presentation"))
                 implementation(project(":modules:catches:domain"))
                 implementation(project(":modules:catches:data"))
+                implementation(project(":modules:submit:domain"))
                 implementation(project(":modules:submit:data"))
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
@@ -75,6 +76,7 @@ kotlin {
         val androidUnitTest by getting {
             dependencies {
                 implementation("io.mockk:mockk:1.13.12")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
             }
         }
     }

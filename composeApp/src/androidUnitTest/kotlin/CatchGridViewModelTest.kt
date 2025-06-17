@@ -1,10 +1,10 @@
 package com.hooked.test
 
-import domain.usecase.GetCatchesUseCase
-import domain.usecase.GetCatchesUseCaseResult
-import domain.model.CatchEntity
-import grid.CatchGridViewModel
-import grid.model.CatchGridIntent
+import com.hooked.catches.domain.usecases.GetCatchesUseCase
+import com.hooked.catches.domain.usecases.GetCatchesUseCaseResult
+import com.hooked.catches.domain.entities.CatchEntity
+import com.hooked.catches.presentation.CatchGridViewModel
+import com.hooked.catches.presentation.model.CatchGridIntent
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers

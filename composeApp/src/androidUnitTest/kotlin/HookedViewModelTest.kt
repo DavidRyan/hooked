@@ -1,6 +1,6 @@
 package com.hooked.test
 
-import core.HookedViewModel
+import com.hooked.core.HookedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
