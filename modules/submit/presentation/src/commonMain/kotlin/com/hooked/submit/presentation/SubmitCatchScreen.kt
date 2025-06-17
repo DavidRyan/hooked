@@ -145,7 +145,7 @@ private fun PhotoSection(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(16.dp).fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (photoUri != null) {
@@ -186,6 +186,7 @@ private fun PhotoSection(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 Row(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     OutlinedButton(onClick = onPickPhoto) {
