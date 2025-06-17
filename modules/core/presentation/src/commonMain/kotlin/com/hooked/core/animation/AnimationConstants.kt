@@ -35,6 +35,12 @@ object AnimationConstants {
     // Shape values
     const val CORNER_RADIUS_DP = 20
     const val CARD_ELEVATION_DP = 4
+    
+    // Spacing values
+    const val GRID_SPACING_DP = 8
+    const val CONTENT_PADDING_DP = 16
+    const val FAB_PADDING_DP = 16
+    const val DETAIL_CARD_TOP_PADDING_DP = 4
 }
 
 object AnimationSpecs {

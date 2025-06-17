@@ -3,7 +3,7 @@ package com.hooked.catches.presentation.components
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.spring
+import com.hooked.core.animation.AnimationSpecs
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,10 +45,7 @@ fun SharedTransitionScope.CatchGridItem(
                     rememberSharedContentState(key = "catch-image-${catch.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     boundsTransform = { _, _ ->
-                        spring(
-                            dampingRatio = AnimationConstants.SPRING_DAMPING_RATIO,
-                            stiffness = AnimationConstants.SPRING_STIFFNESS
-                        )
+                        AnimationSpecs.boundsTransformSpring
                     }
                 )
                 .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))

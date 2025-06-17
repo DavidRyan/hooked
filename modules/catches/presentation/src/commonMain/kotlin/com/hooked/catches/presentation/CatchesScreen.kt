@@ -3,22 +3,18 @@ package com.hooked.catches.presentation
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -50,7 +46,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import com.hooked.catches.presentation.model.CatchDetailsIntent
@@ -63,6 +58,9 @@ import com.hooked.theme.HookedTheme
 import com.hooked.core.util.BackHandler
 import com.hooked.core.animation.AnimationConstants
 import com.hooked.core.animation.AnimationSpecs
+import com.hooked.catches.presentation.components.CatchGridItem
+import com.hooked.catches.presentation.components.AnimatedDetailCard
+import com.hooked.catches.presentation.state.rememberCatchesScreenState
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -77,8 +75,7 @@ fun CatchesScreen(
     navigate: (Screens) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var screenState by remember { mutableStateOf<CatchesScreenState>(CatchesScreenState.Grid) }
-    var detailsAnimationKey by remember { mutableStateOf(0) }
+    val stateManager = rememberCatchesScreenState()
     
     SharedTransitionLayout(
         modifier = modifier
@@ -86,7 +83,7 @@ fun CatchesScreen(
             .background(HookedTheme.background)
     ) {
         AnimatedContent(
-            targetState = screenState,
+            targetState = stateManager.screenState,
             label = "catches_screen_transition",
             transitionSpec = {
                 AnimationSpecs.contentTransitionSpec
@@ -95,25 +92,18 @@ fun CatchesScreen(
             when (state) {
                 is CatchesScreenState.Grid -> {
                     CatchGridContent(
-                        onCatchClick = { catchId ->
-                            detailsAnimationKey += 1
-                            screenState = CatchesScreenState.Details(catchId)
-                        },
+                        onCatchClick = stateManager::navigateToDetails,
                         navigate = navigate,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        sharedTransitionScope = this@SharedTransitionLayout
+                        animatedVisibilityScope = this@AnimatedContent
                     )
                 }
                 is CatchesScreenState.Details -> {
                     CatchDetailsContent(
                         catchId = state.catchId,
-                        animationKey = detailsAnimationKey,
-                        onBackClick = {
-                            screenState = CatchesScreenState.Grid
-                        },
+                        animationKey = stateManager.animationKey,
+                        onBackClick = stateManager::navigateToGrid,
                         navigate = navigate,
-                        animatedVisibilityScope = this@AnimatedContent,
-                        sharedTransitionScope = this@SharedTransitionLayout
+                        animatedVisibilityScope = this@AnimatedContent
                     )
                 }
             }
@@ -127,7 +117,6 @@ fun SharedTransitionScope.CatchGridContent(
     onCatchClick: (Long) -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
     viewModel: CatchGridViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -170,21 +159,20 @@ fun SharedTransitionScope.CatchGridContent(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
+                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
             ) {
                 items(
                     items = state.catches,
                     key = { catch -> catch.id } // Stable key for each item
                 ) { catch ->
-                    CatchGridItemWithSharedElement(
+                    CatchGridItem(
                         catch = catch,
                         onClick = {
-                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(it))
+                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
                         },
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        sharedTransitionScope = sharedTransitionScope
+                        animatedVisibilityScope = animatedVisibilityScope
                     )
                 }
             }
@@ -193,7 +181,7 @@ fun SharedTransitionScope.CatchGridContent(
                 onClick = { navigate(Screens.SubmitCatch) },
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(16.dp)
+                    .padding(AnimationConstants.FAB_PADDING_DP.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -204,39 +192,6 @@ fun SharedTransitionScope.CatchGridContent(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-@Composable
-fun SharedTransitionScope.CatchGridItemWithSharedElement(
-    catch: CatchModel,
-    onClick: (id: Long) -> Unit,
-    animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .aspectRatio(1f)
-            .clickable(onClick = { onClick(catch.id) }),
-        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
-        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
-    ) {
-        AsyncImage(
-            imageUrl = catch.imageUrl,
-            modifier = Modifier
-                .fillMaxSize()
-                .sharedElement(
-                    rememberSharedContentState(key = "catch-image-${catch.id}"),
-                    animatedVisibilityScope = animatedVisibilityScope,
-                    boundsTransform = { _, _ ->
-                        AnimationSpecs.boundsTransformSpring
-                    },
-                    renderInOverlayDuringTransition = true
-                )
-                .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
-        )
-    }
-}
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -246,7 +201,6 @@ fun SharedTransitionScope.CatchDetailsContent(
     onBackClick: () -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    sharedTransitionScope: SharedTransitionScope,
     viewModel: CatchDetailsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -313,7 +267,7 @@ fun SharedTransitionScope.CatchDetailsContent(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp),
+                    .padding(AnimationConstants.CONTENT_PADDING_DP.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
@@ -325,11 +279,11 @@ fun SharedTransitionScope.CatchDetailsContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                        .padding(AnimationConstants.CONTENT_PADDING_DP.dp)
                         .animateContentSize(
                             animationSpec = AnimationSpecs.contentSizeSpring
                         ),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                 ) {
                     // Photo Section with shared element
                     Card(
@@ -356,62 +310,27 @@ fun SharedTransitionScope.CatchDetailsContent(
                     }
                     
                     // Species Section
-                    DetailCard(
+                    AnimatedDetailCard(
                         label = "Species",
                         value = details.species,
-                        modifier = Modifier.graphicsLayer {
-                            translationY = cardsTranslation
-                        }
+                        translationY = cardsTranslation
                     )
                     
                     // Weight Section
-                    DetailCard(
+                    AnimatedDetailCard(
                         label = "Weight",
                         value = "${details.weight} kg",
-                        modifier = Modifier.graphicsLayer {
-                            translationY = cardsTranslation
-                        }
+                        translationY = cardsTranslation
                     )
                     
                     // Length Section
-                    DetailCard(
+                    AnimatedDetailCard(
                         label = "Length",
                         value = "${details.length} cm",
-                        modifier = Modifier.graphicsLayer {
-                            translationY = cardsTranslation
-                        }
+                        translationY = cardsTranslation
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun DetailCard(
-    label: String,
-    value: String,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = HookedTheme.primary
-            )
-            Text(
-                text = value,
-                style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(top = 4.dp)
-            )
         }
     }
 }
