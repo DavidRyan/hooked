@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +17,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +38,7 @@ import com.hooked.catches.presentation.model.CatchModel
 import kotlinx.coroutines.flow.collectLatest
 import com.hooked.theme.HookedTheme
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatchGridScreen(
     modifier: Modifier = Modifier,
@@ -53,40 +59,51 @@ fun CatchGridScreen(
         }
     }
     
-    Box(
+    Column(
         modifier = modifier
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            contentPadding = PaddingValues(4.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        TopAppBar(
+            title = { Text("My Catches") },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = HookedTheme.primary,
+                titleContentColor = HookedTheme.onPrimary
+            )
+        )
+        
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            items(state.catches) { catch ->
-                CatchGridItem(
-                    catch = catch,
-                    onClick = {
-                        viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(it))
-                    }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.catches) { catch ->
+                    CatchGridItem(
+                        catch = catch,
+                        onClick = {
+                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(it))
+                        }
+                    )
+                }
+            }
+            
+            FloatingActionButton(
+                onClick = { navigate(Screens.SubmitCatch) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Add new catch"
                 )
             }
-        }
-        
-        FloatingActionButton(
-            onClick = { navigate(Screens.SubmitCatch) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Add,
-                contentDescription = "Add new catch"
-            )
         }
     }
 }
@@ -103,7 +120,7 @@ fun CatchGridItem(
             .clickable(onClick = { onClick(catch.id) }),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = HookedTheme.tertiary)
+        colors = CardDefaults.cardColors(containerColor = HookedTheme.primary)
     ) {
         AsyncImage(
             imageUrl = catch.imageUrl,

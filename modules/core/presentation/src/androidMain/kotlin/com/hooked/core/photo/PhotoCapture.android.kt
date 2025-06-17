@@ -39,7 +39,7 @@ actual class PhotoCapture(
     
     actual suspend fun capturePhoto(): PhotoCaptureResult {
         if (!hasRequiredPermissions()) {
-            return PhotoCaptureResult.Error("Camera and location permissions required")
+            return PhotoCaptureResult.Error("Camera and location permissions required", "PhotoCapture.capturePhoto")
         }
         
         return suspendCancellableCoroutine { continuation ->
@@ -57,16 +57,16 @@ actual class PhotoCapture(
                 )
                 currentPhotoUri?.let { uri ->
                     launchers.cameraLauncher.launch(uri)
-                } ?: captureCallback?.invoke(PhotoCaptureResult.Error("Failed to create photo URI"))
+                } ?: captureCallback?.invoke(PhotoCaptureResult.Error("Failed to create photo URI", "PhotoCapture.capturePhoto"))
             } catch (e: Exception) {
-                captureCallback?.invoke(PhotoCaptureResult.Error("Failed to start camera: ${e.message}"))
+                captureCallback?.invoke(PhotoCaptureResult.Error("Failed to start camera: ${e.message}", "PhotoCapture.capturePhoto"))
             }
         }
     }
     
     actual suspend fun pickFromGallery(): PhotoCaptureResult {
         if (!hasStoragePermission()) {
-            return PhotoCaptureResult.Error("Storage permission required")
+            return PhotoCaptureResult.Error("Storage permission required", "PhotoCapture.pickFromGallery")
         }
         
         return suspendCancellableCoroutine { continuation ->
@@ -78,7 +78,7 @@ actual class PhotoCapture(
             try {
                 launchers.galleryLauncher.launch("image/*")
             } catch (e: Exception) {
-                captureCallback?.invoke(PhotoCaptureResult.Error("Failed to open gallery: ${e.message}"))
+                captureCallback?.invoke(PhotoCaptureResult.Error("Failed to open gallery: ${e.message}", "PhotoCapture.pickFromGallery"))
             }
         }
     }
@@ -144,7 +144,7 @@ actual class PhotoCapture(
             
             captureCallback?.invoke(PhotoCaptureResult.Success(capturedPhoto))
         } catch (e: Exception) {
-            captureCallback?.invoke(PhotoCaptureResult.Error("Failed to process camera image: ${e.message}"))
+            captureCallback?.invoke(PhotoCaptureResult.Error("Failed to process camera image: ${e.message}", "PhotoCapture.handleCameraResult"))
         }
     }
     
@@ -157,7 +157,7 @@ actual class PhotoCapture(
             
             captureCallback?.invoke(PhotoCaptureResult.Success(capturedPhoto))
         } catch (e: Exception) {
-            captureCallback?.invoke(PhotoCaptureResult.Error("Failed to process gallery image: ${e.message}"))
+            captureCallback?.invoke(PhotoCaptureResult.Error("Failed to process gallery image: ${e.message}", "PhotoCapture.handleGalleryResult"))
         }
     }
 }

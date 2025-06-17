@@ -2,21 +2,19 @@ package com.hooked.submit.presentation
 
 import com.hooked.core.HookedViewModel
 import com.hooked.core.photo.ImageProcessor
-import com.hooked.core.photo.PhotoCapture
-import com.hooked.core.photo.PhotoCaptureResult
 import com.hooked.core.photo.encodeBase64
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
-import com.hooked.submit.domain.usecases.SubmitCatchUseCaseResult
+import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import com.hooked.submit.presentation.model.SubmitCatchEffect
 import com.hooked.submit.presentation.model.SubmitCatchIntent
 import com.hooked.submit.presentation.model.SubmitCatchState
+import com.hooked.core.logging.logError
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
-    private val photoCapture: PhotoCapture,
     private val imageProcessor: ImageProcessor
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
 
@@ -42,9 +40,6 @@ class SubmitCatchViewModel(
             }
             is SubmitCatchIntent.UpdatePhoto -> {
                 setState { copy(photoUri = intent.photoUri) }
-            }
-            is SubmitCatchIntent.PickPhoto -> {
-                pickPhoto()
             }
             is SubmitCatchIntent.GetCurrentLocation -> {
                 setState { copy(isLocationLoading = true) }
@@ -82,51 +77,24 @@ class SubmitCatchViewModel(
                 )
                 
                 when (val result = submitCatchUseCase(catchEntity)) {
-                    is SubmitCatchUseCaseResult.Success -> {
+                    is UseCaseResult.Success -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.CatchSubmittedSuccessfully }
                     }
-                    is SubmitCatchUseCaseResult.Error -> {
+                    is UseCaseResult.Error -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.ShowError(result.message) }
                     }
                 }
             } catch (e: Exception) {
+                logError("Failed to submit catch", e)
                 setState { copy(isSubmitting = false) }
                 sendEffect { SubmitCatchEffect.ShowError("Failed to submit catch: ${e.message}") }
             }
         }
     }
 
-    private fun capturePhoto() {
-        viewModelScope.launch {
-            when (val result = photoCapture.capturePhoto()) {
-                is PhotoCaptureResult.Success -> {
-                    setState { copy(photoUri = result.photo.imageUri) }
-                }
-                is PhotoCaptureResult.Error -> {
-                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
-                }
-                PhotoCaptureResult.Cancelled -> {
-                }
-            }
-        }
-    }
     
-    private fun pickPhoto() {
-        viewModelScope.launch {
-            when (val result = photoCapture.pickFromGallery()) {
-                is PhotoCaptureResult.Success -> {
-                    setState { copy(photoUri = result.photo.imageUri) }
-                }
-                is PhotoCaptureResult.Error -> {
-                    sendEffect { SubmitCatchEffect.ShowError(result.message) }
-                }
-                PhotoCaptureResult.Cancelled -> {
-                }
-            }
-        }
-    }
 
     private suspend fun convertImageToBase64(imageUri: String): String {
         return try {
@@ -136,6 +104,7 @@ class SubmitCatchViewModel(
             
             processedBytes.encodeBase64()
         } catch (e: Exception) {
+            logError("Failed to process image", e)
             throw IllegalStateException("Failed to process image: ${e.message}")
         }
     }

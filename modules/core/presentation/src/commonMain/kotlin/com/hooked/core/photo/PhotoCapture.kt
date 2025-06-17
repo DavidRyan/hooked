@@ -27,7 +27,13 @@ data class CapturedPhoto(
 
 sealed class PhotoCaptureResult {
     data class Success(val photo: CapturedPhoto) : PhotoCaptureResult()
-    data class Error(val message: String) : PhotoCaptureResult()
+    data class Error(val message: String, val context: String? = null) : PhotoCaptureResult() {
+        init {
+            // Automatically log photo capture errors when they are created
+            val contextInfo = context?.let { " [$it]" } ?: ""
+            com.hooked.core.logging.Logger.error("PhotoCapture", "Photo capture error$contextInfo: $message")
+        }
+    }
     object Cancelled : PhotoCaptureResult()
 }
 
