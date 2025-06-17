@@ -9,15 +9,6 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,6 +61,8 @@ import com.hooked.core.components.AsyncImage
 import com.hooked.core.nav.Screens
 import com.hooked.theme.HookedTheme
 import com.hooked.core.util.BackHandler
+import com.hooked.core.animation.AnimationConstants
+import com.hooked.core.animation.AnimationSpecs
 import kotlinx.coroutines.flow.collectLatest
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -85,7 +78,7 @@ fun CatchesScreen(
     modifier: Modifier = Modifier
 ) {
     var screenState by remember { mutableStateOf<CatchesScreenState>(CatchesScreenState.Grid) }
-    var detailsAnimationKey by remember { mutableStateOf(0L) }
+    var detailsAnimationKey by remember { mutableStateOf(0) }
     
     SharedTransitionLayout(
         modifier = modifier
@@ -96,20 +89,14 @@ fun CatchesScreen(
             targetState = screenState,
             label = "catches_screen_transition",
             transitionSpec = {
-                fadeIn(animationSpec = tween(300)) + scaleIn(
-                    initialScale = 0.92f,
-                    animationSpec = tween(300)
-                ) togetherWith fadeOut(animationSpec = tween(300)) + scaleOut(
-                    targetScale = 1.08f,
-                    animationSpec = tween(300)
-                )
+                AnimationSpecs.contentTransitionSpec
             }
         ) { state ->
             when (state) {
                 is CatchesScreenState.Grid -> {
                     CatchGridContent(
                         onCatchClick = { catchId ->
-                            detailsAnimationKey = System.currentTimeMillis()
+                            detailsAnimationKey += 1
                             screenState = CatchesScreenState.Details(catchId)
                         },
                         navigate = navigate,
@@ -164,14 +151,8 @@ fun SharedTransitionScope.CatchGridContent(
     ) {
         AnimatedVisibility(
             visible = true,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(300)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(300)
-            )
+            enter = AnimationSpecs.slideInFromTop,
+            exit = AnimationSpecs.slideOutToTop
         ) {
             TopAppBar(
                 title = { Text("My Catches") },
@@ -236,8 +217,8 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
         modifier = modifier
             .aspectRatio(1f)
             .clickable(onClick = { onClick(catch.id) }),
-        shape = RoundedCornerShape(20.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
         colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
     ) {
         AsyncImage(
@@ -248,14 +229,11 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
                     rememberSharedContentState(key = "catch-image-${catch.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     boundsTransform = { _, _ ->
-                        spring(
-                            dampingRatio = 0.8f,
-                            stiffness = 380f
-                        )
+                        AnimationSpecs.boundsTransformSpring
                     },
                     renderInOverlayDuringTransition = true
                 )
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
         )
     }
 }
@@ -264,7 +242,7 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
 @Composable
 fun SharedTransitionScope.CatchDetailsContent(
     catchId: Long,
-    animationKey: Long,
+    animationKey: Int,
     onBackClick: () -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -277,12 +255,8 @@ fun SharedTransitionScope.CatchDetailsContent(
     
     // Animation state for all cards
     val cardsTranslation by animateFloatAsState(
-        targetValue = if (showDetails) 0f else 1200f,
-        animationSpec = spring(
-            dampingRatio = 0.8f,
-            stiffness = 300f,
-            visibilityThreshold = 0.1f
-        ),
+        targetValue = if (showDetails) 0f else AnimationConstants.CARD_TRANSLATION_OFFSET,
+        animationSpec = AnimationSpecs.detailsSpringSpec,
         label = "cards_translation"
     )
     
@@ -298,7 +272,7 @@ fun SharedTransitionScope.CatchDetailsContent(
         showDetails = false
         showAppBar = false
         viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
-        delay(100) // Small delay to let the image transition start
+        delay(AnimationConstants.DETAILS_ANIMATION_DELAY_MS) // Small delay to let the image transition start
         showDetails = true
         showAppBar = true
     }
@@ -310,14 +284,8 @@ fun SharedTransitionScope.CatchDetailsContent(
     ) {
         AnimatedVisibility(
             visible = showAppBar,
-            enter = slideInVertically(
-                initialOffsetY = { -it },
-                animationSpec = tween(400)
-            ),
-            exit = slideOutVertically(
-                targetOffsetY = { -it },
-                animationSpec = tween(300)
-            )
+            enter = AnimationSpecs.appBarSlideIn,
+            exit = AnimationSpecs.slideOutToTop
         ) {
             TopAppBar(
                 title = { Text("Catch Details") },
@@ -359,10 +327,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                         .animateContentSize(
-                            animationSpec = spring(
-                                dampingRatio = 0.8f,
-                                stiffness = 380f
-                            )
+                            animationSpec = AnimationSpecs.contentSizeSpring
                         ),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -371,8 +336,8 @@ fun SharedTransitionScope.CatchDetailsContent(
                         modifier = Modifier
                             .fillMaxWidth()
                             .aspectRatio(1f), // Keep same aspect ratio as grid
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        shape = RoundedCornerShape(20.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
+                        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
                     ) {
                         AsyncImage(
                             imageUrl = details.photoUrl,
@@ -382,14 +347,11 @@ fun SharedTransitionScope.CatchDetailsContent(
                                     rememberSharedContentState(key = "catch-image-${catchId}"),
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     boundsTransform = { _, _ ->
-                                        spring(
-                                            dampingRatio = 0.8f,
-                                            stiffness = 380f
-                                        )
+                                        AnimationSpecs.boundsTransformSpring
                                     },
                                     renderInOverlayDuringTransition = true
                                 )
-                                .clip(RoundedCornerShape(20.dp))
+                                .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
                         )
                     }
                     
@@ -433,7 +395,7 @@ private fun DetailCard(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp)
     ) {
         Column(
             modifier = Modifier
