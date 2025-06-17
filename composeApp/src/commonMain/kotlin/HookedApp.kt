@@ -39,7 +39,10 @@ fun HookedApp(
                     val details = backStackEntry.toRoute<Screens.CatchDetails>()
                     CatchDetailsScreen(
                         viewModel = koinViewModel<CatchDetailsViewModel>(),
-                        catchId = details.catchId
+                        catchId = details.catchId,
+                        navigate = { screen ->
+                            navController.navigate(screen)
+                        }
                     )
                 }
                 composable<Screens.SubmitCatch> {
