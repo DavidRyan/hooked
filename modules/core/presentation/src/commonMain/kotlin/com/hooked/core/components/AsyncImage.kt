@@ -25,7 +25,7 @@ fun AsyncImage(
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
-    shape: Shape = RoundedCornerShape(16.dp)
+    shape: Shape = RoundedCornerShape(20.dp)
 ) {
     val getPainterResource: @Composable (BoxWithConstraintsScope.() -> Resource<Painter>) = {
         asyncPainterResource(
@@ -38,7 +38,7 @@ fun AsyncImage(
         contentDescription = contentDescription,
         modifier = modifier
             .aspectRatio(1f)
-            .padding(4.dp)
+            .padding(2.dp)
             .background(HookedTheme.background, shape)
             .clip(shape),
         contentScale = contentScale,
