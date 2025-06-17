@@ -18,46 +18,24 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import kotlin.coroutines.resume
 
-actual class PhotoCapture(private val activity: ComponentActivity) {
+actual class PhotoCapture(
+    private val activity: ComponentActivity,
+    private val launchers: PhotoLaunchers
+) {
     
     private val imageProcessor = ImageProcessor(activity)
-    private val permissionFlow = MutableStateFlow(false)
+    val permissionFlow = MutableStateFlow(false)
     
-    private val cameraLauncher: ActivityResultLauncher<Uri> by lazy {
-        activity.registerForActivityResult(
-            ActivityResultContracts.TakePicture()
-        ) { success ->
-            if (success && currentPhotoUri != null) {
-                handleCameraResult(currentPhotoUri!!)
-            } else {
-                captureCallback?.invoke(PhotoCaptureResult.Cancelled)
-            }
-        }
+    var currentPhotoUri: Uri? = null
+    var captureCallback: ((PhotoCaptureResult) -> Unit)? = null
+    
+    companion object {
+        var instance: PhotoCapture? = null
     }
     
-    private val galleryLauncher: ActivityResultLauncher<String> by lazy {
-        activity.registerForActivityResult(
-            ActivityResultContracts.GetContent()
-        ) { uri ->
-            if (uri != null) {
-                handleGalleryResult(uri)
-            } else {
-                captureCallback?.invoke(PhotoCaptureResult.Cancelled)
-            }
-        }
+    init {
+        instance = this
     }
-    
-    private val permissionLauncher: ActivityResultLauncher<Array<String>> by lazy {
-        activity.registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            val allGranted = permissions.values.all { it }
-            permissionFlow.value = allGranted
-        }
-    }
-    
-    private var currentPhotoUri: Uri? = null
-    private var captureCallback: ((PhotoCaptureResult) -> Unit)? = null
     
     actual suspend fun capturePhoto(): PhotoCaptureResult {
         if (!hasRequiredPermissions()) {
@@ -78,7 +56,7 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
                     photoFile
                 )
                 currentPhotoUri?.let { uri ->
-                    cameraLauncher.launch(uri)
+                    launchers.cameraLauncher.launch(uri)
                 } ?: captureCallback?.invoke(PhotoCaptureResult.Error("Failed to create photo URI"))
             } catch (e: Exception) {
                 captureCallback?.invoke(PhotoCaptureResult.Error("Failed to start camera: ${e.message}"))
@@ -98,7 +76,7 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
             }
             
             try {
-                galleryLauncher.launch("image/*")
+                launchers.galleryLauncher.launch("image/*")
             } catch (e: Exception) {
                 captureCallback?.invoke(PhotoCaptureResult.Error("Failed to open gallery: ${e.message}"))
             }
@@ -117,7 +95,7 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
         if (hasRequiredPermissions()) {
             permissionFlow.value = true
         } else {
-            permissionLauncher.launch(permissions)
+            launchers.permissionLauncher.launch(permissions)
         }
         
         return permissionFlow
@@ -157,7 +135,7 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
         return File(activity.getExternalFilesDir(null), fileName)
     }
     
-    private fun handleCameraResult(uri: Uri) {
+    fun handleCameraResult(uri: Uri) {
         try {
             val capturedPhoto = CapturedPhoto(
                 imageUri = uri.toString(),
@@ -170,7 +148,7 @@ actual class PhotoCapture(private val activity: ComponentActivity) {
         }
     }
     
-    private fun handleGalleryResult(uri: Uri) {
+    fun handleGalleryResult(uri: Uri) {
         try {
             val capturedPhoto = CapturedPhoto(
                 imageUri = uri.toString(),

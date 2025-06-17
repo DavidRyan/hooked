@@ -77,7 +77,6 @@ fun SubmitCatchScreen(
         ) {
             PhotoSection(
                 photoUri = state.photoUri,
-                onTakePhoto = { viewModel.sendIntent(SubmitCatchIntent.TakePhoto) },
                 onPickPhoto = { viewModel.sendIntent(SubmitCatchIntent.PickPhoto) }
             )
             
@@ -139,7 +138,6 @@ fun SubmitCatchScreen(
 @Composable
 private fun PhotoSection(
     photoUri: String?,
-    onTakePhoto: () -> Unit,
     onPickPhoto: () -> Unit
 ) {
     Card(
@@ -163,24 +161,24 @@ private fun PhotoSection(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TextButton(onClick = onTakePhoto) {
-                        Text("Retake Photo")
-                    }
                     TextButton(onClick = onPickPhoto) {
                         Text("Choose Different")
                     }
                 }
             } else {
                 Icon(
+                    modifier = Modifier.size(40.dp)
+                        .align(Alignment.CenterHorizontally),
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    modifier = Modifier.size(48.dp),
                     tint = HookedTheme.primary
                 )
                 
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally),
                     text = "Add a photo of your catch",
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -190,11 +188,6 @@ private fun PhotoSection(
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    OutlinedButton(onClick = onTakePhoto) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Take Photo")
-                    }
                     OutlinedButton(onClick = onPickPhoto) {
                         Text("Choose from Gallery")
                     }

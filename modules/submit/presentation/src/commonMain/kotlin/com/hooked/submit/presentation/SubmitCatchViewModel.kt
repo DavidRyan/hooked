@@ -43,9 +43,6 @@ class SubmitCatchViewModel(
             is SubmitCatchIntent.UpdatePhoto -> {
                 setState { copy(photoUri = intent.photoUri) }
             }
-            is SubmitCatchIntent.TakePhoto -> {
-                capturePhoto()
-            }
             is SubmitCatchIntent.PickPhoto -> {
                 pickPhoto()
             }
