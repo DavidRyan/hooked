@@ -9,6 +9,7 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,6 +48,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import kotlinx.coroutines.delay
 import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchGridEffect
@@ -206,6 +211,8 @@ fun SharedTransitionScope.CatchDetailsContent(
     val state by viewModel.state.collectAsState()
     var showDetails by remember(animationKey) { mutableStateOf(false) }
     var showAppBar by remember(animationKey) { mutableStateOf(false) }
+    var topBarHeight by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
     
     // Animation state for all cards
     val cardsTranslation by animateFloatAsState(
@@ -213,7 +220,7 @@ fun SharedTransitionScope.CatchDetailsContent(
         animationSpec = AnimationSpecs.detailsSpringSpec,
         label = "cards_translation"
     )
-    
+
     // Handle back button press
     BackHandler {
         showDetails = false
@@ -231,38 +238,12 @@ fun SharedTransitionScope.CatchDetailsContent(
         showAppBar = true
     }
     
-    Column(
+    Box(
         modifier = Modifier
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        AnimatedVisibility(
-            visible = showAppBar,
-            enter = AnimationSpecs.appBarSlideIn,
-            exit = AnimationSpecs.slideOutToTop
-        ) {
-            TopAppBar(
-                title = { Text("Catch Details") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        showDetails = false // Reset animation state
-                        showAppBar = false
-                        onBackClick()
-                    }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = HookedTheme.primary,
-                    titleContentColor = HookedTheme.onPrimary,
-                    navigationIconContentColor = HookedTheme.onPrimary
-                )
-            )
-        }
-        
+        // Content goes first (behind the app bar)
         if (state.isLoading) {
             Column(
                 modifier = Modifier
@@ -288,6 +269,8 @@ fun SharedTransitionScope.CatchDetailsContent(
                     // Photo Section with shared element
                     Card(
                         modifier = Modifier
+                            //.padding(top = AnimationConstants.DETAIL_CARD_TOP_PADDING_DP.dp)
+                            .padding(top = topBarHeight)
                             .fillMaxWidth()
                             .aspectRatio(1f), // Keep same aspect ratio as grid
                         elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
@@ -304,6 +287,11 @@ fun SharedTransitionScope.CatchDetailsContent(
                                         AnimationSpecs.boundsTransformSpring
                                     },
                                     renderInOverlayDuringTransition = true
+                                )
+                                .border(
+                                    width = AnimationConstants.IMAGE_BORDER_WIDTH_DP.dp,
+                                    color = HookedTheme.tertiary,
+                                    shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
                                 )
                                 .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
                         )
@@ -331,6 +319,37 @@ fun SharedTransitionScope.CatchDetailsContent(
                     )
                 }
             }
+        }
+        
+        // App bar overlays the content
+        AnimatedVisibility(
+            visible = showAppBar,
+            enter = AnimationSpecs.appBarSlideIn,
+            exit = AnimationSpecs.slideOutToTop
+        ) {
+            TopAppBar(
+                modifier = Modifier.onGloballyPositioned { coordinates ->
+                    topBarHeight = with(density) { coordinates.size.height.toDp() }
+                },
+                title = { Text("Catch Details") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        showDetails = false // Reset animation state
+                        showAppBar = false
+                        onBackClick()
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = HookedTheme.primary,
+                    titleContentColor = HookedTheme.onPrimary,
+                    navigationIconContentColor = HookedTheme.onPrimary
+                )
+            )
         }
     }
 }

@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import com.hooked.core.animation.AnimationSpecs
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,11 @@ fun SharedTransitionScope.CatchGridItem(
                     boundsTransform = { _, _ ->
                         AnimationSpecs.boundsTransformSpring
                     }
+                )
+                .border(
+                    width = AnimationConstants.IMAGE_BORDER_WIDTH_DP.dp,
+                    color = HookedTheme.tertiary,
+                    shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
                 )
                 .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
         )
