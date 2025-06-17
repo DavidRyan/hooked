@@ -24,7 +24,7 @@ class SubmitApiService(
             val catchId = response["id"] ?: throw Exception("No catch ID returned")
             return NetworkResult.Success(catchId)
         } catch (e: Exception) {
-            return NetworkResult.Error(Exception("Failed to submit catch: ${e.message}"))
+            return NetworkResult.Error(e, "SubmitApiService.submitCatch")
         }
     }
 }

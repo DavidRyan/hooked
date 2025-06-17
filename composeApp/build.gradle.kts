@@ -23,6 +23,7 @@ kotlin {
                 implementation(libs.koin.compose.viewmodel)
                 implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
                 implementation(libs.kotlinx.serialization.json)
+                implementation(project(":modules:core:domain"))
                 implementation(project(":modules:core:presentation"))
                 implementation(project(":modules:catches:presentation"))
                 implementation(project(":modules:submit:presentation"))
