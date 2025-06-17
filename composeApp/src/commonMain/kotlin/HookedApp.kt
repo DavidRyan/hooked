@@ -1,6 +1,8 @@
 package com.hooked
 
+import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -21,7 +23,8 @@ fun HookedApp(
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = Screens.CatchGrid
+                startDestination = Screens.CatchGrid,
+                modifier = Modifier.background(HookedTheme.background)
             ) {
                 composable<Screens.CatchGrid> {
                     CatchesScreen(

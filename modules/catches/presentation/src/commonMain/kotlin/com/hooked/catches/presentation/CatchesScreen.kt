@@ -1,6 +1,7 @@
 package com.hooked.catches.presentation
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -14,6 +15,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -81,9 +84,12 @@ fun CatchesScreen(
     modifier: Modifier = Modifier
 ) {
     var screenState by remember { mutableStateOf<CatchesScreenState>(CatchesScreenState.Grid) }
+    var detailsAnimationKey by remember { mutableStateOf(0L) }
     
     SharedTransitionLayout(
-        modifier = modifier.fillMaxSize()
+        modifier = modifier
+            .fillMaxSize()
+            .background(HookedTheme.background)
     ) {
         AnimatedContent(
             targetState = screenState,
@@ -102,6 +108,7 @@ fun CatchesScreen(
                 is CatchesScreenState.Grid -> {
                     CatchGridContent(
                         onCatchClick = { catchId ->
+                            detailsAnimationKey = System.currentTimeMillis()
                             screenState = CatchesScreenState.Details(catchId)
                         },
                         navigate = navigate,
@@ -112,6 +119,7 @@ fun CatchesScreen(
                 is CatchesScreenState.Details -> {
                     CatchDetailsContent(
                         catchId = state.catchId,
+                        animationKey = detailsAnimationKey,
                         onBackClick = {
                             screenState = CatchesScreenState.Grid
                         },
@@ -153,13 +161,25 @@ fun SharedTransitionScope.CatchGridContent(
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        TopAppBar(
-            title = { Text("My Catches") },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = HookedTheme.primary,
-                titleContentColor = HookedTheme.onPrimary
+        AnimatedVisibility(
+            visible = true,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(300)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(300)
             )
-        )
+        ) {
+            TopAppBar(
+                title = { Text("My Catches") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = HookedTheme.primary,
+                    titleContentColor = HookedTheme.onPrimary
+                )
+            )
+        }
         
         Box(
             modifier = Modifier.fillMaxSize()
@@ -217,13 +237,12 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
             .clickable(onClick = { onClick(catch.id) }),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(containerColor = HookedTheme.primary)
+        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
     ) {
         AsyncImage(
             imageUrl = catch.imageUrl,
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(20.dp))
                 .sharedElement(
                     rememberSharedContentState(key = "catch-image-${catch.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
@@ -235,6 +254,7 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
                     },
                     renderInOverlayDuringTransition = true
                 )
+                .clip(RoundedCornerShape(20.dp))
         )
     }
 }
@@ -243,6 +263,7 @@ fun SharedTransitionScope.CatchGridItemWithSharedElement(
 @Composable
 fun SharedTransitionScope.CatchDetailsContent(
     catchId: Long,
+    animationKey: Long,
     onBackClick: () -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -250,7 +271,8 @@ fun SharedTransitionScope.CatchDetailsContent(
     viewModel: CatchDetailsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    var showDetails by remember { mutableStateOf(false) }
+    var showDetails by remember(animationKey) { mutableStateOf(false) }
+    var showAppBar by remember(animationKey) { mutableStateOf(false) }
     
     // Animation state for all cards
     val cardsTranslation by animateFloatAsState(
@@ -263,12 +285,14 @@ fun SharedTransitionScope.CatchDetailsContent(
         label = "cards_translation"
     )
     
-    LaunchedEffect(catchId) {
+    LaunchedEffect(animationKey) {
         // Reset animation state first
         showDetails = false
+        showAppBar = false
         viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
         delay(100) // Small delay to let the image transition start
         showDetails = true
+        showAppBar = true
     }
     
     Column(
@@ -276,25 +300,38 @@ fun SharedTransitionScope.CatchDetailsContent(
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        TopAppBar(
-            title = { Text("Catch Details") },
-            navigationIcon = {
-                IconButton(onClick = {
-                    showDetails = false // Reset animation state
-                    onBackClick()
-                }) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = HookedTheme.primary,
-                titleContentColor = HookedTheme.onPrimary,
-                navigationIconContentColor = HookedTheme.onPrimary
+        AnimatedVisibility(
+            visible = showAppBar,
+            enter = slideInVertically(
+                initialOffsetY = { -it },
+                animationSpec = tween(400)
+            ),
+            exit = slideOutVertically(
+                targetOffsetY = { -it },
+                animationSpec = tween(300)
             )
-        )
+        ) {
+            TopAppBar(
+                title = { Text("Catch Details") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        showDetails = false // Reset animation state
+                        showAppBar = false
+                        onBackClick()
+                    }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = HookedTheme.primary,
+                    titleContentColor = HookedTheme.onPrimary,
+                    navigationIconContentColor = HookedTheme.onPrimary
+                )
+            )
+        }
         
         if (state.isLoading) {
             Column(
@@ -327,13 +364,12 @@ fun SharedTransitionScope.CatchDetailsContent(
                             .fillMaxWidth()
                             .aspectRatio(1f), // Keep same aspect ratio as grid
                         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(20.dp)
                     ) {
                         AsyncImage(
                             imageUrl = details.photoUrl,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .clip(RoundedCornerShape(12.dp))
                                 .sharedElement(
                                     rememberSharedContentState(key = "catch-image-${catchId}"),
                                     animatedVisibilityScope = animatedVisibilityScope,
@@ -345,6 +381,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                                     },
                                     renderInOverlayDuringTransition = true
                                 )
+                                .clip(RoundedCornerShape(20.dp))
                         )
                     }
                     
