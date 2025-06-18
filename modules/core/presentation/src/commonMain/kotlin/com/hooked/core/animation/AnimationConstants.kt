@@ -7,7 +7,9 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.geometry.Rect
@@ -85,5 +87,26 @@ object AnimationSpecs {
     val appBarSlideIn = slideInVertically(
         initialOffsetY = { -it },
         animationSpec = tween(AnimationConstants.APP_BAR_ANIMATION_MS)
+    )
+    
+    // Navigation animations
+    val slideInFromRight = slideInHorizontally(
+        initialOffsetX = { it },
+        animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)
+    )
+    
+    val slideOutToLeft = slideOutHorizontally(
+        targetOffsetX = { -it },
+        animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)
+    )
+    
+    val slideInFromLeft = slideInHorizontally(
+        initialOffsetX = { -it },
+        animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)
+    )
+    
+    val slideOutToRight = slideOutHorizontally(
+        targetOffsetX = { it },
+        animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)
     )
 }

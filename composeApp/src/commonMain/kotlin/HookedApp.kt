@@ -1,5 +1,7 @@
 package com.hooked
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -26,18 +28,69 @@ fun HookedApp(
                 startDestination = Screens.CatchGrid,
                 modifier = Modifier.background(HookedTheme.background)
             ) {
-                composable<Screens.CatchGrid> {
+                composable<Screens.CatchGrid>(
+                    exitTransition = {
+                        when (targetState.destination.route) {
+                            Screens.SubmitCatch::class.qualifiedName -> {
+                                slideOutOfContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(300)
+                                )
+                            }
+                            else -> null
+                        }
+                    },
+                    popEnterTransition = {
+                        when (initialState.destination.route) {
+                            Screens.SubmitCatch::class.qualifiedName -> {
+                                slideIntoContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                                    animationSpec = tween(300)
+                                )
+                            }
+                            else -> null
+                        }
+                    }
+                ) {
                     CatchesScreen(
                         navigate = { screen ->
                             navController.navigate(screen)
                         }
                     )
                 }
-                composable<Screens.SubmitCatch> {
+                composable<Screens.SubmitCatch>(
+                    enterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    }
+                ) {
                     SubmitCatchScreen(
                         viewModel = koinViewModel<SubmitCatchViewModel>(),
                         navigate = { screen ->
-                            navController.navigate(screen)
+                            when (screen) {
+                                is Screens.CatchGrid -> navController.popBackStack()
+                                else -> navController.navigate(screen)
+                            }
                         }
                     )
                 }
