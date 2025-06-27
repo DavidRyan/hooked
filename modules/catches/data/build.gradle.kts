@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.sqldelight)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20"
 }
 
@@ -21,28 +22,34 @@ kotlin {
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.sqldelight.runtime)
+                implementation(libs.sqldelight.coroutines.extensions)
             }
         }
 
         val androidMain by getting {
             dependencies {
                 implementation(libs.ktor.client.android)
+                implementation(libs.sqldelight.android.driver)
             }
         }
 
         val iosX64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.native.driver)
             }
         }
         val iosArm64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.native.driver)
             }
         }
         val iosSimulatorArm64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                implementation(libs.sqldelight.native.driver)
             }
         }
     }
@@ -59,5 +66,13 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+}
+
+sqldelight {
+    databases {
+        create("CatchDatabase") {
+            packageName.set("com.hooked.catches.data.database")
+        }
     }
 }

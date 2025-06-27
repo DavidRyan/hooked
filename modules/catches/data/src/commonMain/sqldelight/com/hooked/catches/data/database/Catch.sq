@@ -1,0 +1,29 @@
+CREATE TABLE CatchEntity (
+    id INTEGER PRIMARY KEY,
+    species TEXT NOT NULL,
+    weight REAL NOT NULL,
+    length REAL NOT NULL,
+    photoUrl TEXT NOT NULL,
+    latitude REAL,
+    longitude REAL,
+    timestamp INTEGER,
+    dateCaught TEXT NOT NULL,
+    location TEXT NOT NULL,
+    description TEXT NOT NULL
+);
+
+selectAll:
+SELECT * FROM CatchEntity;
+
+selectById:
+SELECT * FROM CatchEntity WHERE id = ?;
+
+insert:
+INSERT OR REPLACE INTO CatchEntity(id, species, weight, length, photoUrl, latitude, longitude, timestamp, dateCaught, location, description)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+deleteById:
+DELETE FROM CatchEntity WHERE id = ?;
+
+deleteAll:
+DELETE FROM CatchEntity;
