@@ -1,11 +1,11 @@
 package com.hooked.submit.presentation
 
 import com.hooked.core.HookedViewModel
-import com.hooked.core.photo.ImageProcessor
-import com.hooked.core.photo.encodeBase64
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
+import com.hooked.submit.domain.usecases.ConvertImageToBase64UseCase
 import com.hooked.core.domain.UseCaseResult
+import com.hooked.core.domain.flatMap
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import com.hooked.submit.presentation.model.SubmitCatchEffect
@@ -15,7 +15,7 @@ import com.hooked.core.logging.logError
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
-    private val imageProcessor: ImageProcessor
+    private val convertImageToBase64UseCase: ConvertImageToBase64UseCase
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
 
     override fun handleIntent(intent: SubmitCatchIntent) {
@@ -66,17 +66,25 @@ class SubmitCatchViewModel(
         
         viewModelScope.launch {
             try {
-                val catchEntity = SubmitCatchEntity(
-                    species = currentState.species,
-                    weight = currentState.weight.toDouble(),
-                    length = currentState.length.toDouble(),
-                    latitude = currentState.latitude,
-                    longitude = currentState.longitude,
-                    photoBase64 = currentState.photoUri?.let { convertImageToBase64(it) },
-                    timestamp = Clock.System.now().toEpochMilliseconds()
-                )
+                // Flat-mapped chain: Convert image -> Create entity -> Submit catch
+                val result = if (currentState.photoUri != null) {
+                    convertImageToBase64UseCase(currentState.photoUri!!)
+                } else {
+                    UseCaseResult.Success(null)
+                }.flatMap { photoBase64 ->
+                    val catchEntity = SubmitCatchEntity(
+                        species = currentState.species,
+                        weight = currentState.weight.toDouble(),
+                        length = currentState.length.toDouble(),
+                        latitude = currentState.latitude,
+                        longitude = currentState.longitude,
+                        photoBase64 = photoBase64,
+                        timestamp = Clock.System.now().toEpochMilliseconds()
+                    )
+                    submitCatchUseCase(catchEntity)
+                }
                 
-                when (val result = submitCatchUseCase(catchEntity)) {
+                when (result) {
                     is UseCaseResult.Success -> {
                         setState { copy(isSubmitting = false) }
                         sendEffect { SubmitCatchEffect.CatchSubmittedSuccessfully }
@@ -91,21 +99,6 @@ class SubmitCatchViewModel(
                 setState { copy(isSubmitting = false) }
                 sendEffect { SubmitCatchEffect.ShowError("Failed to submit catch: ${e.message}") }
             }
-        }
-    }
-
-    
-
-    private suspend fun convertImageToBase64(imageUri: String): String {
-        return try {
-            val imageBytes = imageProcessor.loadImageFromUri(imageUri)
-            
-            val processedBytes = imageProcessor.processImageWithExif(imageBytes)
-            
-            processedBytes.encodeBase64()
-        } catch (e: Exception) {
-            logError("Failed to process image", e)
-            throw IllegalStateException("Failed to process image: ${e.message}")
         }
     }
 

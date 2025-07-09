@@ -44,6 +44,14 @@ kotlin {
             }
         }
 
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation("io.mockk:mockk:1.13.8")
+            }
+        }
+
     }
 }
 
@@ -58,5 +66,11 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
     }
 }

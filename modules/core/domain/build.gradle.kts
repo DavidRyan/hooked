@@ -78,3 +78,8 @@ android {
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     dependsOn(generateMapConfig)
 }
+
+// Also make metadata compilation tasks depend on generateMapConfig
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompileCommon>().configureEach {
+    dependsOn(generateMapConfig)
+}

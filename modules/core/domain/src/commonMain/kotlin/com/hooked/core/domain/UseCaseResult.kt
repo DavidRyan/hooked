@@ -17,3 +17,10 @@ sealed class UseCaseResult<out T> {
         }
     }
 }
+
+inline fun <T, R> UseCaseResult<T>.flatMap(transform: (T) -> UseCaseResult<R>): UseCaseResult<R> {
+    return when (this) {
+        is UseCaseResult.Success -> transform(data)
+        is UseCaseResult.Error -> this
+    }
+}

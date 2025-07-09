@@ -34,23 +34,21 @@ kotlin {
             }
         }
 
-        val iosX64Main by getting {
+        val iosMain by creating {
+            dependsOn(commonMain)
             dependencies {
                 implementation(libs.ktor.client.darwin)
                 implementation(libs.sqldelight.native.driver)
             }
+        }
+        val iosX64Main by getting {
+            dependsOn(iosMain)
         }
         val iosArm64Main by getting {
-            dependencies {
-                implementation(libs.ktor.client.darwin)
-                implementation(libs.sqldelight.native.driver)
-            }
+            dependsOn(iosMain)
         }
         val iosSimulatorArm64Main by getting {
-            dependencies {
-                implementation(libs.ktor.client.darwin)
-                implementation(libs.sqldelight.native.driver)
-            }
+            dependsOn(iosMain)
         }
     }
 }
