@@ -6,8 +6,10 @@ import com.hooked.catches.data.database.toCatchDetailsEntity
 import com.hooked.catches.data.database.toDomainEntity
 import com.hooked.catches.data.model.toEntity
 import com.hooked.catches.data.model.toCatchDetailsEntity
+import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository as CatchRepositoryInterface
 import com.hooked.core.domain.NetworkResult
 import com.hooked.core.logging.Logger
@@ -86,6 +88,35 @@ class CatchRepositoryImpl(
             }
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error refreshing catches: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<Long> {
+        val submitDto = SubmitCatchDto(
+            species = catchEntity.species,
+            weight = catchEntity.weight,
+            length = catchEntity.length,
+            latitude = catchEntity.latitude,
+            longitude = catchEntity.longitude,
+            photoBase64 = catchEntity.photoBase64,
+            timestamp = catchEntity.timestamp
+        )
+        
+        return try {
+            when(val result = catchApiService.submitCatch(submitDto)) {
+                is NetworkResult.Success -> {
+                    Logger.info("CatchRepository", "Successfully submitted catch, received ID: ${result.data}")
+                    Result.success(result.data)
+                }
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Failed to submit catch: ${result.error.message}", result.error)
+                    Result.failure(result.error)
+                }
+                NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
+            }
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error submitting catch: ${e.message}", e)
             Result.failure(e)
         }
     }

@@ -2,16 +2,13 @@ package di
 
 import com.hooked.catches.presentation.CatchGridViewModel
 import com.hooked.catches.presentation.CatchDetailsViewModel
-import com.hooked.submit.presentation.SubmitCatchViewModel
+import com.hooked.catches.presentation.SubmitCatchViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
-import com.hooked.submit.domain.usecases.SubmitCatchUseCase
+import com.hooked.catches.domain.usecases.SubmitCatchUseCase
 import com.hooked.catches.domain.repositories.CatchRepository as CatchesRepositoryInterface
-import com.hooked.submit.domain.repositories.SubmitRepository as SubmitRepositoryInterface
 import com.hooked.catches.data.repo.CatchRepositoryImpl
-import com.hooked.submit.data.repo.SubmitRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
-import com.hooked.submit.data.api.SubmitApiService
 import com.hooked.catches.data.database.DatabaseDriverFactory
 import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
@@ -46,10 +43,6 @@ val dataModule = module {
         CatchApiService(get())
     }
 
-    single<SubmitApiService> {
-        SubmitApiService(get())
-    }
-
     single { DatabaseModule(get()) }
     
     single<CatchLocalDataSource> {
@@ -58,10 +51,6 @@ val dataModule = module {
 
     single<CatchesRepositoryInterface> {
         CatchRepositoryImpl(get(), get())
-    }
-
-    single<SubmitRepositoryInterface> {
-        SubmitRepositoryImpl(get())
     }
 }
 
