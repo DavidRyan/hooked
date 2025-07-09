@@ -10,8 +10,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hooked.catches.presentation.CatchesScreen
-import com.hooked.submit.presentation.SubmitCatchScreen
-import com.hooked.submit.presentation.SubmitCatchViewModel
+import com.hooked.catches.presentation.SubmitCatchScreen
+import com.hooked.catches.presentation.SubmitCatchViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import com.hooked.theme.HookedTheme

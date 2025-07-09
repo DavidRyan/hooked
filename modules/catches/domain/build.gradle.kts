@@ -10,6 +10,11 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        freeCompilerArgs.add("-module-name=catches-domain")
+    }
 
     sourceSets {
         val commonMain by getting {
