@@ -12,6 +12,9 @@ import com.hooked.catches.data.repo.CatchRepositoryImpl
 import com.hooked.submit.data.repo.SubmitRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
 import com.hooked.submit.data.api.SubmitApiService
+import com.hooked.catches.data.database.DatabaseDriverFactory
+import com.hooked.catches.data.database.DatabaseModule
+import com.hooked.catches.data.database.CatchLocalDataSource
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -47,8 +50,14 @@ val dataModule = module {
         SubmitApiService(get())
     }
 
+    single { DatabaseModule(get()) }
+    
+    single<CatchLocalDataSource> {
+        get<DatabaseModule>().provideCatchLocalDataSource()
+    }
+
     single<CatchesRepositoryInterface> {
-        CatchRepositoryImpl(get())
+        CatchRepositoryImpl(get(), get())
     }
 
     single<SubmitRepositoryInterface> {

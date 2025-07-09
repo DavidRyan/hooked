@@ -41,6 +41,11 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    
+    @OptIn(org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi::class)
+    compilerOptions {
+        freeCompilerArgs.add("-module-name=core-domain")
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -76,5 +81,10 @@ android {
 
 // Make compile tasks depend on generateMapConfig
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn(generateMapConfig)
+}
+
+// Make Kotlin metadata compilation tasks depend on generateMapConfig
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
     dependsOn(generateMapConfig)
 }
