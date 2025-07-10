@@ -1,7 +1,9 @@
 defmodule Backend.Catches do 
   import Ecto.Query, warn: false
+  alias Ecto.Repo
   alias Backend.UserCatches.UserCatch
   alias Backend.Repo
+  alias HookedApi.Enrichment.EnrichmentOrchastrator
 
   def list_user_catches() do
     Repo.all(UserCatch)
@@ -12,6 +14,8 @@ defmodule Backend.Catches do
   end
   
   def create_user_catch(user_catch) do
+    enriched_user_catch = EnrichmentOrchastrator.enrich(user_catch)
+    Repo.insert(enriched_user_catch)
   end
 
   def update_user_catch(user_catch) do
