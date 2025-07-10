@@ -1,9 +1,9 @@
-defmodule Backend.MixProject do
+defmodule HookedApi.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :backend,
+      app: :hooked_api,
       version: "0.1.0",
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -15,7 +15,7 @@ defmodule Backend.MixProject do
 
   def application do
     [
-      mod: {Backend.Application, []},
+      mod: {HookedApi.Application, []},
       extra_applications: [:logger, :runtime_tools]
     ]
   end

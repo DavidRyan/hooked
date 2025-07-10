@@ -1,23 +1,23 @@
 import Config
 
-config :backend,
-  ecto_repos: [Backend.Repo],
+config :hooked_api,
+  ecto_repos: [HookedApi.Repo],
   generators: [timestamp_type: :utc_datetime, binary_id: true]
 
-config :backend, Backend.Endpoint,
+config :hooked_api, HookedApi.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [json: HookedApiWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: Backend.PubSub,
+  pubsub_server: HookedApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"]
 
-#config :backend, Oban,
+#config :hooked_api, Oban,
 #  engine: Oban.Engines.Basic,
 #  queues: [default: 10, enrichment: 5],
-#  repo: Backend.Repo
+#  repo: HookedApi.Repo
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",

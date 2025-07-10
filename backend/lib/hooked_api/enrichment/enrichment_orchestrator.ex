@@ -1,4 +1,4 @@
-defmodule HookedApi.Enrichment.EnrichmentOrchastrator do
+defmodule HookedApi.Enrichment.EnrichmentOrchestrator do
   def enrich(user_catch) do 
     enrichers = [
       HookedApi.Enrichment.Enrichers.GeoEnricher,

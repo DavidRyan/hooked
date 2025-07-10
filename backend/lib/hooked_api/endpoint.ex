@@ -1,12 +1,12 @@
-defmodule Backend.Endpoint do
-  use Phoenix.Endpoint, otp_app: :backend
+defmodule HookedApi.Endpoint do
+  use Phoenix.Endpoint, otp_app: :hooked_api
 
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
   @session_options [
     store: :cookie,
-    key: "_backend_key",
+    key: "_hooked_api_key",
     signing_salt: "your_signing_salt_here",
     same_site: "Lax"
   ]
@@ -21,7 +21,7 @@ defmodule Backend.Endpoint do
   # when deploying your static files in production.
   plug Plug.Static,
     at: "/",
-    from: :backend,
+    from: :hooked_api,
     gzip: false,
     only: HookedApiWeb.static_paths()
 
@@ -29,7 +29,7 @@ defmodule Backend.Endpoint do
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
     plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :backend
+    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :hooked_api
   end
 
   plug Phoenix.LiveDashboard.RequestLogger,

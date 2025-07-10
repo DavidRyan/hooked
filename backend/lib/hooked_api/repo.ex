@@ -1,5 +1,5 @@
-defmodule Backend.Repo do
+defmodule HookedApi.Repo do
   use Ecto.Repo,
-    otp_app: :backend,
+    otp_app: :hooked_api,
     adapter: Ecto.Adapters.Postgres
 end

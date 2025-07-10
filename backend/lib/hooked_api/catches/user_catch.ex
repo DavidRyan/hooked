@@ -1,4 +1,4 @@
-defmodule Backend.UserCatches.UserCatch do
+defmodule HookedApi.Catches.UserCatch do
   use Ecto.Schema
   import Ecto.Changeset
 
