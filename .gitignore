@@ -19,3 +19,19 @@ gradlew
 # API Keys - DO NOT COMMIT
 **/MapConfig.kt
 **/generated/source/mapconfig/
+
+# Elixir build artifacts
+backend/_build/
+backend/deps/
+backend/erl_crash.dump
+
+# Mix environment files
+backend/*.ez
+
+
+# The lock file for npm if using assets (optional)
+backendassets/package-lock.json
+
+# Elixir/Phoenix generated files
+backend/.elixir_ls/
+backend/.coverage/
