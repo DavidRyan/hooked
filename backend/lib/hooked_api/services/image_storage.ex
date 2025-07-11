@@ -1,35 +1,10 @@
 defmodule HookedApi.Services.ImageStorage do
-  @moduledoc """
-  Service for handling image uploads and storage.
-  
-  Supports multiple storage backends:
-  - Local filesystem (development)
-  - AWS S3 (production)
-  - Other cloud providers (future)
-  """
-
   require Logger
 
   @allowed_extensions ~w(.jpg .jpeg .png .webp .heic)
-  @max_file_size 10_000_000 # 10MB
+  @max_file_size 10_000_000
   @upload_dir "priv/static/uploads/catches"
 
-  @doc """
-  Uploads an image file and returns the storage metadata.
-  
-  ## Examples
-  
-      iex> upload_image(%Plug.Upload{filename: "fish.jpg", path: "/tmp/..."})
-      {:ok, %{
-        url: "/uploads/catches/uuid-fish.jpg",
-        filename: "fish.jpg", 
-        content_type: "image/jpeg",
-        file_size: 1024
-      }}
-      
-      iex> upload_image(%Plug.Upload{filename: "bad.txt"})
-      {:error, :invalid_file_type}
-  """
   def upload_image(%Plug.Upload{} = upload) do
     with :ok <- validate_file(upload),
          {:ok, storage_path} <- store_file(upload),
@@ -38,27 +13,18 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
-  @doc """
-  Deletes an image file from storage.
-  """
   def delete_image(image_url) when is_binary(image_url) do
     case get_storage_backend() do
       :local -> delete_local_file(image_url)
       :s3 -> delete_s3_file(image_url)
     end
   end
-
-  @doc """
-  Generates a presigned URL for direct upload (useful for mobile apps).
-  """
   def generate_presigned_url(filename, content_type) do
     case get_storage_backend() do
       :local -> {:error, :not_supported}
       :s3 -> generate_s3_presigned_url(filename, content_type)
     end
   end
-
-  # Private functions
 
   defp validate_file(%Plug.Upload{filename: filename, path: path}) do
     with :ok <- validate_extension(filename),
@@ -70,7 +36,7 @@ defmodule HookedApi.Services.ImageStorage do
 
   defp validate_extension(filename) do
     extension = Path.extname(filename) |> String.downcase()
-    
+
     if extension in @allowed_extensions do
       :ok
     else
@@ -87,8 +53,6 @@ defmodule HookedApi.Services.ImageStorage do
   end
 
   defp validate_content_type(path) do
-    # You could use a library like `file_info` or `mime` here
-    # For now, we'll trust the file extension validation
     :ok
   end
 
@@ -100,35 +64,27 @@ defmodule HookedApi.Services.ImageStorage do
   end
 
   defp store_local_file(filename, temp_path) do
-    # Generate unique filename to avoid conflicts
     unique_filename = generate_unique_filename(filename)
     destination_dir = @upload_dir
     destination_path = Path.join(destination_dir, unique_filename)
-    
-    # Ensure upload directory exists
+
     File.mkdir_p!(destination_dir)
-    
+
     case File.cp(temp_path, destination_path) do
-      :ok -> 
-        # Return the public URL path
+      :ok ->
         public_path = "/uploads/catches/#{unique_filename}"
         {:ok, public_path}
-      {:error, reason} -> 
+
+      {:error, reason} ->
         Logger.error("Failed to copy file: #{inspect(reason)}")
         {:error, :storage_failed}
     end
   end
 
   defp store_s3_file(filename, temp_path) do
-    # Implementation for S3 upload
-    # You'd use ExAws.S3 or similar library here
     unique_filename = generate_unique_filename(filename)
     s3_key = "catches/#{unique_filename}"
-    
-    # Placeholder for S3 upload logic
-    # ExAws.S3.put_object(bucket, s3_key, File.read!(temp_path))
-    # |> ExAws.request()
-    
+
     {:ok, "https://your-bucket.s3.amazonaws.com/#{s3_key}"}
   end
 
@@ -141,6 +97,7 @@ defmodule HookedApi.Services.ImageStorage do
         "image_content_type" => content_type,
         "image_file_size" => file_size
       }
+
       {:ok, metadata}
     else
       {:error, _} -> {:error, :metadata_failed}
@@ -148,28 +105,27 @@ defmodule HookedApi.Services.ImageStorage do
   end
 
   defp delete_local_file(image_url) do
-    # Extract filename from URL like "/uploads/catches/uuid-fish.jpg"
     filename = Path.basename(image_url)
     file_path = Path.join(@upload_dir, filename)
-    
+
     case File.rm(file_path) do
-      :ok -> :ok
-      {:error, :enoent} -> :ok # File already doesn't exist
-      {:error, reason} -> 
+      :ok ->
+        :ok
+
+      {:error, :enoent} ->
+        :ok
+
+      {:error, reason} ->
         Logger.error("Failed to delete file: #{inspect(reason)}")
         {:error, :delete_failed}
     end
   end
 
   defp delete_s3_file(image_url) do
-    # Extract S3 key from URL
-    # Implementation for S3 delete
     :ok
   end
 
   defp generate_s3_presigned_url(filename, content_type) do
-    # Implementation for S3 presigned URL
-    # ExAws.S3.presigned_url(:put, bucket, key, expires_in: 3600)
     {:ok, "https://presigned-url..."}
   end
 
@@ -177,8 +133,7 @@ defmodule HookedApi.Services.ImageStorage do
     extension = Path.extname(original_filename)
     base_name = Path.basename(original_filename, extension)
     uuid = Ecto.UUID.generate()
-    
-    # Create filename like: "uuid-original-name.jpg"
+
     "#{uuid}-#{base_name}#{extension}"
   end
 

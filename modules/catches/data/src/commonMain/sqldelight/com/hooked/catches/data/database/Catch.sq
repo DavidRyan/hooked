@@ -3,7 +3,7 @@ CREATE TABLE CatchEntity (
     species TEXT NOT NULL,
     weight REAL NOT NULL,
     length REAL NOT NULL,
-    photoUrl TEXT NOT NULL,
+    photoURL TEXT NOT NULL,
     latitude REAL,
     longitude REAL,
     timestamp INTEGER,
@@ -19,7 +19,7 @@ selectById:
 SELECT * FROM CatchEntity WHERE id = ?;
 
 insert:
-INSERT OR REPLACE INTO CatchEntity(id, species, weight, length, photoUrl, latitude, longitude, timestamp, dateCaught, location, description)
+INSERT OR REPLACE INTO CatchEntity(id, species, weight, length, photoURL, latitude, longitude, timestamp, dateCaught, location, description)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteById:

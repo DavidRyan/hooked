@@ -14,7 +14,7 @@ config :hooked_api, HookedApi.Endpoint,
   pubsub_server: HookedApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"]
 
-#config :hooked_api, Oban,
+# config :hooked_api, Oban,
 #  engine: Oban.Engines.Basic,
 #  queues: [default: 10, enrichment: 5],
 #  repo: HookedApi.Repo
@@ -29,7 +29,8 @@ config :phoenix, :json_library, Jason
 config :hooked_api,
   image_storage_backend: :local,
   image_upload_dir: "priv/static/uploads/catches",
-  max_image_size: 10_000_000 # 10MB
+  # 10MB
+  max_image_size: 10_000_000
 
 # Import environment specific config
 import_config "#{config_env()}.exs"

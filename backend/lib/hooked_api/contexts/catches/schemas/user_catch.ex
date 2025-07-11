@@ -1,35 +1,28 @@
 defmodule HookedApi.Catches.UserCatch do
-  @moduledoc """
-  Schema for user catch records.
-  
-  Represents a fishing catch made by a user, including location,
-  species, timing, and enriched data like weather information.
-  """
-  
   use Ecto.Schema
   import Ecto.Changeset
-  
+
   @derive {Jason.Encoder, except: [:__meta__]}
 
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
-  
+
   @type t :: %__MODULE__{
-    id: binary(),
-    species: String.t(),
-    location: String.t(),
-    latitude: float(),
-    longitude: float(),
-    caught_at: NaiveDateTime.t(),
-    notes: String.t() | nil,
-    weather_data: map() | nil,
-    image_url: String.t() | nil,
-    image_filename: String.t() | nil,
-    image_content_type: String.t() | nil,
-    image_file_size: integer() | nil,
-    inserted_at: DateTime.t(),
-    updated_at: DateTime.t()
-  }
+          id: binary(),
+          species: String.t(),
+          location: String.t(),
+          latitude: float(),
+          longitude: float(),
+          caught_at: NaiveDateTime.t(),
+          notes: String.t() | nil,
+          weather_data: map() | nil,
+          image_url: String.t() | nil,
+          image_filename: String.t() | nil,
+          image_content_type: String.t() | nil,
+          image_file_size: integer() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
 
   schema "user_catches" do
     field :species, :string
@@ -39,37 +32,29 @@ defmodule HookedApi.Catches.UserCatch do
     field :caught_at, :naive_datetime
     field :notes, :string
     field :weather_data, :map
-    
-    # Image fields
+
     field :image_url, :string
     field :image_filename, :string
     field :image_content_type, :string
     field :image_file_size, :integer
 
-    # Future: Add user association
-    # belongs_to :user, HookedApi.Accounts.User
-
     timestamps(type: :utc_datetime)
   end
-
-  @doc """
-  Changeset for user catch creation and updates.
-  
-  ## Required fields
-  - species: The type of fish caught
-  - location: Where the catch was made
-  - caught_at: When the catch was made
-  
-  ## Optional fields
-  - latitude, longitude: GPS coordinates
-  - notes: Additional notes about the catch
-  - weather_data: Enriched weather information (usually set automatically)
-  - image_url, image_filename, image_content_type, image_file_size: Image metadata
-  """
   def changeset(user_catch, attrs) do
     user_catch
-    |> cast(attrs, [:species, :location, :latitude, :longitude, :caught_at, :notes, :weather_data, 
-                    :image_url, :image_filename, :image_content_type, :image_file_size])
+    |> cast(attrs, [
+      :species,
+      :location,
+      :latitude,
+      :longitude,
+      :caught_at,
+      :notes,
+      :weather_data,
+      :image_url,
+      :image_filename,
+      :image_content_type,
+      :image_file_size
+    ])
     |> validate_required([:species, :location, :caught_at])
     |> validate_length(:species, min: 1, max: 100)
     |> validate_length(:location, min: 1, max: 200)
@@ -77,8 +62,6 @@ defmodule HookedApi.Catches.UserCatch do
     |> validate_coordinates()
     |> validate_image()
   end
-
-
 
   defp validate_coordinates(changeset) do
     changeset
@@ -90,7 +73,12 @@ defmodule HookedApi.Catches.UserCatch do
     changeset
     |> validate_length(:image_filename, max: 255)
     |> validate_length(:image_url, max: 500)
-    |> validate_inclusion(:image_content_type, ["image/jpeg", "image/png", "image/webp", "image/heic"])
-    |> validate_number(:image_file_size, greater_than: 0, less_than: 10_000_000) # 10MB max
+    |> validate_inclusion(:image_content_type, [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/heic"
+    ])
+    |> validate_number(:image_file_size, greater_than: 0, less_than: 10_000_000)
   end
 end
