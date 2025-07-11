@@ -8,6 +8,7 @@ defmodule HookedApi.Application do
     children = [
       HookedApi.Repo,
       {Phoenix.PubSub, name: HookedApi.PubSub},
+      HookedApi.Catches,
       HookedApi.Endpoint
     ]
 
