@@ -10,6 +10,7 @@ defmodule HookedApi.Catches do
   alias HookedApi.Repo
   alias HookedApi.Catches.UserCatch
   alias HookedApi.Enrichment
+  alias HookedApi.Services.ImageStorage
 
   @doc """
   Returns the list of user catches.
@@ -102,7 +103,7 @@ defmodule HookedApi.Catches do
   end 
 
   @doc """
-  Deletes a user catch.
+  Deletes a user catch and its associated image.
 
   ## Examples
 
@@ -114,6 +115,11 @@ defmodule HookedApi.Catches do
 
   """
   def delete_user_catch(%UserCatch{} = user_catch) do
+    # Delete the image file if it exists
+    if user_catch.image_url do
+      ImageStorage.delete_image(user_catch.image_url)
+    end
+    
     Repo.delete(user_catch)
   end 
 
@@ -128,5 +134,32 @@ defmodule HookedApi.Catches do
   """
   def change_user_catch(%UserCatch{} = user_catch, attrs \\ %{}) do
     UserCatch.changeset(user_catch, attrs)
-  end 
+  end
+
+  @doc """
+  Creates a user catch with an uploaded image.
+
+  ## Examples
+
+      iex> create_user_catch_with_image(attrs, %Plug.Upload{})
+      {:ok, %UserCatch{}}
+
+      iex> create_user_catch_with_image(bad_attrs, upload)
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def create_user_catch_with_image(attrs, %Plug.Upload{} = image_upload) do
+    with {:ok, image_metadata} <- ImageStorage.upload_image(image_upload),
+         attrs_with_image <- Map.merge(attrs, image_metadata),
+         {:ok, user_catch} <- create_user_catch(attrs_with_image) do
+      {:ok, user_catch}
+    else
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, changeset}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+
+
+
 end

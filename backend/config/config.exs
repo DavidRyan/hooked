@@ -25,3 +25,11 @@ config :logger, :console,
 
 config :phoenix, :json_library, Jason
 
+# Image storage configuration
+config :hooked_api,
+  image_storage_backend: :local,
+  image_upload_dir: "priv/static/uploads/catches",
+  max_image_size: 10_000_000 # 10MB
+
+# Import environment specific config
+import_config "#{config_env()}.exs"

@@ -19,16 +19,12 @@ defmodule HookedApiWeb.UserCatchController do
     end
   end
 
-  def create(conn, %{"user_catch" => user_catch_params}) do
-    case Catches.create_user_catch(user_catch_params) do
-      {:ok, user_catch} ->
-        conn
-        |> put_status(:created)
-        |> json(%{user_catch: user_catch})
-      {:error, changeset} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{errors: changeset_errors(changeset)})
+  def create(conn, %{"user_catch" => user_catch_params} = params) do
+    case Map.get(params, "image") do
+      %Plug.Upload{} = image_upload ->
+        create_with_image(conn, user_catch_params, image_upload)
+      _ ->
+        create_without_image(conn, user_catch_params)
     end
   end
 
@@ -67,6 +63,45 @@ defmodule HookedApiWeb.UserCatchController do
         end
     end
   end
+
+
+
+  # Private helper functions
+
+  defp create_with_image(conn, user_catch_params, image_upload) do
+    case Catches.create_user_catch_with_image(user_catch_params, image_upload) do
+      {:ok, user_catch} ->
+        conn
+        |> put_status(:created)
+        |> json(%{user_catch: user_catch})
+      {:error, reason} when is_atom(reason) ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{error: format_error_reason(reason)})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: changeset_errors(changeset)})
+    end
+  end
+
+  defp create_without_image(conn, user_catch_params) do
+    case Catches.create_user_catch(user_catch_params) do
+      {:ok, user_catch} ->
+        conn
+        |> put_status(:created)
+        |> json(%{user_catch: user_catch})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: changeset_errors(changeset)})
+    end
+  end
+
+  defp format_error_reason(:invalid_file_type), do: "Invalid file type. Only JPEG, PNG, WebP, and HEIC images are allowed."
+  defp format_error_reason(:file_too_large), do: "File is too large. Maximum size is 10MB."
+  defp format_error_reason(:storage_failed), do: "Failed to store image. Please try again."
+  defp format_error_reason(reason), do: "Upload failed: #{reason}"
 
   defp changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->

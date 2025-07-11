@@ -1,15 +1,15 @@
 import Config
 
-config :backend, Backend.Repo,
+config :hooked_api, HookedApi.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "backend_dev",
+  database: "hooked_api_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 
-config :backend, Backend.Endpoint,
+config :hooked_api, HookedApi.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4000],
   check_origin: false,
   code_reloader: true,
@@ -17,7 +17,7 @@ config :backend, Backend.Endpoint,
   secret_key_base: "your-secret-key-base-here",
   watchers: []
 
-config :backend, :dev_routes, true
+config :hooked_api, :dev_routes, true
 
 config :logger, :console, format: "[$level] $message\n"
 
