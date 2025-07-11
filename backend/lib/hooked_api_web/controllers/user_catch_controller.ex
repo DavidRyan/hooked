@@ -20,11 +20,16 @@ defmodule HookedApiWeb.UserCatchController do
   end
 
   def create(conn, %{"user_catch" => user_catch_params}) do
-    # todo: add validation
-    # call catches.create_user_catch(user_catch_params)
-    # it starts a background process to enrich the catch
-    # return 200
-    # broadcast created with enriched data to websockt
+    case Catches.create_user_catch(user_catch_params) do
+      {:ok, user_catch} ->
+        conn
+        |> put_status(:created)
+        |> json(%{user_catch: user_catch})
+      {:error, changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(%{errors: changeset_errors(changeset)})
+    end
   end
 
   def update(conn, %{"id" => id, "user_catch" => user_catch_params}) do
