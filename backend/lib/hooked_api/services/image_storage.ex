@@ -148,6 +148,27 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
+  def get_image_file_path(image_url) when is_binary(image_url) do
+    case get_storage_backend() do
+      :local -> get_local_file_path(image_url)
+      :s3 -> {:error, :s3_not_supported}
+    end
+  end
+
+  def get_image_file_path(_), do: {:error, :no_image}
+
+  defp get_local_file_path(image_url) do
+    filename = Path.basename(image_url)
+    upload_dir = Application.get_env(:hooked_api, :image_upload_dir, @upload_dir)
+    file_path = Path.join(upload_dir, filename)
+    
+    if File.exists?(file_path) do
+      {:ok, file_path}
+    else
+      {:error, :file_not_found}
+    end
+  end
+
   defp get_storage_backend do
     Application.get_env(:hooked_api, :image_storage_backend, :local)
   end

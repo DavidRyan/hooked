@@ -1,3 +1,3 @@
 defmodule HookedApi.Enrichers.Enricher do
-  @callback enrich(struct()) :: map()
+  @callback enrich(struct(), map()) :: map()
 end

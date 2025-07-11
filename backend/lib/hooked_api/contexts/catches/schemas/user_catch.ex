@@ -16,6 +16,7 @@ defmodule HookedApi.Catches.UserCatch do
           caught_at: NaiveDateTime.t(),
           notes: String.t() | nil,
           weather_data: map() | nil,
+          exif_data: map() | nil,
           image_url: String.t() | nil,
           image_filename: String.t() | nil,
           image_content_type: String.t() | nil,
@@ -32,6 +33,7 @@ defmodule HookedApi.Catches.UserCatch do
     field :caught_at, :naive_datetime
     field :notes, :string
     field :weather_data, :map
+    field :exif_data, :map
 
     field :image_url, :string
     field :image_filename, :string
@@ -50,6 +52,7 @@ defmodule HookedApi.Catches.UserCatch do
       :caught_at,
       :notes,
       :weather_data,
+      :exif_data,
       :image_url,
       :image_filename,
       :image_content_type,

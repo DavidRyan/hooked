@@ -14,10 +14,10 @@ config :hooked_api, HookedApi.Endpoint,
   pubsub_server: HookedApi.PubSub,
   live_view: [signing_salt: "your-signing-salt"]
 
-# config :hooked_api, Oban,
-#  engine: Oban.Engines.Basic,
-#  queues: [default: 10, enrichment: 5],
-#  repo: HookedApi.Repo
+config :hooked_api, Oban,
+  engine: Oban.Engines.Basic,
+  queues: [catch_enrichment: 5],
+  repo: HookedApi.Repo
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
@@ -29,8 +29,12 @@ config :phoenix, :json_library, Jason
 config :hooked_api,
   image_storage_backend: :local,
   image_upload_dir: "priv/static/uploads/catches",
-  # 10MB
-  max_image_size: 10_000_000
+  max_image_size: 10_000_000,
+  enrichers: [
+    HookedApi.Enrichers.GeoEnricher,
+    HookedApi.Enrichers.WeatherEnricher,
+    HookedApi.Enrichers.SpeciesEnricher
+  ]
 
 # Import environment specific config
 import_config "#{config_env()}.exs"

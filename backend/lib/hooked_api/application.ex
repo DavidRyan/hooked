@@ -7,8 +7,9 @@ defmodule HookedApi.Application do
   def start(_type, _args) do
     children = [
       HookedApi.Repo,
+      {Oban, Application.fetch_env!(:hooked_api, Oban)},
       {Phoenix.PubSub, name: HookedApi.PubSub},
-      HookedApi.Catches,
+      HookedApi.EnrichmentHandler,
       HookedApi.Endpoint
     ]
 
