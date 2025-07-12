@@ -7,6 +7,7 @@ defmodule HookedApi.Repo.Migrations.AddImageFieldsToUserCatches do
       add :image_filename, :string
       add :image_content_type, :string
       add :image_file_size, :integer
+      add :exif_data, :map
     end
 
     create index(:user_catches, [:image_url])

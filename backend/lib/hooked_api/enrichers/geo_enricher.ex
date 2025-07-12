@@ -12,18 +12,24 @@ defmodule HookedApi.Enrichers.GeoEnricher do
   end
 
   defp get_coordinates(user_catch, exif_data) do
-    cond do
-      {lat, lng} = get_exif_coordinates(exif_data) ->
+    case get_exif_coordinates(exif_data) do
+      {lat, lng} when is_number(lat) and is_number(lng) ->
         {lat, lng}
       
-      location = Map.get(user_catch, :location) ->
-        {Map.get(location, :latitude), Map.get(location, :longitude)}
-      
-      lat = Map.get(user_catch, :latitude) ->
-        {lat, Map.get(user_catch, :longitude)}
-      
-      true ->
-        {nil, nil}
+      _ ->
+        case Map.get(user_catch, :location) do
+          location when is_map(location) ->
+            {Map.get(location, :latitude), Map.get(location, :longitude)}
+          
+          _ ->
+            case Map.get(user_catch, :latitude) do
+              lat when is_number(lat) ->
+                {lat, Map.get(user_catch, :longitude)}
+              
+              _ ->
+                {nil, nil}
+            end
+        end
     end
   end
 

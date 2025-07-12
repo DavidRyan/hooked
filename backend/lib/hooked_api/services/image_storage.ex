@@ -52,7 +52,7 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
-  defp validate_content_type(path) do
+  defp validate_content_type(_path) do
     :ok
   end
 
@@ -81,7 +81,7 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
-  defp store_s3_file(filename, temp_path) do
+  defp store_s3_file(filename, _temp_path) do
     unique_filename = generate_unique_filename(filename)
     s3_key = "catches/#{unique_filename}"
 
@@ -121,11 +121,11 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
-  defp delete_s3_file(image_url) do
+  defp delete_s3_file(_image_url) do
     :ok
   end
 
-  defp generate_s3_presigned_url(filename, content_type) do
+  defp generate_s3_presigned_url(_filename, _content_type) do
     {:ok, "https://presigned-url..."}
   end
 

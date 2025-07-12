@@ -56,7 +56,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
       {:ok, file_path} ->
         case ExifParser.parse(file_path) do
           {:ok, exif_data} -> exif_data
-          {:error, _reason} -> %{}
+          _ -> %{}
         end
       
       {:error, _reason} ->
