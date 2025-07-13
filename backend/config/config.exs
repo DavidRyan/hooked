@@ -33,8 +33,12 @@ config :hooked_api,
   enrichers: [
     HookedApi.Enrichers.GeoEnricher,
     HookedApi.Enrichers.WeatherEnricher,
-    HookedApi.Enrichers.SpeciesEnricher
+    HookedApi.Enrichers.Species.SpeciesEnricher
   ]
+
+# iNaturalist API configuration
+config :hooked_api,
+  inaturalist_access_token: "YOUR_INATURALIST_ACCESS_TOKEN_HERE"
 
 # Import environment specific config
 import_config "#{config_env()}.exs"

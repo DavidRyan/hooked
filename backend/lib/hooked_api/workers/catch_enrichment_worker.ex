@@ -36,19 +36,32 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
     exif_data = extract_exif_data(user_catch)
     enrichers = EnrichmentService.get_configured_enrichers()
 
-    enriched_data = Enum.reduce(enrichers, %{}, fn enricher, acc ->
+    # Chain the user_catch through enrichers
+    final_user_catch = Enum.reduce(enrichers, user_catch, fn enricher, updated_catch ->
       try do
-        enricher.enrich(user_catch, exif_data)
-        |> Map.merge(acc)
+        enricher.enrich(updated_catch, exif_data)
       rescue
         error ->
           require Logger
           Logger.error("Enricher #{enricher} failed: #{inspect(error)}")
-          acc
+          updated_catch  # Return unchanged on error
       end
     end)
 
-    Map.merge(enriched_data, %{"exif_data" => exif_data})
+    # Extract only new/changed fields for broadcasting
+    original_map = Map.from_struct(user_catch)
+    final_map = Map.from_struct(final_user_catch)
+    
+    # Find fields that were added or changed
+    enriched_data = Enum.reduce(final_map, %{}, fn {key, value}, acc ->
+      case Map.get(original_map, key) do
+        ^value -> acc  # Same value, skip
+        _ -> Map.put(acc, to_string(key), value)  # New or changed value
+      end
+    end)
+    |> Map.put("exif_data", exif_data)
+
+    enriched_data
   end
 
   defp extract_exif_data(user_catch) do
