@@ -39,7 +39,10 @@ defmodule HookedApi.MixProject do
       {:oban, "~> 2.17"},
       {:tesla, "~> 1.8"},
       {:hackney, "~> 1.18"},
-      {:exexif, "~> 0.0.5"}
+      {:exexif, "~> 0.0.5"},
+      {:ex_machina, "~> 2.8", only: :test},
+      {:mox, "~> 1.0", only: :test},
+      {:mock, "~> 0.3.0", only: :test}
     ]
   end
 

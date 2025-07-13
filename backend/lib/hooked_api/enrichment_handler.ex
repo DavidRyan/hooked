@@ -16,13 +16,13 @@ defmodule HookedApi.EnrichmentHandler do
   end
 
   @impl true
-  def handle_info({:enrichment_completed, catch_id, enriched_data}, state) do
+  def handle_info({:enrichment_completed, catch_id, enriched_user_catch}, state) do
     case Catches.get_user_catch(catch_id) do
       nil ->
         Logger.error("Catch not found for enrichment: #{catch_id}")
 
-      user_catch ->
-        case Catches.update_user_catch(user_catch, enriched_data) do
+      _user_catch ->
+        case Catches.replace_user_catch(enriched_user_catch) do
           {:ok, updated_catch} ->
             Logger.info("Successfully enriched catch #{updated_catch.id}")
 

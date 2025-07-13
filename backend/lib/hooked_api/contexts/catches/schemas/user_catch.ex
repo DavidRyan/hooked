@@ -2,7 +2,7 @@ defmodule HookedApi.Catches.UserCatch do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @derive {Jason.Encoder, except: [:__meta__]}
+  @derive {Jason.Encoder, only: [:id, :species, :location, :latitude, :longitude, :caught_at, :notes, :weather_data, :exif_data, :image_url, :image_filename, :image_content_type, :image_file_size, :inserted_at, :updated_at]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 

@@ -1,76 +1,86 @@
 defmodule HookedApi.Workers.CatchEnrichmentWorker do
   use Oban.Worker, queue: :catch_enrichment, max_attempts: 3
 
+  require Logger
+
+  alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
   alias HookedApi.Utils.ExifExtractor
   alias HookedApi.PubSubTopics
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"catch_id" => catch_id, "user_catch" => user_catch_data}}) do
-    user_catch = struct(HookedApi.Catches.UserCatch, user_catch_data)
+  def perform(%Oban.Job{args: %{"catch_id" => catch_id, "user_catch" => user_catch}}) do
+    user_catch
+    |> enrich_catch()
+    |> case do
+      {:ok, enriched_user_catch} ->
+        broadcast_success(catch_id, enriched_user_catch)
+        :ok
+
+      {:error, error} ->
+        broadcast_failure(catch_id, error)
+        {:error, error}
+    end
+  end
+
+  defp enrich_catch(user_catch) do
+    with {:ok, exif_data} <- extract_exif_data(user_catch),
+         {:ok, enriched_catch} <- apply_enrichers(user_catch) do
+      {:ok, %{enriched_catch | exif_data: exif_data}}
+    end
+  end
+
+  defp extract_exif_data(user_catch) do
+    user_catch.image_url
+    |> ImageStorage.get_image_file_path()
+    |> case do
+      {:ok, file_path} -> 
+        {:ok, ExifExtractor.extract_from_file(file_path)}
+      {:error, _reason} -> 
+        {:ok, %{}}
+    end
+  end
+
+  defp apply_enrichers(user_catch) do
+    enrichers = EnrichmentService.get_configured_enrichers()
     
-    enriched_data = enrich_catch(user_catch)
+    enrichers
+    |> Enum.reduce_while({:ok, user_catch}, &apply_enricher/2)
+  end
+
+  defp apply_enricher(enricher, {:ok, user_catch}) do
+    case safe_enrich(enricher, user_catch) do
+      {:ok, enriched_catch} -> 
+        {:cont, {:ok, enriched_catch}}
+      {:error, error} -> 
+        Logger.warning("Enricher #{inspect(enricher)} failed: #{inspect(error)}")
+        {:cont, {:ok, user_catch}}  # Continue with original catch on enricher failure
+    end
+  end
+
+  defp safe_enrich(enricher, user_catch) do
+    enricher.enrich(user_catch)
+  rescue
+    error ->
+      Logger.error("Enricher #{inspect(enricher)} crashed: #{inspect(error)}")
+      {:error, error}
+  end
+
+  defp broadcast_success(catch_id, enriched_user_catch) do
+    Phoenix.PubSub.broadcast(
+      HookedApi.PubSub,
+      PubSubTopics.catch_enrichment(),
+      {:enrichment_completed, catch_id, enriched_user_catch}
+    )
+  end
+
+  defp broadcast_failure(catch_id, error) do
+    Logger.error("Failed to enrich catch #{catch_id}: #{inspect(error)}")
     
     Phoenix.PubSub.broadcast(
       HookedApi.PubSub,
       PubSubTopics.catch_enrichment(),
-      {:enrichment_completed, catch_id, enriched_data}
+      {:enrichment_failed, catch_id, error}
     )
-    
-    :ok
-  rescue
-    error ->
-      require Logger
-      Logger.error("Failed to enrich catch #{catch_id}: #{inspect(error)}")
-      
-      Phoenix.PubSub.broadcast(
-        HookedApi.PubSub,
-        PubSubTopics.catch_enrichment(),
-        {:enrichment_failed, catch_id, error}
-      )
-      
-      {:error, error}
-  end
-
-  defp enrich_catch(user_catch) do
-    exif_data = extract_exif_data(user_catch)
-    enrichers = EnrichmentService.get_configured_enrichers()
-
-    # Chain the user_catch through enrichers
-    final_user_catch = Enum.reduce(enrichers, user_catch, fn enricher, updated_catch ->
-      try do
-        enricher.enrich(updated_catch, exif_data)
-      rescue
-        error ->
-          require Logger
-          Logger.error("Enricher #{enricher} failed: #{inspect(error)}")
-          updated_catch  # Return unchanged on error
-      end
-    end)
-
-    # Extract only new/changed fields for broadcasting
-    original_map = Map.from_struct(user_catch)
-    final_map = Map.from_struct(final_user_catch)
-    
-    # Find fields that were added or changed
-    enriched_data = Enum.reduce(final_map, %{}, fn {key, value}, acc ->
-      case Map.get(original_map, key) do
-        ^value -> acc  # Same value, skip
-        _ -> Map.put(acc, to_string(key), value)  # New or changed value
-      end
-    end)
-    |> Map.put("exif_data", exif_data)
-
-    enriched_data
-  end
-
-  defp extract_exif_data(user_catch) do
-    case ImageStorage.get_image_file_path(user_catch.image_url) do
-      {:ok, file_path} ->
-        ExifExtractor.extract_from_file(file_path)
-      
-      {:error, _reason} ->
-        %{}
-    end
   end
 end

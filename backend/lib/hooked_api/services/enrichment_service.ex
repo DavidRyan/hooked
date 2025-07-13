@@ -2,9 +2,7 @@ defmodule HookedApi.Services.EnrichmentService do
   alias HookedApi.Workers.CatchEnrichmentWorker
 
   def enqueue_enrichment(user_catch) do
-    user_catch_data = Map.from_struct(user_catch)
-
-    %{catch_id: user_catch.id, user_catch: user_catch_data}
+    %{catch_id: user_catch.id, user_catch: user_catch}
     |> CatchEnrichmentWorker.new()
     |> Oban.insert()
   end
