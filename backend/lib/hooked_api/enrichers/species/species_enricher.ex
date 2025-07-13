@@ -1,6 +1,16 @@
 defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
+  @moduledoc """
+  Enriches user catches with species identification using iNaturalist's Computer Vision API.
+  
+  This enricher downloads the catch image, sends it to iNaturalist for species identification,
+  and updates the catch with the identified species name (preferring common names over scientific names).
+  """
+  
   @behaviour HookedApi.Enrichers.Enricher
+  
   use Tesla
+  require Logger
+  
   plug Tesla.Middleware.JSON
   plug Tesla.Middleware.Logger
   plug Tesla.Middleware.Multipart
@@ -10,45 +20,65 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
   ]
 
   adapter Tesla.Adapter.Hackney
-  @tempfile "tmp/file.jpg"
 
+  @doc """
+  Enriches a user catch with species identification.
+  
+  ## Parameters
+  - user_catch: The user catch struct to enrich
+  - _exif_data: EXIF data (unused in this enricher)
+  
+  ## Returns
+  - Updated user catch with species field set, or original catch if identification fails
+  """
+  @spec enrich(map(), map()) :: map()
   def enrich(user_catch, _exif_data) do
+    case identify_species(user_catch.image_url) do
+      {:ok, species} -> 
+        %{user_catch | species: species}
+      {:error, reason} ->
+        Logger.warning("Species identification failed: #{inspect(reason)}")
+        user_catch
+    end
+  end
 
-    with {:ok, _} <- download_image(user_catch.image_url),
-      multipart <- Tesla.Multipart.new()  |> Tesla.Multipart.add_file(@tempfile, name: "image"),
-      {:ok, %Tesla.Env{status: 200, body: body}} <- post("/computervision/score_image", multipart) do
-        [best | _] = body["results"]
-        # Use preferred common name if available, fallback to scientific name
-        species = best["taxon"]["preferred_common_name"] || best["taxon"]["name"]
-        cleanup(@tempfile)
-        Map.put(user_catch, :species, species)
-        else 
-          {:error, _error} ->
-          cleanup(@tempfile)
-            user_catch
+  @doc """
+  Identifies species directly from image URL using stream processing.
+  """
+  @spec identify_species(String.t()) :: {:ok, String.t()} | {:error, term()}
+  defp identify_species(image_url) do
+    with {:ok, %Tesla.Env{status: 200, body: image_data}} <- Tesla.get(image_url),
+         multipart <- Tesla.Multipart.new() |> Tesla.Multipart.add_file_content(image_data, "image.jpg", name: "image"),
+         {:ok, %Tesla.Env{status: 200, body: %{"results" => [best_result | _]}}} <- post("/computervision/score_image", multipart) do
+      extract_species_name(best_result)
+    else
+      {:ok, %Tesla.Env{status: 200, body: %{"results" => []}}} ->
+        {:error, :no_species_identified}
+      {:ok, %Tesla.Env{status: status}} ->
+        {:error, {:api_error, status}}
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @doc """
+  Extracts the preferred species name from iNaturalist API response.
+  """
+  @spec extract_species_name(map()) :: {:ok, String.t()} | {:error, :invalid_response}
+  defp extract_species_name(%{"taxon" => taxon}) do
+    species_name = 
+      case taxon do
+        %{"preferred_common_name" => name} when is_binary(name) and name != "" -> name
+        %{"name" => name} when is_binary(name) and name != "" -> name
+        _ -> nil
       end
+    
+    case species_name do
+      nil -> {:error, :invalid_response}
+      name -> {:ok, name}
+    end
   end
+  defp extract_species_name(_), do: {:error, :invalid_response}
 
-def download_image(image_url) do
-  case Tesla.get(image_url) do
-    {:ok, %Tesla.Env{status: 200, body: body}} ->
-      File.mkdir_p!("tmp")
-      case File.write(@tempfile, body) do
-        :ok -> {:ok, @tempfile}
-        error -> {:error, error}
-      end
 
-    {:ok, %Tesla.Env{status: status}} ->
-      {:error, "Failed to download image: status #{status}"}
-
-    {:error, error} ->
-      {:error, error}
-  end
-end
-
-def cleanup(tempfile) do
-  if File.exists?(tempfile) do
-    File.rm(tempfile)
-  end
-end
 end
