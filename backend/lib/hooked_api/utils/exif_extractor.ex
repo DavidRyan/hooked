@@ -1,16 +1,4 @@
 defmodule HookedApi.Utils.ExifExtractor do
-  @moduledoc """
-  Wrapper for EXIF data extraction from image files.
-  
-  Isolates the exexif library implementation details from the rest of the application.
-  Provides a clean interface for extracting EXIF data with standardized return format.
-  """
-
-  @doc """
-  Extracts EXIF data from an image file.
-  
-  Returns a standardized map with common EXIF fields, or empty map if extraction fails.
-  """
   @spec extract_from_file(String.t()) :: map()
   def extract_from_file(file_path) when is_binary(file_path) do
     case Exexif.exif_from_jpeg_file(file_path) do
@@ -20,7 +8,6 @@ defmodule HookedApi.Utils.ExifExtractor do
   end
   def extract_from_file(_), do: %{}
 
-  # Normalizes exexif data to a standardized format
   @spec normalize_exif_data(map()) :: map()
   defp normalize_exif_data(exif_data) when is_map(exif_data) do
     %{

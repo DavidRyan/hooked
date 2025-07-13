@@ -1,11 +1,4 @@
 defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
-  @moduledoc """
-  Enriches user catches with species identification using iNaturalist's Computer Vision API.
-  
-  This enricher downloads the catch image, sends it to iNaturalist for species identification,
-  and updates the catch with the identified species name (preferring common names over scientific names).
-  """
-  
   @behaviour HookedApi.Enrichers.Enricher
   
   use Tesla
@@ -21,16 +14,6 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
 
   adapter Tesla.Adapter.Hackney
 
-  @doc """
-  Enriches a user catch with species identification.
-  
-  ## Parameters
-  - user_catch: The user catch struct to enrich
-  - _exif_data: EXIF data (unused in this enricher)
-  
-  ## Returns
-  - Updated user catch with species field set, or original catch if identification fails
-  """
   @spec enrich(map(), map()) :: map()
   def enrich(user_catch, _exif_data) do
     case identify_species(user_catch.image_url) do
@@ -42,9 +25,6 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
     end
   end
 
-  @doc """
-  Identifies species directly from image URL using stream processing.
-  """
   @spec identify_species(String.t()) :: {:ok, String.t()} | {:error, term()}
   defp identify_species(image_url) do
     with {:ok, %Tesla.Env{status: 200, body: image_data}} <- Tesla.get(image_url),
@@ -61,9 +41,6 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
     end
   end
 
-  @doc """
-  Extracts the preferred species name from iNaturalist API response.
-  """
   @spec extract_species_name(map()) :: {:ok, String.t()} | {:error, :invalid_response}
   defp extract_species_name(%{"taxon" => taxon}) do
     species_name = 
