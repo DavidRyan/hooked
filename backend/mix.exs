@@ -38,7 +38,8 @@ defmodule HookedApi.MixProject do
       {:bandit, "~> 1.5"},
       {:oban, "~> 2.17"},
       {:tesla, "~> 1.8"},
-      {:hackney, "~> 1.18"}
+      {:hackney, "~> 1.18"},
+      {:exexif, "~> 0.0.5"}
     ]
   end
 
