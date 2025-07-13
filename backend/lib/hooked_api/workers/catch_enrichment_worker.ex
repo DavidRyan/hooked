@@ -1,8 +1,8 @@
 defmodule HookedApi.Workers.CatchEnrichmentWorker do
   use Oban.Worker, queue: :catch_enrichment, max_attempts: 3
 
-  alias HookedApi.Utils.ExifParser
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
+  alias HookedApi.Utils.ExifExtractor
   alias HookedApi.PubSubTopics
 
   @impl Oban.Worker
@@ -67,10 +67,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
   defp extract_exif_data(user_catch) do
     case ImageStorage.get_image_file_path(user_catch.image_url) do
       {:ok, file_path} ->
-        case ExifParser.parse(file_path) do
-          {:ok, exif_data} -> exif_data
-          _ -> %{}
-        end
+        ExifExtractor.extract_from_file(file_path)
       
       {:error, _reason} ->
         %{}
