@@ -1,7 +1,7 @@
 package com.hooked.catches.domain.entities
 
 data class CatchEntity(
-    val id: Long,
+    val id: String,
     val name: String,
     val description: String,
     val dateCaught: String,

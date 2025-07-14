@@ -2,30 +2,38 @@ package com.hooked.catches.data.model
 
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class CatchDto(
-    val id: Long,
+    val id: String,
     val species: String,
-    val weight: Double,
-    val length: Double,
-    val photoUrl: String,
+    val location: String,
     val latitude: Double? = null,
     val longitude: Double? = null,
-    val timestamp: Long? = null
+    @SerialName("caught_at") val caughtAt: String,
+    val notes: String? = null,
+    @SerialName("weather_data") val weatherData: Map<String, String>? = null,
+    @SerialName("exif_data") val exifData: Map<String, String>? = null,
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("image_filename") val imageFilename: String? = null,
+    @SerialName("image_content_type") val imageContentType: String? = null,
+    @SerialName("image_file_size") val imageFileSize: Long? = null,
+    @SerialName("inserted_at") val insertedAt: String,
+    @SerialName("updated_at") val updatedAt: String
 )
 
 fun CatchDto.toEntity(): CatchEntity {
     return CatchEntity(
         id = id,
         name = species,
-        description = "Caught a $species weighing $weight kg and measuring $length cm",
-        dateCaught = "2023-10-01",
-        location = "Unknown",
-        imageUrl = photoUrl,
-        weight = weight,
-        length = length
+        description = notes ?: "Caught a $species at $location",
+        dateCaught = caughtAt.take(10), // Extract date part from datetime string
+        location = location,
+        imageUrl = imageUrl ?: "",
+        weight = 0.0, // Weight not in current schema, using default
+        length = 0.0  // Length not in current schema, using default
     )
 }
 
@@ -33,18 +41,14 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
     return CatchDetailsEntity(
         id = id,
         species = species,
-        weight = weight,
-        length = length,
+        weight = 0.0, // Weight not in current schema, using default
+        length = 0.0, // Length not in current schema, using default
         latitude = latitude,
         longitude = longitude,
-        timestamp = timestamp,
-        photoUrl = photoUrl,
-        location = if (latitude != null && longitude != null) {
-            "${latitude.toString().take(6)}, ${longitude.toString().take(6)}"
-        } else "Unknown location",
-        dateCaught = timestamp?.let { 
-            "Date: $it" // TODO: Use kotlinx-datetime for proper date formatting
-        } ?: "Unknown date"
+        timestamp = null, // Convert datetime string to timestamp if needed
+        photoUrl = imageUrl ?: "",
+        location = location,
+        dateCaught = caughtAt.take(10) // Extract date part from datetime string
     )
 }
 

@@ -21,7 +21,7 @@ defmodule HookedApi.EnrichmentHandler do
       nil ->
         Logger.error("Catch not found for enrichment: #{catch_id}")
 
-      _user_catch ->
+      user_catch ->
         case Catches.replace_user_catch(enriched_user_catch) do
           {:ok, updated_catch} ->
             Logger.info("Successfully enriched catch #{updated_catch.id}")

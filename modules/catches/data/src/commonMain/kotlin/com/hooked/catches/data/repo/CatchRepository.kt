@@ -46,7 +46,7 @@ class CatchRepositoryImpl(
         }
     }
     
-    override suspend fun getCatchDetails(catchId: Long): Result<CatchDetailsEntity> {
+    override suspend fun getCatchDetails(catchId: String): Result<CatchDetailsEntity> {
         return try {
             // First try to get from local database
             val localCatch = localDataSource.getCatchById(catchId)
@@ -92,19 +92,18 @@ class CatchRepositoryImpl(
         }
     }
     
-    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<Long> {
+    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<String> {
         val submitDto = SubmitCatchDto(
             species = catchEntity.species,
-            weight = catchEntity.weight,
-            length = catchEntity.length,
+            location = catchEntity.location ?: "Unknown",
             latitude = catchEntity.latitude,
             longitude = catchEntity.longitude,
-            photoBase64 = catchEntity.photoBase64,
-            timestamp = catchEntity.timestamp
+            caughtAt = catchEntity.caughtAt ?: "2024-01-01T00:00:00Z",
+            notes = catchEntity.notes
         )
         
         return try {
-            when(val result = catchApiService.submitCatch(submitDto)) {
+            when(val result = catchApiService.submitCatch(submitDto, catchEntity.imageBytes)) {
                 is NetworkResult.Success -> {
                     Logger.info("CatchRepository", "Successfully submitted catch, received ID: ${result.data}")
                     Result.success(result.data)

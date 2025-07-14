@@ -9,6 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 class CatchLocalDataSource(
     private val database: CatchDatabase
@@ -19,7 +21,7 @@ class CatchLocalDataSource(
         return queries.selectAll().asFlow().mapToList(Dispatchers.IO)
     }
 
-    suspend fun getCatchById(id: Long): CatchEntity? {
+    suspend fun getCatchById(id: String): CatchEntity? {
         return withContext(Dispatchers.IO) {
             queries.selectById(id).executeAsOneOrNull()
         }
@@ -31,17 +33,19 @@ class CatchLocalDataSource(
                 queries.insert(
                     id = catch.id,
                     species = catch.species,
-                    weight = catch.weight,
-                    length = catch.length,
-                    photoUrl = catch.photoUrl,
+                    location = catch.location,
                     latitude = catch.latitude,
                     longitude = catch.longitude,
-                    timestamp = catch.timestamp,
-                    dateCaught = "2023-10-01", // TODO: Use proper date from DTO
-                    location = if (catch.latitude != null && catch.longitude != null) {
-                        "${catch.latitude}, ${catch.longitude}"
-                    } else "Unknown",
-                    description = "Caught a ${catch.species} weighing ${catch.weight} kg"
+                    caught_at = catch.caughtAt,
+                    notes = catch.notes,
+                    weather_data = catch.weatherData?.let { Json.encodeToString(it) },
+                    exif_data = catch.exifData?.let { Json.encodeToString(it) },
+                    image_url = catch.imageUrl,
+                    image_filename = catch.imageFilename,
+                    image_content_type = catch.imageContentType,
+                    image_file_size = catch.imageFileSize,
+                    inserted_at = catch.insertedAt,
+                    updated_at = catch.updatedAt
                 )
                 Logger.info("CatchLocalDataSource", "Inserted catch with id: ${catch.id}")
             } catch (e: Exception) {
@@ -65,7 +69,7 @@ class CatchLocalDataSource(
         }
     }
 
-    suspend fun deleteCatch(id: Long) {
+    suspend fun deleteCatch(id: String) {
         withContext(Dispatchers.IO) {
             queries.deleteById(id)
             Logger.info("CatchLocalDataSource", "Deleted catch with id: $id")

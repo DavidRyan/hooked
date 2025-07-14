@@ -5,7 +5,7 @@ import com.hooked.catches.domain.repositories.CatchRepository
 import com.hooked.core.domain.UseCaseResult
 
 class GetCatchDetailsUseCase(private val catchRepository: CatchRepository) {
-    suspend operator fun invoke(catchId: Long): UseCaseResult<CatchDetailsEntity> {
+    suspend operator fun invoke(catchId: String): UseCaseResult<CatchDetailsEntity> {
         return try {
             val result = catchRepository.getCatchDetails(catchId)
             if (result.isSuccess) {

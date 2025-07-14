@@ -1,15 +1,19 @@
 CREATE TABLE CatchEntity (
-    id INTEGER PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     species TEXT NOT NULL,
-    weight REAL NOT NULL,
-    length REAL NOT NULL,
-    photoURL TEXT NOT NULL,
+    location TEXT NOT NULL,
     latitude REAL,
     longitude REAL,
-    timestamp INTEGER,
-    dateCaught TEXT NOT NULL,
-    location TEXT NOT NULL,
-    description TEXT NOT NULL
+    caught_at TEXT NOT NULL,
+    notes TEXT,
+    weather_data TEXT,
+    exif_data TEXT,
+    image_url TEXT,
+    image_filename TEXT,
+    image_content_type TEXT,
+    image_file_size INTEGER,
+    inserted_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
 );
 
 selectAll:
@@ -19,8 +23,12 @@ selectById:
 SELECT * FROM CatchEntity WHERE id = ?;
 
 insert:
-INSERT OR REPLACE INTO CatchEntity(id, species, weight, length, photoURL, latitude, longitude, timestamp, dateCaught, location, description)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+INSERT OR REPLACE INTO CatchEntity(
+    id, species, location, latitude, longitude, caught_at, notes, 
+    weather_data, exif_data, image_url, image_filename, 
+    image_content_type, image_file_size, inserted_at, updated_at
+)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 deleteById:
 DELETE FROM CatchEntity WHERE id = ?;

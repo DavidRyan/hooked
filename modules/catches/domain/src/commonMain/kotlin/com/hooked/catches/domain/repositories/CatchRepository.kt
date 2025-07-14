@@ -6,6 +6,6 @@ import com.hooked.catches.domain.entities.SubmitCatchEntity
 
 interface CatchRepository {
     suspend fun getCatches(): Result<List<CatchEntity>>
-    suspend fun getCatchDetails(catchId: Long): Result<CatchDetailsEntity>
-    suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<Long>
+    suspend fun getCatchDetails(catchId: String): Result<CatchDetailsEntity>
+    suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<String>
 }
