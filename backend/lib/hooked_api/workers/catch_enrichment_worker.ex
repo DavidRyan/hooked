@@ -3,7 +3,6 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
 
   require Logger
 
-  alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
   alias HookedApi.Utils.ExifExtractor
   alias HookedApi.PubSubTopics

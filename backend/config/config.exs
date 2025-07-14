@@ -40,5 +40,12 @@ config :hooked_api,
 config :hooked_api,
   inaturalist_access_token: "YOUR_INATURALIST_ACCESS_TOKEN_HERE"
 
+# OpenWeatherMap API configuration
+config :hooked_api,
+  openweather_api_key: System.get_env("OPENWEATHER_API_KEY")
+
+# Tesla configuration
+config :tesla, disable_deprecated_builder_warning: true
+
 # Import environment specific config
 import_config "#{config_env()}.exs"

@@ -14,14 +14,13 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
 
   adapter Tesla.Adapter.Hackney
 
-  @spec enrich(map(), map()) :: map()
-  def enrich(user_catch, _exif_data) do
+  def enrich(user_catch) do
     case identify_species(user_catch.image_url) do
       {:ok, species} -> 
-        %{user_catch | species: species}
+        {:ok, %{user_catch | species: species}}
       {:error, reason} ->
         Logger.warning("Species identification failed: #{inspect(reason)}")
-        user_catch
+        {:ok, user_catch}
     end
   end
 

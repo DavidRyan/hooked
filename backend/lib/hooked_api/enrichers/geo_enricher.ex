@@ -1,12 +1,12 @@
 defmodule HookedApi.Enrichers.GeoEnricher do
   @behaviour HookedApi.Enrichers.Enricher
 
-  def enrich(user_catch, exif_data) do
-    case get_gps_from_exif(exif_data) do
+  def enrich(user_catch) do
+    case get_gps_from_exif(user_catch.exif_data) do
       {:ok, lat, lng} ->
-        %{user_catch | latitude: lat, longitude: lng}
+        {:ok, %{user_catch | latitude: lat, longitude: lng}}
       _ ->
-        user_catch
+        {:ok, user_catch}
     end
   end
 
