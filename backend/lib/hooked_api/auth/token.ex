@@ -33,8 +33,17 @@ defmodule HookedApi.Auth.Token do
   end
 
   defp get_signer do
-    secret = Application.get_env(:hooked_api, :jwt_secret) || 
-             raise "JWT secret not configured. Set :jwt_secret in config."
+    secret = System.get_env("JWT_SECRET") || 
+             raise """
+             JWT_SECRET environment variable is required.
+             Generate a secure secret with: mix phx.gen.secret
+             Then set: export JWT_SECRET=your_generated_secret
+             """
+    
+    if byte_size(secret) < 32 do
+      raise "JWT_SECRET must be at least 32 characters long for security"
+    end
+    
     Joken.Signer.create("HS256", secret)
   end
 end

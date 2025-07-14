@@ -13,6 +13,9 @@ defmodule HookedApi.Accounts.User do
           first_name: String.t() | nil,
           last_name: String.t() | nil,
           is_active: boolean(),
+          failed_login_attempts: integer(),
+          locked_until: DateTime.t() | nil,
+          last_failed_login: DateTime.t() | nil,
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }
@@ -24,6 +27,9 @@ defmodule HookedApi.Accounts.User do
     field :first_name, :string
     field :last_name, :string
     field :is_active, :boolean, default: true
+    field :failed_login_attempts, :integer, default: 0
+    field :locked_until, :utc_datetime
+    field :last_failed_login, :utc_datetime
 
     timestamps(type: :utc_datetime)
   end
@@ -46,15 +52,16 @@ defmodule HookedApi.Accounts.User do
 
   def update_changeset(user, attrs) do
     user
-    |> cast(attrs, [:first_name, :last_name, :is_active])
+    |> cast(attrs, [:first_name, :last_name, :is_active, :failed_login_attempts, :locked_until, :last_failed_login])
     |> validate_length(:first_name, min: 1, max: 50)
     |> validate_length(:last_name, min: 1, max: 50)
+    |> validate_number(:failed_login_attempts, greater_than_or_equal_to: 0)
   end
 
   defp validate_email(changeset) do
     changeset
     |> validate_required([:email])
-    |> validate_format(:email, ~r/^[^\s]+@[^\s]+$/, message: "must have the @ sign and no spaces")
+    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: "must be a valid email address")
     |> validate_length(:email, max: 160)
     |> unsafe_validate_unique(:email, HookedApi.Repo)
     |> unique_constraint(:email)

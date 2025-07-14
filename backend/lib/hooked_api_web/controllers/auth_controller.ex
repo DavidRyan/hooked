@@ -15,10 +15,10 @@ defmodule HookedApiWeb.AuthController do
             |> put_status(:created)
             |> render(:user_with_token, user: user, token: token)
           
-          {:error, reason} ->
+          {:error, _reason} ->
             conn
             |> put_status(:unprocessable_entity)
-            |> json(%{error: "Authentication failed: #{inspect(reason)}"})
+            |> json(%{error: "Authentication failed"})
         end
 
       {:error, %Ecto.Changeset{} = changeset} ->
@@ -33,20 +33,10 @@ defmodule HookedApiWeb.AuthController do
       {:ok, user, token} ->
         render(conn, :user_with_token, user: user, token: token)
       
-      {:error, :invalid_credentials} ->
+      {:error, _reason} ->
         conn
         |> put_status(:unauthorized)
         |> json(%{error: "Invalid email or password"})
-      
-      {:error, :account_disabled} ->
-        conn
-        |> put_status(:forbidden)
-        |> json(%{error: "Account is disabled"})
-      
-      {:error, reason} ->
-        conn
-        |> put_status(:unprocessable_entity)
-        |> json(%{error: "Authentication failed: #{inspect(reason)}"})
     end
   end
 
@@ -62,10 +52,10 @@ defmodule HookedApiWeb.AuthController do
       {:ok, token, _claims} ->
         render(conn, :user_with_token, user: user, token: token)
       
-      {:error, reason} ->
+      {:error, _reason} ->
         conn
         |> put_status(:unprocessable_entity)
-        |> json(%{error: "Token generation failed: #{inspect(reason)}"})
+        |> json(%{error: "Token generation failed"})
     end
   end
 end
