@@ -47,5 +47,9 @@ config :hooked_api,
 # Tesla configuration
 config :tesla, disable_deprecated_builder_warning: true
 
+# JWT configuration
+config :hooked_api,
+  jwt_secret: System.get_env("JWT_SECRET") || "your-super-secret-jwt-key-change-this-in-production"
+
 # Import environment specific config
 import_config "#{config_env()}.exs"

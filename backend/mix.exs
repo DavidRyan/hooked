@@ -42,7 +42,9 @@ defmodule HookedApi.MixProject do
       {:exexif, "~> 0.0.5"},
       {:ex_machina, "~> 2.8", only: :test},
       {:mox, "~> 1.0", only: :test},
-      {:mock, "~> 0.3.0", only: :test}
+      {:mock, "~> 0.3.0", only: :test},
+      {:joken, "~> 2.6"},
+      {:bcrypt_elixir, "~> 3.0"}
     ]
   end
 
