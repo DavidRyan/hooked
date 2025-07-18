@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CatchDetailsModel(
-    val id: Long,
+    val id: String,
     val species: String,
     val weight: Double,
     val length: Double,

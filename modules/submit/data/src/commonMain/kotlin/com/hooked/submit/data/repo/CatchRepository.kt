@@ -10,7 +10,7 @@ class SubmitRepositoryImpl(
     private val submitApiService: SubmitApiService
 ) : SubmitRepository {
     
-    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<Long> {
+    override suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<String> {
         val submitDto = SubmitCatchDto(
             species = catchEntity.species,
             weight = catchEntity.weight,

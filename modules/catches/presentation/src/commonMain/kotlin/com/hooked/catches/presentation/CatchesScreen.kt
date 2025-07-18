@@ -74,7 +74,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 sealed class CatchesScreenState {
     object Grid : CatchesScreenState()
-    data class Details(val catchId: Long) : CatchesScreenState()
+    data class Details(val catchId: String) : CatchesScreenState()
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -122,7 +122,7 @@ fun CatchesScreen(
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SharedTransitionScope.CatchGridContent(
-    onCatchClick: (Long) -> Unit,
+    onCatchClick: (String) -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: CatchGridViewModel = koinViewModel()
@@ -204,7 +204,7 @@ fun SharedTransitionScope.CatchGridContent(
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun SharedTransitionScope.CatchDetailsContent(
-    catchId: Long,
+    catchId: String,
     animationKey: Int,
     onBackClick: () -> Unit,
     navigate: (Screens) -> Unit,

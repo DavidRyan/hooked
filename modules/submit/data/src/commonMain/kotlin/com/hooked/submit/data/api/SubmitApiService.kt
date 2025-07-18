@@ -12,14 +12,14 @@ import io.ktor.http.contentType
 class SubmitApiService(
     private val httpClient: HttpClient,
 ) {
-    suspend fun submitCatch(submitCatchDto: SubmitCatchDto): NetworkResult<Long> {
+    suspend fun submitCatch(submitCatchDto: SubmitCatchDto): NetworkResult<String> {
         try {
             val response = httpClient
                 .post("http://10.0.2.2:8080/catches") {
                     contentType(ContentType.Application.Json)
                     setBody(submitCatchDto)
                 }
-                .body<Map<String, Long>>()
+                .body<Map<String, String>>()
             
             val catchId = response["id"] ?: throw Exception("No catch ID returned")
             return NetworkResult.Success(catchId)

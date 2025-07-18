@@ -19,7 +19,7 @@ class CatchesScreenStateManager {
     var animationKey by mutableStateOf(0)
         private set
     
-    fun navigateToDetails(catchId: Long) {
+    fun navigateToDetails(catchId: String) {
         animationKey += 1
         screenState = CatchesScreenState.Details(catchId)
     }
@@ -28,7 +28,7 @@ class CatchesScreenStateManager {
         screenState = CatchesScreenState.Grid
     }
     
-    fun getCurrentCatchId(): Long? {
+    fun getCurrentCatchId(): String? {
         return when (val state = screenState) {
             is CatchesScreenState.Details -> state.catchId
             else -> null

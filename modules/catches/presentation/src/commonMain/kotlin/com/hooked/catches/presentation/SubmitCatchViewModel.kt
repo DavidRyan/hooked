@@ -68,12 +68,12 @@ class SubmitCatchViewModel(
             try {
                 val catchEntity = SubmitCatchEntity(
                     species = currentState.species,
-                    weight = currentState.weight.toDouble(),
-                    length = currentState.length.toDouble(),
+                    location = null, // Will be enriched by backend
                     latitude = currentState.latitude,
                     longitude = currentState.longitude,
-                    photoBase64 = currentState.photoUri?.let { convertImageToBase64(it) },
-                    timestamp = Clock.System.now().toEpochMilliseconds()
+                    caughtAt = null, // Will be set by backend
+                    notes = null, // No notes field in current UI
+                    imageBytes = currentState.photoUri?.let { convertImageToBytes(it) }
                 )
                 
                 when (val result = submitCatchUseCase(catchEntity)) {
@@ -96,13 +96,20 @@ class SubmitCatchViewModel(
 
     
 
-    private suspend fun convertImageToBase64(imageUri: String): String {
+    private suspend fun convertImageToBytes(imageUri: String): ByteArray {
         return try {
             val imageBytes = imageProcessor.loadImageFromUri(imageUri)
-            
-            val processedBytes = imageProcessor.processImageWithExif(imageBytes)
-            
-            processedBytes.encodeBase64()
+            imageProcessor.processImageWithExif(imageBytes)
+        } catch (e: Exception) {
+            logError("Failed to process image", e)
+            throw IllegalStateException("Failed to process image: ${e.message}")
+        }
+    }
+
+    private suspend fun convertImageToBase64(imageUri: String): String {
+        return try {
+            val imageBytes = convertImageToBytes(imageUri)
+            imageBytes.encodeBase64()
         } catch (e: Exception) {
             logError("Failed to process image", e)
             throw IllegalStateException("Failed to process image: ${e.message}")

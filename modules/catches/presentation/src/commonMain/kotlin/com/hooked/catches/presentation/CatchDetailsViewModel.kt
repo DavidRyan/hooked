@@ -21,7 +21,7 @@ class CatchDetailsViewModel(
         }
     }
 
-    private fun loadCatchDetails(catchId: Long) {
+    private fun loadCatchDetails(catchId: String) {
         setState { copy(isLoading = true) }
         viewModelScope.launch {
             when (val result = getCatchDetailsUseCase(catchId)) {
