@@ -1,5 +1,8 @@
 package di
 
+import com.hooked.auth.data.di.authDataModule
+import com.hooked.auth.domain.di.authUseCaseModule
+import com.hooked.auth.presentation.di.authPresentationModule
 import com.hooked.catches.presentation.CatchGridViewModel
 import com.hooked.catches.presentation.CatchDetailsViewModel
 import com.hooked.catches.presentation.SubmitCatchViewModel
@@ -24,7 +27,7 @@ val presentationModule = module {
     viewModelOf(::CatchGridViewModel)
     viewModelOf(::CatchDetailsViewModel)
     viewModel { SubmitCatchViewModel(get(), get()) }
-}
+} + authPresentationModule
 
 val dataModule = module {
     single {
@@ -52,10 +55,10 @@ val dataModule = module {
     single<CatchesRepositoryInterface> {
         CatchRepositoryImpl(get(), get())
     }
-}
+} + authDataModule
 
 val useCaseModule = module {
     single { GetCatchesUseCase(get()) }
     single { GetCatchDetailsUseCase(get()) }
     single { SubmitCatchUseCase(get()) }
-}
+} + authUseCaseModule

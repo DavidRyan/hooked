@@ -8,7 +8,10 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
   alias HookedApi.PubSubTopics
 
   @impl Oban.Worker
-  def perform(%Oban.Job{args: %{"catch_id" => catch_id, "user_catch" => user_catch}}) do
+  def perform(%Oban.Job{args: %{"catch_id" => catch_id, "user_catch" => user_catch_map}}) do
+    # Convert map back to struct since Oban serializes structs as maps
+    user_catch = struct(UserCatch, atomize_keys(user_catch_map))
+    
     user_catch
     |> enrich_catch()
     |> case do
@@ -82,4 +85,13 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
       {:enrichment_failed, catch_id, error}
     )
   end
+
+  defp atomize_keys(map) when is_map(map) do
+    Map.new(map, fn
+      {key, value} when is_binary(key) -> {String.to_existing_atom(key), atomize_keys(value)}
+      {key, value} -> {key, atomize_keys(value)}
+    end)
+  end
+  
+  defp atomize_keys(value), do: value
 end

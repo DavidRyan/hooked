@@ -1,0 +1,9 @@
+package com.hooked.auth.presentation.di
+
+import com.hooked.auth.presentation.LoginViewModel
+import org.koin.compose.viewmodel.dsl.viewModelOf
+import org.koin.dsl.module
+
+val authPresentationModule = module {
+    viewModelOf(::LoginViewModel)
+}

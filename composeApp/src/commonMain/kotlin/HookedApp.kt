@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.hooked.auth.presentation.LoginScreen
 import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.catches.presentation.SubmitCatchScreen
 import com.hooked.catches.presentation.SubmitCatchViewModel
@@ -25,10 +26,42 @@ fun HookedApp(
             val navController = rememberNavController()
             NavHost(
                 navController = navController,
-                startDestination = Screens.CatchGrid,
+                startDestination = Screens.Login,
                 modifier = Modifier.background(HookedTheme.background)
             ) {
+                composable<Screens.Login>(
+                    exitTransition = {
+                        when (targetState.destination.route) {
+                            Screens.CatchGrid::class.qualifiedName -> {
+                                slideOutOfContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(300)
+                                )
+                            }
+                            else -> null
+                        }
+                    }
+                ) {
+                    LoginScreen(
+                        onNavigateToHome = {
+                            navController.navigate(Screens.CatchGrid) {
+                                popUpTo(Screens.Login) { inclusive = true }
+                            }
+                        }
+                    )
+                }
                 composable<Screens.CatchGrid>(
+                    enterTransition = {
+                        when (initialState.destination.route) {
+                            Screens.Login::class.qualifiedName -> {
+                                slideIntoContainer(
+                                    towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                                    animationSpec = tween(300)
+                                )
+                            }
+                            else -> null
+                        }
+                    },
                     exitTransition = {
                         when (targetState.destination.route) {
                             Screens.SubmitCatch::class.qualifiedName -> {
