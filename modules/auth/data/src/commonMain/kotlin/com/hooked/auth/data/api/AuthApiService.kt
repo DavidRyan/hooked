@@ -5,6 +5,7 @@ import com.hooked.auth.data.model.AuthResponseDto
 import com.hooked.auth.data.model.LoginRequestDto
 import com.hooked.auth.data.model.RegisterRequestDto
 import com.hooked.auth.data.model.UserResponseDto
+import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -20,7 +21,7 @@ import io.ktor.http.contentType
 
 class AuthApiService(
     private val httpClient: HttpClient,
-    private val baseUrl: String = "http://localhost:4000/api"
+    private val baseUrl: String = NetworkConfig.BASE_URL
 ) {
     
     suspend fun login(email: String, password: String): NetworkResult<AuthResponseDto> {

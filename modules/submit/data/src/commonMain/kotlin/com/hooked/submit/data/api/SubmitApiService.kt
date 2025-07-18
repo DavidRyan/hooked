@@ -1,6 +1,7 @@
 package com.hooked.submit.data.api
 
 import com.hooked.submit.data.model.SubmitCatchDto
+import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -15,7 +16,7 @@ class SubmitApiService(
     suspend fun submitCatch(submitCatchDto: SubmitCatchDto): NetworkResult<String> {
         try {
             val response = httpClient
-                .post("http://10.0.2.2:8080/catches") {
+                .post("${NetworkConfig.BASE_URL}/user_catches") {
                     contentType(ContentType.Application.Json)
                     setBody(submitCatchDto)
                 }

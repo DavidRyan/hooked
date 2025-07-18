@@ -1,7 +1,9 @@
 package com.hooked.auth.data.config
 
+import com.hooked.core.config.NetworkConfig
+
 object AuthConfig {
-    const val BASE_URL = "http://localhost:4000/api"
+    val BASE_URL = NetworkConfig.BASE_URL
     const val LOGIN_ENDPOINT = "/auth/login"
     const val REGISTER_ENDPOINT = "/auth/register"
     const val ME_ENDPOINT = "/auth/me"

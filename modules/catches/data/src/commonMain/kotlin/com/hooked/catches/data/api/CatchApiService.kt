@@ -2,6 +2,7 @@ package com.hooked.catches.data.api
 
 import com.hooked.catches.data.model.CatchDto
 import com.hooked.catches.data.model.SubmitCatchDto
+import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -17,7 +18,7 @@ import io.ktor.http.contentType
 
 class CatchApiService(
     private val httpClient: HttpClient,
-    private val baseUrl: String = "http://localhost:4000/api"
+    private val baseUrl: String = NetworkConfig.BASE_URL
 ) {
     suspend fun getCatches(): NetworkResult<List<CatchDto>> {
         return try {
