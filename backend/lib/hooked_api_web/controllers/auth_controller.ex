@@ -14,13 +14,15 @@ defmodule HookedApiWeb.AuthController do
             conn
             |> put_status(:created)
             |> json(%{
-              user: %{
-                id: user.id,
-                email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name
-              },
-              token: token
+              data: %{
+                user: %{
+                  id: user.id,
+                  email: user.email,
+                  first_name: user.first_name,
+                  last_name: user.last_name
+                },
+                token: token
+              }
             })
 
           {:error, reason} ->
@@ -48,13 +50,15 @@ defmodule HookedApiWeb.AuthController do
       {:ok, user, token} ->
         conn
         |> json(%{
-          user: %{
-            id: user.id,
-            email: user.email,
-            first_name: user.first_name,
-            last_name: user.last_name
-          },
-          token: token
+          data: %{
+            user: %{
+              id: user.id,
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name
+            },
+            token: token
+          }
         })
 
       {:error, _reason} ->
@@ -69,7 +73,7 @@ defmodule HookedApiWeb.AuthController do
 
     conn
     |> json(%{
-      user: %{
+      data: %{
         id: user.id,
         email: user.email,
         first_name: user.first_name,
@@ -85,13 +89,15 @@ defmodule HookedApiWeb.AuthController do
       {:ok, token, _claims} ->
         conn
         |> json(%{
-          user: %{
-            id: user.id,
-            email: user.email,
-            first_name: user.first_name,
-            last_name: user.last_name
-          },
-          token: token
+          data: %{
+            user: %{
+              id: user.id,
+              email: user.email,
+              first_name: user.first_name,
+              last_name: user.last_name
+            },
+            token: token
+          }
         })
 
       {:error, _reason} ->
