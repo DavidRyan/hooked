@@ -15,6 +15,7 @@ import com.hooked.catches.data.api.CatchApiService
 import com.hooked.catches.data.database.DatabaseDriverFactory
 import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
+import com.hooked.auth.data.api.AuthInterceptor
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -38,6 +39,9 @@ val dataModule = module {
                     ignoreUnknownKeys = true
                     isLenient = true
                 })
+            }
+            install(AuthInterceptor) {
+                tokenStorage = get()
             }
         }
     }

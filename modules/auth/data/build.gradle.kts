@@ -27,7 +27,7 @@ kotlin {
 
         val androidMain by getting {
             dependencies {
-                
+                implementation(libs.androidx.security.crypto)
             }
         }
 

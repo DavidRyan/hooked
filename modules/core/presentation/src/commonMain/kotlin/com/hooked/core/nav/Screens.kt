@@ -6,6 +6,8 @@ sealed class Screens() {
     @Serializable
     object Login : Screens()
     @Serializable
+    object CreateAccount : Screens()
+    @Serializable
     object CatchGrid : Screens()
     @Serializable
     data class CatchDetails(val catchId: String) : Screens()

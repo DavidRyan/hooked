@@ -5,15 +5,13 @@ import com.hooked.auth.data.datasources.AuthDataSource
 import com.hooked.auth.data.datasources.RemoteAuthDataSource
 import com.hooked.auth.data.datasources.StubAuthDataSource
 import com.hooked.auth.data.repositories.AuthRepositoryImpl
-import com.hooked.auth.data.storage.InMemoryTokenStorage
 import com.hooked.auth.data.storage.TokenStorage
 import com.hooked.auth.domain.repositories.AuthRepository
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val authDataModule = module {
-    // Storage
-    single<TokenStorage> { InMemoryTokenStorage() }
+    // Storage - platform-specific implementation will be provided by platform modules
     
     // API Service
     single<AuthApiService> { AuthApiService(get()) }

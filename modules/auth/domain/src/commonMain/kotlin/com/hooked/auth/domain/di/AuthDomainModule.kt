@@ -1,5 +1,6 @@
 package com.hooked.auth.domain.di
 
+import com.hooked.auth.domain.usecases.CheckAuthStatusUseCase
 import com.hooked.auth.domain.usecases.GetCurrentUserUseCase
 import com.hooked.auth.domain.usecases.LoginUseCase
 import com.hooked.auth.domain.usecases.LogoutUseCase
@@ -8,6 +9,7 @@ import com.hooked.auth.domain.usecases.RegisterUseCase
 import org.koin.dsl.module
 
 val authUseCaseModule = module {
+    single { CheckAuthStatusUseCase(get()) }
     single { LoginUseCase(get()) }
     single { RegisterUseCase(get()) }
     single { LogoutUseCase(get()) }

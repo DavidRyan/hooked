@@ -29,7 +29,8 @@ class CatchApiService(
             val catches = response["user_catches"] ?: emptyList()
             NetworkResult.Success(catches)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "CatchApiService.getCatches")
+            val detailedMessage = "Failed to fetch catches: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.getCatches")
         }
     }
     
@@ -44,7 +45,8 @@ class CatchApiService(
             
             NetworkResult.Success(catchDetails)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "CatchApiService.getCatchDetails")
+            val detailedMessage = "Failed to fetch catch details for ID $catchId: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.getCatchDetails")
         }
     }
     
@@ -77,7 +79,8 @@ class CatchApiService(
             
             NetworkResult.Success(userCatch.id)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "CatchApiService.submitCatch")
+            val detailedMessage = "Failed to submit catch: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.submitCatch")
         }
     }
 }

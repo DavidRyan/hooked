@@ -33,7 +33,10 @@ data class UserResponseDto(
 
 @Serializable
 data class AuthErrorDto(
-    val error: String
+    val error: String,
+    val message: String? = null,
+    val details: Map<String, List<String>>? = null,
+    val code: String? = null
 )
 
 fun AuthResponseDto.toUserEntity(): UserEntity {

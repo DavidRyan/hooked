@@ -3,13 +3,16 @@ package com.hooked.auth.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -43,29 +46,30 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import com.hooked.auth.presentation.model.LoginEffect
-import com.hooked.auth.presentation.model.LoginIntent
+import com.hooked.auth.presentation.model.CreateAccountEffect
+import com.hooked.auth.presentation.model.CreateAccountIntent
 import com.hooked.core.animation.AnimationConstants
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
-fun LoginScreen(
+fun CreateAccountScreen(
     onNavigateToHome: () -> Unit,
-    onNavigateToCreateAccount: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = koinViewModel()
+    viewModel: CreateAccountViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
+    val scrollState = rememberScrollState()
     
     LaunchedEffect(viewModel.effect) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is LoginEffect.NavigateToHome -> {
+                is CreateAccountEffect.NavigateToHome -> {
                     onNavigateToHome()
                 }
-                is LoginEffect.ShowError -> {
+                is CreateAccountEffect.ShowError -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
             }
@@ -92,27 +96,73 @@ fun LoginScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(24.dp)
+                        .verticalScroll(scrollState),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Text(
-                        text = "Welcome to Hooked",
+                        text = "Create Account",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold
                     )
                     
                     Text(
-                        text = "Sign in to continue",
+                        text = "Join Hooked to track your catches",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = state.firstName,
+                            onValueChange = { viewModel.sendIntent(CreateAccountIntent.UpdateFirstName(it)) },
+                            label = { Text("First Name") },
+                            placeholder = { Text("Enter first name") },
+                            isError = state.isFirstNameError,
+                            supportingText = if (state.isFirstNameError) {
+                                { Text(state.firstNameErrorMessage) }
+                            } else null,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Right) }
+                            ),
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.isLoading
+                        )
+                        
+                        OutlinedTextField(
+                            value = state.lastName,
+                            onValueChange = { viewModel.sendIntent(CreateAccountIntent.UpdateLastName(it)) },
+                            label = { Text("Last Name") },
+                            placeholder = { Text("Enter last name") },
+                            isError = state.isLastNameError,
+                            supportingText = if (state.isLastNameError) {
+                                { Text(state.lastNameErrorMessage) }
+                            } else null,
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Text,
+                                imeAction = ImeAction.Next
+                            ),
+                            keyboardActions = KeyboardActions(
+                                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                            ),
+                            modifier = Modifier.weight(1f),
+                            enabled = !state.isLoading
+                        )
+                    }
+                    
                     OutlinedTextField(
                         value = state.email,
-                        onValueChange = { viewModel.sendIntent(LoginIntent.UpdateEmail(it)) },
+                        onValueChange = { viewModel.sendIntent(CreateAccountIntent.UpdateEmail(it)) },
                         label = { Text("Email") },
                         placeholder = { Text("Enter your email") },
                         isError = state.isEmailError,
@@ -132,18 +182,32 @@ fun LoginScreen(
                     
                     PasswordTextField(
                         value = state.password,
-                        onValueChange = { viewModel.sendIntent(LoginIntent.UpdatePassword(it)) },
+                        onValueChange = { viewModel.sendIntent(CreateAccountIntent.UpdatePassword(it)) },
+                        label = "Password",
+                        placeholder = "Enter your password",
                         isError = state.isPasswordError,
                         errorMessage = state.passwordErrorMessage,
                         enabled = !state.isLoading,
-                        onDone = { viewModel.sendIntent(LoginIntent.Login) },
+                        onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    PasswordTextField(
+                        value = state.confirmPassword,
+                        onValueChange = { viewModel.sendIntent(CreateAccountIntent.UpdateConfirmPassword(it)) },
+                        label = "Confirm Password",
+                        placeholder = "Confirm your password",
+                        isError = state.isConfirmPasswordError,
+                        errorMessage = state.confirmPasswordErrorMessage,
+                        enabled = !state.isLoading,
+                        onDone = { viewModel.sendIntent(CreateAccountIntent.CreateAccount) },
                         modifier = Modifier.fillMaxWidth()
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Button(
-                        onClick = { viewModel.sendIntent(LoginIntent.Login) },
+                        onClick = { viewModel.sendIntent(CreateAccountIntent.CreateAccount) },
                         enabled = !state.isLoading,
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -152,23 +216,16 @@ fun LoginScreen(
                                 modifier = Modifier.height(20.dp)
                             )
                         } else {
-                            Text("Sign In")
+                            Text("Create Account")
                         }
                     }
                     
                     TextButton(
-                        onClick = onNavigateToCreateAccount,
+                        onClick = onNavigateToLogin,
                         enabled = !state.isLoading
                     ) {
-                        Text("Don't have an account? Create one")
+                        Text("Already have an account? Sign In")
                     }
-                    
-                    Text(
-                        text = "Test credentials: test@example.com / password",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
                 }
             }
         }
@@ -179,19 +236,22 @@ fun LoginScreen(
 private fun PasswordTextField(
     value: String,
     onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String,
     isError: Boolean,
     errorMessage: String,
     enabled: Boolean,
-    onDone: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNext: (() -> Unit)? = null,
+    onDone: (() -> Unit)? = null
 ) {
     var passwordVisible by remember { mutableStateOf(false) }
     
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text("Password") },
-        placeholder = { Text("Enter your password") },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
         isError = isError,
         supportingText = if (isError) {
             { Text(errorMessage) }
@@ -219,10 +279,11 @@ private fun PasswordTextField(
         },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
-            imeAction = ImeAction.Done
+            imeAction = if (onDone != null) ImeAction.Done else ImeAction.Next
         ),
         keyboardActions = KeyboardActions(
-            onDone = { onDone() }
+            onNext = { onNext?.invoke() },
+            onDone = { onDone?.invoke() }
         ),
         modifier = modifier,
         enabled = enabled

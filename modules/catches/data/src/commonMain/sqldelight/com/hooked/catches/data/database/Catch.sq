@@ -16,6 +16,11 @@ CREATE TABLE CatchEntity (
     updated_at TEXT NOT NULL
 );
 
+CREATE TABLE AuthEntity (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
+
 selectAll:
 SELECT * FROM CatchEntity;
 

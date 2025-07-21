@@ -14,6 +14,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -37,9 +38,12 @@ class AuthApiService(
                 HttpStatusCode.Unauthorized -> {
                     try {
                         val errorResponse = e.response.body<AuthErrorDto>()
-                        NetworkResult.Error(Exception(errorResponse.error), "AuthApiService.login")
+                        val detailedMessage = buildDetailedErrorMessage(errorResponse)
+                        NetworkResult.Error(Exception(detailedMessage), "AuthApiService.login")
                     } catch (parseError: Exception) {
-                        NetworkResult.Error(Exception("Invalid email or password"), "AuthApiService.login")
+                        val rawResponse = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
+                        val errorMessage = "Login failed - Parse error: ${parseError.message}, Raw response: $rawResponse"
+                        NetworkResult.Error(Exception(errorMessage), "AuthApiService.login")
                     }
                 }
                 else -> NetworkResult.Error(e, "AuthApiService.login")
@@ -74,9 +78,13 @@ class AuthApiService(
                 HttpStatusCode.UnprocessableEntity -> {
                     try {
                         val errorResponse = e.response.body<AuthErrorDto>()
-                        NetworkResult.Error(Exception(errorResponse.error), "AuthApiService.register")
+                        val detailedMessage = buildDetailedErrorMessage(errorResponse)
+                        NetworkResult.Error(Exception(detailedMessage), "AuthApiService.register")
                     } catch (parseError: Exception) {
-                        NetworkResult.Error(Exception("Registration failed"), "AuthApiService.register")
+                        // Log the parsing error and raw response for debugging
+                        val rawResponse = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
+                        val errorMessage = "Registration failed - Parse error: ${parseError.message}, Raw response: $rawResponse"
+                        NetworkResult.Error(Exception(errorMessage), "AuthApiService.register")
                     }
                 }
                 else -> NetworkResult.Error(e, "AuthApiService.register")
@@ -121,6 +129,19 @@ class AuthApiService(
             }
         } catch (e: Exception) {
             NetworkResult.Error(e, "AuthApiService.refreshToken")
+        }
+    }
+    
+    private fun buildDetailedErrorMessage(errorResponse: AuthErrorDto): String {
+        val baseMessage = errorResponse.message ?: errorResponse.error
+        
+        return if (errorResponse.details != null && errorResponse.details.isNotEmpty()) {
+            val fieldErrors = errorResponse.details.entries.joinToString("; ") { (field, messages) ->
+                "$field: ${messages.joinToString(", ")}"
+            }
+            "$baseMessage - $fieldErrors"
+        } else {
+            baseMessage
         }
     }
 }
