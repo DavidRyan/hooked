@@ -3,7 +3,8 @@ defmodule HookedApi.Auth.Token do
 
   @impl Joken.Config
   def token_config do
-    default_claims(default_exp: 60 * 60 * 24 * 7) # 7 days
+    # 7 days
+    default_claims(default_exp: 60 * 60 * 24 * 7)
     |> add_claim("iss", fn -> "hooked_api" end)
     |> add_claim("aud", fn -> "hooked_app" end)
   end
@@ -13,8 +14,8 @@ defmodule HookedApi.Auth.Token do
       "sub" => user_id,
       "user_id" => user_id
     }
-    
-    generate_and_sign(extra_claims)
+
+    generate_and_sign(extra_claims, get_signer())
   end
 
   def verify_token(token) do
@@ -33,17 +34,20 @@ defmodule HookedApi.Auth.Token do
   end
 
   defp get_signer do
-    secret = System.get_env("JWT_SECRET") || 
-             raise """
-             JWT_SECRET environment variable is required.
-             Generate a secure secret with: mix phx.gen.secret
-             Then set: export JWT_SECRET=your_generated_secret
-             """
-    
+    secret =
+      Application.get_env(:hooked_api, :jwt_secret) ||
+        System.get_env("JWT_SECRET") ||
+        raise """
+        JWT_SECRET environment variable or :jwt_secret config is required.
+        Generate a secure secret with: mix phx.gen.secret
+        Then set: export JWT_SECRET=your_generated_secret
+        Or configure in config/dev.exs: config :hooked_api, :jwt_secret, "your_secret"
+        """
+
     if byte_size(secret) < 32 do
       raise "JWT_SECRET must be at least 32 characters long for security"
     end
-    
+
     Joken.Signer.create("HS256", secret)
   end
 end

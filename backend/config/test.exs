@@ -26,3 +26,8 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
+# JWT Configuration for testing
+System.put_env(
+  "JWT_SECRET",
+  "test_jwt_secret_that_is_at_least_32_characters_long_for_testing_purposes"
+)

@@ -24,3 +24,8 @@ config :logger, :console, format: "[$level] $message\n"
 config :phoenix, :stacktrace_depth, 20
 
 config :phoenix, :plug_init_mode, :runtime
+
+# JWT Configuration
+config :hooked_api,
+       :jwt_secret,
+       "lSecx5L/Nqhs1Lp4XezmvOA+xgpTBB0Hn9W4aT7EnRXfPswG/8wdvql9uwQROsze"
