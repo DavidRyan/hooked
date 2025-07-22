@@ -1,6 +1,6 @@
 defmodule HookedApi.Enrichers.WeatherEnricher do
   @behaviour HookedApi.Enrichers.Enricher
-  
+
   require Logger
 
   @current_weather_base_url "https://api.openweathermap.org/data/2.5"
@@ -9,22 +9,38 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   @historical_weather_endpoint "/onecall/timemachine"
 
   def enrich(user_catch) do
+    Logger.debug("WeatherEnricher: Processing catch #{user_catch.id}")
+
     with {:ok, api_key} <- get_api_key(),
          {:ok, lat, lng} <- get_coordinates(user_catch),
          {:ok, weather_data} <- fetch_weather_data(lat, lng, user_catch.caught_at, api_key) do
+      Logger.info(
+        "WeatherEnricher: Successfully enriched catch #{user_catch.id} with weather data"
+      )
+
       {:ok, %{user_catch | weather_data: weather_data}}
     else
       {:error, :no_api_key} ->
-        Logger.warning("OpenWeatherMap API key not configured")
+        Logger.warning(
+          "WeatherEnricher: OpenWeatherMap API key not configured for catch #{user_catch.id}"
+        )
+
         {:ok, user_catch}
-      
+
       {:error, :no_coordinates} ->
-        Logger.debug("No coordinates available for weather enrichment")
+        Logger.debug(
+          "WeatherEnricher: No coordinates available for weather enrichment for catch #{user_catch.id}"
+        )
+
         {:ok, user_catch}
-      
+
       {:error, reason} ->
-        Logger.error("Weather enrichment failed: #{inspect(reason)}")
-        {:ok, user_catch}  # Continue without weather data on failure
+        Logger.error(
+          "WeatherEnricher: Weather enrichment failed for catch #{user_catch.id}: #{inspect(reason)}"
+        )
+
+        # Continue without weather data on failure
+        {:ok, user_catch}
     end
   end
 
@@ -40,6 +56,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
     case {user_catch.latitude, user_catch.longitude} do
       {lat, lng} when is_float(lat) and is_float(lng) ->
         {:ok, lat, lng}
+
       _ ->
         {:error, :no_coordinates}
     end
@@ -47,8 +64,16 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp fetch_weather_data(lat, lng, caught_at, api_key) do
     case is_historical_request?(caught_at) do
-      true -> fetch_historical_weather(lat, lng, caught_at, api_key)
-      false -> fetch_current_weather(lat, lng, api_key)
+      true ->
+        Logger.debug(
+          "WeatherEnricher: Fetching historical weather data for #{lat}, #{lng} at #{caught_at}"
+        )
+
+        fetch_historical_weather(lat, lng, caught_at, api_key)
+
+      false ->
+        Logger.debug("WeatherEnricher: Fetching current weather data for #{lat}, #{lng}")
+        fetch_current_weather(lat, lng, api_key)
     end
   end
 
@@ -59,7 +84,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp fetch_current_weather(lat, lng, api_key) do
     url = "#{@current_weather_base_url}#{@current_weather_endpoint}"
-    
+
     params = %{
       lat: lat,
       lon: lng,
@@ -76,7 +101,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   defp fetch_historical_weather(lat, lng, caught_at, api_key) do
     timestamp = DateTime.from_naive!(caught_at, "Etc/UTC") |> DateTime.to_unix()
     url = "#{@historical_weather_base_url}#{@historical_weather_endpoint}"
-    
+
     params = %{
       lat: lat,
       lon: lng,
@@ -92,26 +117,27 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   end
 
   defp make_request(url, params) do
-    client = Tesla.client([
-      {Tesla.Middleware.BaseUrl, url},
-      {Tesla.Middleware.Query, params},
-      Tesla.Middleware.JSON,
-      {Tesla.Middleware.Timeout, timeout: 10_000}
-    ])
+    client =
+      Tesla.client([
+        {Tesla.Middleware.BaseUrl, url},
+        {Tesla.Middleware.Query, params},
+        Tesla.Middleware.JSON,
+        {Tesla.Middleware.Timeout, timeout: 10_000}
+      ])
 
     case Tesla.get(client, "") do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
         {:ok, body}
-      
+
       {:ok, %Tesla.Env{status: 401}} ->
         {:error, :unauthorized}
-      
+
       {:ok, %Tesla.Env{status: 404}} ->
         {:error, :not_found}
-      
+
       {:ok, %Tesla.Env{status: status_code}} ->
         {:error, {:http_error, status_code}}
-      
+
       {:error, reason} ->
         {:error, {:request_failed, reason}}
     end
@@ -140,7 +166,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp parse_historical_weather_response(response) do
     current_data = Map.get(response, "current", %{})
-    
+
     weather_data = %{
       temperature: get_in(current_data, ["temp"]),
       feels_like: get_in(current_data, ["feels_like"]),
@@ -173,6 +199,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   end
 
   defp unix_to_datetime(nil), do: nil
+
   defp unix_to_datetime(timestamp) when is_integer(timestamp) do
     DateTime.from_unix!(timestamp) |> DateTime.to_naive()
   end
