@@ -2,7 +2,24 @@ defmodule HookedApi.Catches.UserCatch do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @derive {Jason.Encoder, only: [:id, :species, :location, :latitude, :longitude, :caught_at, :notes, :weather_data, :exif_data, :image_url, :image_filename, :image_content_type, :image_file_size, :inserted_at, :updated_at]}
+  @derive {Jason.Encoder,
+           only: [
+             :id,
+             :species,
+             :location,
+             :latitude,
+             :longitude,
+             :caught_at,
+             :notes,
+             :weather_data,
+             :exif_data,
+             :image_url,
+             :image_filename,
+             :image_content_type,
+             :image_file_size,
+             :inserted_at,
+             :updated_at
+           ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
@@ -25,22 +42,23 @@ defmodule HookedApi.Catches.UserCatch do
         }
 
   schema "user_catches" do
-    field :species, :string
-    field :location, :string
-    field :latitude, :float
-    field :longitude, :float
-    field :caught_at, :naive_datetime
-    field :notes, :string
-    field :weather_data, :map
-    field :exif_data, :map
+    field(:species, :string)
+    field(:location, :string)
+    field(:latitude, :float)
+    field(:longitude, :float)
+    field(:caught_at, :naive_datetime)
+    field(:notes, :string)
+    field(:weather_data, :map)
+    field(:exif_data, :map)
 
-    field :image_url, :string
-    field :image_filename, :string
-    field :image_content_type, :string
-    field :image_file_size, :integer
+    field(:image_url, :string)
+    field(:image_filename, :string)
+    field(:image_content_type, :string)
+    field(:image_file_size, :integer)
 
     timestamps(type: :utc_datetime)
   end
+
   def changeset(user_catch, attrs) do
     user_catch
     |> cast(attrs, [
@@ -57,7 +75,7 @@ defmodule HookedApi.Catches.UserCatch do
       :image_content_type,
       :image_file_size
     ])
-    |> validate_required([:species, :location, :caught_at])
+    |> validate_required([])
     |> validate_length(:species, min: 1, max: 100)
     |> validate_length(:location, min: 1, max: 200)
     |> validate_length(:notes, max: 1000)

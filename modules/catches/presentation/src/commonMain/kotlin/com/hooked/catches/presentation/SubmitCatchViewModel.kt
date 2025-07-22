@@ -58,7 +58,7 @@ class SubmitCatchViewModel(
         val currentState = state.value
         
         if (!currentState.isFormValid) {
-            sendEffect { SubmitCatchEffect.ShowError("Please fill in all required fields") }
+            sendEffect { SubmitCatchEffect.ShowError("Please select a photo") }
             return
         }
 

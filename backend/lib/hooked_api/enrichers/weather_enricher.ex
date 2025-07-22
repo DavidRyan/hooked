@@ -46,18 +46,37 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp get_api_key do
     case Application.get_env(:hooked_api, :openweather_api_key) do
-      nil -> {:error, :no_api_key}
-      key when is_binary(key) -> {:ok, key}
-      _ -> {:error, :invalid_api_key}
+      nil ->
+        Logger.warning("WeatherEnricher: No OpenWeatherMap API key configured")
+        {:error, :no_api_key}
+
+      key when is_binary(key) ->
+        Logger.debug("WeatherEnricher: API key found (#{String.length(key)} characters)")
+        {:ok, key}
+
+      invalid ->
+        Logger.error("WeatherEnricher: Invalid API key configuration: #{inspect(invalid)}")
+        {:error, :invalid_api_key}
     end
   end
 
   defp get_coordinates(user_catch) do
+    Logger.debug("WeatherEnricher: Checking coordinates for catch #{user_catch.id}")
+
+    Logger.debug(
+      "WeatherEnricher: Latitude: #{inspect(user_catch.latitude)}, Longitude: #{inspect(user_catch.longitude)}"
+    )
+
     case {user_catch.latitude, user_catch.longitude} do
       {lat, lng} when is_float(lat) and is_float(lng) ->
+        Logger.info("WeatherEnricher: Valid coordinates found - Lat: #{lat}, Lng: #{lng}")
         {:ok, lat, lng}
 
-      _ ->
+      {lat, lng} ->
+        Logger.warning(
+          "WeatherEnricher: Invalid coordinates - Lat: #{inspect(lat)}, Lng: #{inspect(lng)}"
+        )
+
         {:error, :no_coordinates}
     end
   end
@@ -79,7 +98,14 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp is_historical_request?(caught_at) do
     now = NaiveDateTime.utc_now()
-    NaiveDateTime.diff(now, caught_at, :hour) > 1
+    hours_diff = NaiveDateTime.diff(now, caught_at, :hour)
+    is_historical = hours_diff > 1
+
+    Logger.debug(
+      "WeatherEnricher: Time difference: #{hours_diff} hours, using #{if is_historical, do: "historical", else: "current"} weather API"
+    )
+
+    is_historical
   end
 
   defp fetch_current_weather(lat, lng, api_key) do
@@ -92,9 +118,21 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       units: "imperial"
     }
 
+    Logger.info("WeatherEnricher: Fetching current weather from #{url}")
+
+    Logger.debug(
+      "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
+    )
+
     case make_request(url, params) do
-      {:ok, response} -> parse_current_weather_response(response)
-      error -> error
+      {:ok, response} ->
+        Logger.info("WeatherEnricher: Successfully received current weather data")
+        Logger.debug("WeatherEnricher: Response keys: #{inspect(Map.keys(response))}")
+        parse_current_weather_response(response)
+
+      error ->
+        Logger.error("WeatherEnricher: Current weather request failed: #{inspect(error)}")
+        error
     end
   end
 
@@ -110,13 +148,30 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       units: "imperial"
     }
 
+    Logger.info("WeatherEnricher: Fetching historical weather from #{url}")
+
+    Logger.debug(
+      "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
+    )
+
+    Logger.debug("WeatherEnricher: Timestamp: #{timestamp} (#{caught_at})")
+
     case make_request(url, params) do
-      {:ok, response} -> parse_historical_weather_response(response)
-      error -> error
+      {:ok, response} ->
+        Logger.info("WeatherEnricher: Successfully received historical weather data")
+        Logger.debug("WeatherEnricher: Response keys: #{inspect(Map.keys(response))}")
+        parse_historical_weather_response(response)
+
+      error ->
+        Logger.error("WeatherEnricher: Historical weather request failed: #{inspect(error)}")
+        error
     end
   end
 
   defp make_request(url, params) do
+    full_url = url <> "?" <> URI.encode_query(Map.put(params, :appid, "[REDACTED]"))
+    Logger.debug("WeatherEnricher: Making request to #{full_url}")
+
     client =
       Tesla.client([
         {Tesla.Middleware.BaseUrl, url},
@@ -127,23 +182,36 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
     case Tesla.get(client, "") do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
+        Logger.info("WeatherEnricher: HTTP 200 - Request successful")
         {:ok, body}
 
-      {:ok, %Tesla.Env{status: 401}} ->
+      {:ok, %Tesla.Env{status: 401, body: body}} ->
+        Logger.error(
+          "WeatherEnricher: HTTP 401 - Unauthorized. API key may be invalid or expired"
+        )
+
+        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
         {:error, :unauthorized}
 
-      {:ok, %Tesla.Env{status: 404}} ->
+      {:ok, %Tesla.Env{status: 404, body: body}} ->
+        Logger.error("WeatherEnricher: HTTP 404 - Not found")
+        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
         {:error, :not_found}
 
-      {:ok, %Tesla.Env{status: status_code}} ->
+      {:ok, %Tesla.Env{status: status_code, body: body}} ->
+        Logger.error("WeatherEnricher: HTTP #{status_code} - Unexpected status code")
+        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
         {:error, {:http_error, status_code}}
 
       {:error, reason} ->
+        Logger.error("WeatherEnricher: Request failed: #{inspect(reason)}")
         {:error, {:request_failed, reason}}
     end
   end
 
   defp parse_current_weather_response(response) do
+    Logger.debug("WeatherEnricher: Parsing current weather response")
+
     weather_data = %{
       temperature: get_in(response, ["main", "temp"]),
       feels_like: get_in(response, ["main", "feels_like"]),
@@ -161,11 +229,21 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       data_type: "current"
     }
 
+    Logger.info(
+      "WeatherEnricher: Parsed weather data - Temp: #{weather_data.temperature}°F, Condition: #{weather_data.weather_description}"
+    )
+
     {:ok, weather_data}
   end
 
   defp parse_historical_weather_response(response) do
+    Logger.debug("WeatherEnricher: Parsing historical weather response")
     current_data = Map.get(response, "current", %{})
+
+    if map_size(current_data) == 0 do
+      Logger.warning("WeatherEnricher: No 'current' data found in historical response")
+      Logger.debug("WeatherEnricher: Available response keys: #{inspect(Map.keys(response))}")
+    end
 
     weather_data = %{
       temperature: get_in(current_data, ["temp"]),
@@ -183,6 +261,10 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       data_source: "openweathermap",
       data_type: "historical"
     }
+
+    Logger.info(
+      "WeatherEnricher: Parsed historical weather data - Temp: #{weather_data.temperature}°F, Condition: #{weather_data.weather_description}"
+    )
 
     {:ok, weather_data}
   end

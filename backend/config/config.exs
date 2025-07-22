@@ -17,11 +17,22 @@ config :hooked_api, HookedApi.Endpoint,
 config :hooked_api, Oban,
   engine: Oban.Engines.Basic,
   queues: [catch_enrichment: 5],
-  repo: HookedApi.Repo
+  repo: HookedApi.Repo,
+  plugins: [
+    {Oban.Plugins.Lifeline, rescue_after: :timer.minutes(30)},
+    {Oban.Plugins.Pruner, max_age: 300}
+  ]
 
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
-  metadata: [:request_id]
+  metadata: [:request_id, :oban_job]
+
+# Enable Oban logging
+config :logger,
+  level: :info
+
+# Log Oban job failures
+config :oban, :log, false
 
 config :phoenix, :json_library, Jason
 

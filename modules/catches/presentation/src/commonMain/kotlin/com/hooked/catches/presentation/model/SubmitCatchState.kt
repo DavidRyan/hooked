@@ -13,9 +13,7 @@ data class SubmitCatchState(
     val errorMessage: String? = null
 ) {
     val isFormValid: Boolean
-        get() = species.isNotBlank() && 
-                weight.toDoubleOrNull() != null && 
-                length.toDoubleOrNull() != null
+        get() = photoUri != null
                 
     val locationText: String
         get() = if (latitude != null && longitude != null) {
