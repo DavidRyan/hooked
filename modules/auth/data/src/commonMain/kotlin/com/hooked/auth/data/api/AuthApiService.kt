@@ -27,6 +27,7 @@ class AuthApiService(
     
     suspend fun login(email: String, password: String): NetworkResult<AuthResponseDto> {
         return try {
+            com.hooked.core.logging.Logger.debug("AuthApiService", "Login URL: $baseUrl/auth/login")
             val response = httpClient.post("$baseUrl/auth/login") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequestDto(email = email, password = password))
@@ -60,15 +61,14 @@ class AuthApiService(
         lastName: String
     ): NetworkResult<AuthResponseDto> {
         return try {
+            com.hooked.core.logging.Logger.debug("AuthApiService", "Register URL: $baseUrl/auth/register")
             val response = httpClient.post("$baseUrl/auth/register") {
                 contentType(ContentType.Application.Json)
                 setBody(RegisterRequestDto(
-                    user = com.hooked.auth.data.model.UserRegistrationDto(
-                        email = email,
-                        password = password,
-                        firstName = firstName,
-                        lastName = lastName
-                    )
+                    email = email,
+                    password = password,
+                    firstName = firstName,
+                    lastName = lastName
                 ))
             }.body<AuthResponseDto>()
             

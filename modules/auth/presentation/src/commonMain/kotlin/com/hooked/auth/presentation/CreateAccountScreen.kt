@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.dp
 import com.hooked.auth.presentation.model.CreateAccountEffect
 import com.hooked.auth.presentation.model.CreateAccountIntent
 import com.hooked.core.animation.AnimationConstants
+import com.hooked.core.presentation.toast.ToastManager
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
@@ -56,10 +58,10 @@ fun CreateAccountScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: CreateAccountViewModel = koinViewModel()
+    viewModel: CreateAccountViewModel = koinViewModel(),
+    toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
     
@@ -70,20 +72,18 @@ fun CreateAccountScreen(
                     onNavigateToHome()
                 }
                 is CreateAccountEffect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    toastManager.showError(effect.message)
                 }
             }
         }
     }
     
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier
-    ) { paddingValues ->
+    Box(
+        modifier = modifier.fillMaxSize()
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(AnimationConstants.CONTENT_PADDING_DP.dp),
             contentAlignment = Alignment.Center
         ) {

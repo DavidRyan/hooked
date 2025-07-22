@@ -69,7 +69,9 @@ import com.hooked.catches.presentation.components.CatchGridItem
 import com.hooked.catches.presentation.components.AnimatedDetailCard
 import com.hooked.catches.presentation.components.StaticMapCard
 import com.hooked.catches.presentation.state.rememberCatchesScreenState
+import com.hooked.core.presentation.toast.ToastManager
 import kotlinx.coroutines.flow.collectLatest
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 sealed class CatchesScreenState {
@@ -125,7 +127,8 @@ fun SharedTransitionScope.CatchGridContent(
     onCatchClick: (String) -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    viewModel: CatchGridViewModel = koinViewModel()
+    viewModel: CatchGridViewModel = koinViewModel(),
+    toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
     
@@ -136,7 +139,9 @@ fun SharedTransitionScope.CatchGridContent(
                 is CatchGridEffect.NavigateToCatchDetails -> {
                     onCatchClick(effect.catchId)
                 }
-                else -> {}
+                is CatchGridEffect.ShowError -> {
+                    toastManager.showError(effect.message)
+                }
             }
         }
     }

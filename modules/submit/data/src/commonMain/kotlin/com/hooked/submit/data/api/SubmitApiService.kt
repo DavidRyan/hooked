@@ -15,6 +15,7 @@ class SubmitApiService(
 ) {
     suspend fun submitCatch(submitCatchDto: SubmitCatchDto): NetworkResult<String> {
         try {
+            com.hooked.core.logging.Logger.debug("SubmitApiService", "submitCatch URL: ${NetworkConfig.BASE_URL}/user_catches")
             val response = httpClient
                 .post("${NetworkConfig.BASE_URL}/user_catches") {
                     contentType(ContentType.Application.Json)

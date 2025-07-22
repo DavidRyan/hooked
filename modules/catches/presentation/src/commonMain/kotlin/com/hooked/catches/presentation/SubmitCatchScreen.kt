@@ -17,8 +17,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.hooked.core.components.AsyncImage
 import com.hooked.core.nav.Screens
+import com.hooked.core.presentation.toast.ToastManager
 import kotlinx.coroutines.flow.collectLatest
 import com.hooked.catches.presentation.model.SubmitCatchEffect
+import org.koin.compose.koinInject
 import com.hooked.catches.presentation.model.SubmitCatchIntent
 import com.hooked.theme.HookedTheme
 
@@ -27,7 +29,8 @@ import com.hooked.theme.HookedTheme
 fun SubmitCatchScreen(
     modifier: Modifier = Modifier,
     viewModel: SubmitCatchViewModel,
-    navigate: (Screens) -> Unit
+    navigate: (Screens) -> Unit,
+    toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
     
@@ -38,8 +41,10 @@ fun SubmitCatchScreen(
                     navigate(Screens.CatchGrid)
                 }
                 is SubmitCatchEffect.ShowError -> {
+                    toastManager.showError(effect.message)
                 }
                 is SubmitCatchEffect.CatchSubmittedSuccessfully -> {
+                    toastManager.showSuccess("Catch submitted successfully!")
                     navigate(Screens.CatchGrid)
                 }
                 else -> {}

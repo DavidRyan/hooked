@@ -3,6 +3,8 @@ package com.hooked
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,6 +18,7 @@ import androidx.navigation.toRoute
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
 import com.hooked.catches.presentation.CatchesScreen
+import com.hooked.core.presentation.toast.ToastHost
 import com.hooked.catches.presentation.SubmitCatchScreen
 import com.hooked.catches.presentation.SubmitCatchViewModel
 import org.koin.compose.KoinContext
@@ -43,11 +46,12 @@ fun HookedApp(
             
             // Only show NavHost once we know the start destination
             startDestination?.let { destination ->
-                NavHost(
-                    navController = navController,
-                    startDestination = destination,
-                    modifier = Modifier.background(HookedTheme.background)
-                ) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = destination,
+                        modifier = Modifier.background(HookedTheme.background)
+                    ) {
                 composable<Screens.Login>(
                     exitTransition = {
                         when (targetState.destination.route) {
@@ -206,7 +210,11 @@ fun HookedApp(
                             }
                         }
                     )
-                }
+                    }
+                    }
+                    
+                    // Toast overlay
+                    ToastHost()
                 }
             }
         }

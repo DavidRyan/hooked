@@ -16,6 +16,7 @@ import com.hooked.catches.data.database.DatabaseDriverFactory
 import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
 import com.hooked.auth.data.api.AuthInterceptor
+import com.hooked.core.presentation.toast.ToastManager
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -25,6 +26,7 @@ import org.koin.compose.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val presentationModule = module {
+    single { ToastManager() }
     viewModelOf(::CatchGridViewModel)
     viewModelOf(::CatchDetailsViewModel)
     viewModel { SubmitCatchViewModel(get(), get()) }

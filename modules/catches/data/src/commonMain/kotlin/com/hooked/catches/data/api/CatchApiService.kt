@@ -22,6 +22,7 @@ class CatchApiService(
 ) {
     suspend fun getCatches(): NetworkResult<List<CatchDto>> {
         return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "getCatches URL: $baseUrl/user_catches")
             val response = httpClient
                 .get("$baseUrl/user_catches")
                 .body<Map<String, List<CatchDto>>>()
@@ -52,6 +53,7 @@ class CatchApiService(
     
     suspend fun submitCatch(submitCatchDto: SubmitCatchDto, imageBytes: ByteArray? = null): NetworkResult<String> {
         return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "submitCatch URL: $baseUrl/user_catches")
             val response = httpClient.post("$baseUrl/user_catches") {
                 setBody(MultiPartFormDataContent(
                     formData {

@@ -46,17 +46,18 @@ import androidx.compose.ui.unit.dp
 import com.hooked.auth.presentation.model.LoginEffect
 import com.hooked.auth.presentation.model.LoginIntent
 import com.hooked.core.animation.AnimationConstants
+import com.hooked.core.presentation.toast.ToastManager
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToCreateAccount: () -> Unit,
-    modifier: Modifier = Modifier,
-    viewModel: LoginViewModel = koinViewModel()
+    viewModel: LoginViewModel = koinViewModel(),
+    toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
     val focusManager = LocalFocusManager.current
     
     LaunchedEffect(viewModel.effect) {
@@ -66,20 +67,16 @@ fun LoginScreen(
                     onNavigateToHome()
                 }
                 is LoginEffect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
+                    toastManager.showError(effect.message)
                 }
             }
         }
     }
     
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        modifier = modifier
-    ) { paddingValues ->
+    Box(modifier = Modifier.fillMaxSize()) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
                 .padding(AnimationConstants.CONTENT_PADDING_DP.dp),
             contentAlignment = Alignment.Center
         ) {
