@@ -42,6 +42,7 @@ config :hooked_api,
   image_upload_dir: "priv/static/uploads/catches",
   max_image_size: 10_000_000,
   enrichers: [
+    HookedApi.Enrichers.ExifEnricher,
     HookedApi.Enrichers.GeoEnricher,
     HookedApi.Enrichers.WeatherEnricher,
     HookedApi.Enrichers.Species.SpeciesEnricher

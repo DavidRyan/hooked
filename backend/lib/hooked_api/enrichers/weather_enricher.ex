@@ -275,30 +275,35 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       "WeatherEnricher: RAW HISTORICAL RESPONSE TO PARSE: #{inspect(response, pretty: true, limit: :infinity)}"
     )
 
-    current_data = Map.get(response, "current", %{})
+    # Historical API returns data in a "data" array, get the first (and only) entry
+    historical_data =
+      case get_in(response, ["data", Access.at(0)]) do
+        nil ->
+          Logger.warning("WeatherEnricher: No data found in historical response")
+          Logger.debug("WeatherEnricher: Available response keys: #{inspect(Map.keys(response))}")
+          %{}
 
-    if map_size(current_data) == 0 do
-      Logger.warning("WeatherEnricher: No 'current' data found in historical response")
-      Logger.debug("WeatherEnricher: Available response keys: #{inspect(Map.keys(response))}")
-    end
+        data ->
+          data
+      end
 
     Logger.info(
-      "WeatherEnricher: EXTRACTED CURRENT DATA: #{inspect(current_data, pretty: true, limit: :infinity)}"
+      "WeatherEnricher: EXTRACTED HISTORICAL DATA: #{inspect(historical_data, pretty: true, limit: :infinity)}"
     )
 
     weather_data = %{
-      temperature: get_in(current_data, ["temp"]),
-      feels_like: get_in(current_data, ["feels_like"]),
-      humidity: get_in(current_data, ["humidity"]),
-      pressure: get_in(current_data, ["pressure"]),
-      visibility: Map.get(current_data, "visibility"),
-      wind_speed: get_in(current_data, ["wind_speed"]),
-      wind_direction: get_in(current_data, ["wind_deg"]),
-      weather_condition: get_weather_condition(current_data),
-      weather_description: get_weather_description(current_data),
-      clouds: get_in(current_data, ["clouds"]),
-      sunrise: get_in(current_data, ["sunrise"]) |> unix_to_datetime(),
-      sunset: get_in(current_data, ["sunset"]) |> unix_to_datetime(),
+      temperature: get_in(historical_data, ["temp"]),
+      feels_like: get_in(historical_data, ["feels_like"]),
+      humidity: get_in(historical_data, ["humidity"]),
+      pressure: get_in(historical_data, ["pressure"]),
+      visibility: Map.get(historical_data, "visibility"),
+      wind_speed: get_in(historical_data, ["wind_speed"]),
+      wind_direction: get_in(historical_data, ["wind_deg"]),
+      weather_condition: get_weather_condition(historical_data),
+      weather_description: get_weather_description(historical_data),
+      clouds: get_in(historical_data, ["clouds"]),
+      sunrise: get_in(historical_data, ["sunrise"]) |> unix_to_datetime(),
+      sunset: get_in(historical_data, ["sunset"]) |> unix_to_datetime(),
       data_source: "openweathermap",
       data_type: "historical"
     }
