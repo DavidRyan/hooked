@@ -171,6 +171,11 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   defp make_request(url, params) do
     full_url = url <> "?" <> URI.encode_query(Map.put(params, :appid, "[REDACTED]"))
     Logger.debug("WeatherEnricher: Making request to #{full_url}")
+    Logger.info("WeatherEnricher: FULL REQUEST DETAILS - URL: #{url}")
+
+    Logger.info(
+      "WeatherEnricher: FULL REQUEST PARAMS: #{inspect(Map.put(params, :appid, "[REDACTED]"), pretty: true)}"
+    )
 
     client =
       Tesla.client([
@@ -183,6 +188,11 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
     case Tesla.get(client, "") do
       {:ok, %Tesla.Env{status: 200, body: body}} ->
         Logger.info("WeatherEnricher: HTTP 200 - Request successful")
+
+        Logger.info(
+          "WeatherEnricher: FULL RESPONSE BODY: #{inspect(body, pretty: true, limit: :infinity)}"
+        )
+
         {:ok, body}
 
       {:ok, %Tesla.Env{status: 401, body: body}} ->
@@ -190,27 +200,45 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
           "WeatherEnricher: HTTP 401 - Unauthorized. API key may be invalid or expired"
         )
 
-        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
+        Logger.error(
+          "WeatherEnricher: FULL ERROR RESPONSE BODY: #{inspect(body, pretty: true, limit: :infinity)}"
+        )
+
         {:error, :unauthorized}
 
       {:ok, %Tesla.Env{status: 404, body: body}} ->
         Logger.error("WeatherEnricher: HTTP 404 - Not found")
-        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
+
+        Logger.error(
+          "WeatherEnricher: FULL ERROR RESPONSE BODY: #{inspect(body, pretty: true, limit: :infinity)}"
+        )
+
         {:error, :not_found}
 
       {:ok, %Tesla.Env{status: status_code, body: body}} ->
         Logger.error("WeatherEnricher: HTTP #{status_code} - Unexpected status code")
-        Logger.error("WeatherEnricher: Response body: #{inspect(body)}")
+
+        Logger.error(
+          "WeatherEnricher: FULL ERROR RESPONSE BODY: #{inspect(body, pretty: true, limit: :infinity)}"
+        )
+
         {:error, {:http_error, status_code}}
 
       {:error, reason} ->
-        Logger.error("WeatherEnricher: Request failed: #{inspect(reason)}")
+        Logger.error(
+          "WeatherEnricher: Request failed: #{inspect(reason, pretty: true, limit: :infinity)}"
+        )
+
         {:error, {:request_failed, reason}}
     end
   end
 
   defp parse_current_weather_response(response) do
     Logger.debug("WeatherEnricher: Parsing current weather response")
+
+    Logger.info(
+      "WeatherEnricher: RAW RESPONSE TO PARSE: #{inspect(response, pretty: true, limit: :infinity)}"
+    )
 
     weather_data = %{
       temperature: get_in(response, ["main", "temp"]),
@@ -233,17 +261,30 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       "WeatherEnricher: Parsed weather data - Temp: #{weather_data.temperature}°F, Condition: #{weather_data.weather_description}"
     )
 
+    Logger.info(
+      "WeatherEnricher: FINAL PARSED WEATHER DATA: #{inspect(weather_data, pretty: true, limit: :infinity)}"
+    )
+
     {:ok, weather_data}
   end
 
   defp parse_historical_weather_response(response) do
     Logger.debug("WeatherEnricher: Parsing historical weather response")
+
+    Logger.info(
+      "WeatherEnricher: RAW HISTORICAL RESPONSE TO PARSE: #{inspect(response, pretty: true, limit: :infinity)}"
+    )
+
     current_data = Map.get(response, "current", %{})
 
     if map_size(current_data) == 0 do
       Logger.warning("WeatherEnricher: No 'current' data found in historical response")
       Logger.debug("WeatherEnricher: Available response keys: #{inspect(Map.keys(response))}")
     end
+
+    Logger.info(
+      "WeatherEnricher: EXTRACTED CURRENT DATA: #{inspect(current_data, pretty: true, limit: :infinity)}"
+    )
 
     weather_data = %{
       temperature: get_in(current_data, ["temp"]),
@@ -264,6 +305,10 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
     Logger.info(
       "WeatherEnricher: Parsed historical weather data - Temp: #{weather_data.temperature}°F, Condition: #{weather_data.weather_description}"
+    )
+
+    Logger.info(
+      "WeatherEnricher: FINAL PARSED HISTORICAL WEATHER DATA: #{inspect(weather_data, pretty: true, limit: :infinity)}"
     )
 
     {:ok, weather_data}

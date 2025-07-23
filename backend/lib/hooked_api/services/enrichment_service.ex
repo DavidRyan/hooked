@@ -64,6 +64,7 @@ defmodule HookedApi.Services.EnrichmentService do
 
     enrichers =
       Application.get_env(:hooked_api, :enrichers, [
+        HookedApi.Enrichers.ExifEnricher,
         HookedApi.Enrichers.GeoEnricher,
         HookedApi.Enrichers.WeatherEnricher,
         HookedApi.Enrichers.Species.SpeciesEnricher

@@ -3,8 +3,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
 
   require Logger
 
-  alias HookedApi.Services.{ImageStorage, EnrichmentService}
-  alias HookedApi.Utils.ExifExtractor
+  alias HookedApi.Services.EnrichmentService
   alias HookedApi.PubSubTopics
   alias HookedApi.Catches.UserCatch
 
@@ -56,45 +55,15 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
   defp enrich_catch(user_catch) do
     Logger.debug("Starting enrichment process for catch #{user_catch.id}")
 
-    with {:ok, exif_data} <- extract_exif_data(user_catch),
-         {:ok, enriched_catch} <- apply_enrichers(user_catch) do
-      Logger.debug("Enrichment process completed for catch #{user_catch.id}")
-      {:ok, %{enriched_catch | exif_data: exif_data}}
-    else
+    case apply_enrichers(user_catch) do
+      {:ok, enriched_catch} ->
+        Logger.debug("Enrichment process completed for catch #{user_catch.id}")
+        {:ok, enriched_catch}
+
       {:error, reason} = error ->
         Logger.error("Enrichment process failed for catch #{user_catch.id}: #{inspect(reason)}")
         error
     end
-  end
-
-  defp extract_exif_data(user_catch) do
-    Logger.debug(
-      "Extracting EXIF data for catch #{user_catch.id} from image: #{user_catch.image_url}"
-    )
-
-    result =
-      user_catch.image_url
-      |> ImageStorage.get_image_file_path()
-      |> case do
-        {:ok, file_path} ->
-          Logger.debug("Found image file at #{file_path}, extracting EXIF data")
-          exif_data = ExifExtractor.extract_from_file(file_path)
-
-          Logger.debug(
-            "Extracted EXIF data for catch #{user_catch.id}: #{inspect(Map.keys(exif_data))}"
-          )
-
-          {:ok, exif_data}
-
-        {:error, reason} ->
-          Logger.warning(
-            "Could not get image file path for catch #{user_catch.id}: #{inspect(reason)}"
-          )
-
-          {:ok, %{}}
-      end
-
-    result
   end
 
   defp apply_enrichers(user_catch) do

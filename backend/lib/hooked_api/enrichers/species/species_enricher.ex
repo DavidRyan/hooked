@@ -92,9 +92,14 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
              |> Tesla.Multipart.add_file_content(image_data, "image.jpg", name: "image"),
            _ <-
              Logger.info("SpeciesEnricher: Sending image to iNaturalist API for identification"),
-           {:ok, %Tesla.Env{status: 200, body: %{"results" => results}}} <-
+           {:ok, %Tesla.Env{status: 200, body: %{"results" => results}} = response} <-
              post("/computervision/score_image", multipart) do
         Logger.info("SpeciesEnricher: Received identification results from iNaturalist API")
+
+        Logger.info(
+          "SpeciesEnricher: FULL API RESPONSE: #{inspect(response.body, pretty: true, limit: :infinity)}"
+        )
+
         Logger.debug("SpeciesEnricher: Number of results: #{length(results)}")
 
         case results do

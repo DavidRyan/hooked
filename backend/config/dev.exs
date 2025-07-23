@@ -1,5 +1,29 @@
 import Config
 
+# Simple .env file loader
+defmodule EnvLoader do
+  def load_env do
+    env_file = ".env"
+
+    if File.exists?(env_file) do
+      env_file
+      |> File.read!()
+      |> String.split("\n")
+      |> Enum.each(fn line ->
+        case String.split(line, "=", parts: 2) do
+          [key, value] when key != "" and value != "" ->
+            System.put_env(String.trim(key), String.trim(value))
+
+          _ ->
+            :ok
+        end
+      end)
+    end
+  end
+end
+
+EnvLoader.load_env()
+
 config :hooked_api, HookedApi.Repo,
   username: "postgres",
   password: "postgres",
@@ -29,3 +53,6 @@ config :phoenix, :plug_init_mode, :runtime
 config :hooked_api,
        :jwt_secret,
        "lSecx5L/Nqhs1Lp4XezmvOA+xgpTBB0Hn9W4aT7EnRXfPswG/8wdvql9uwQROsze"
+
+# OpenWeatherMap API Configuration
+config :hooked_api, :openweather_api_key, System.get_env("OPENWEATHER_API_KEY")

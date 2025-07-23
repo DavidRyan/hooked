@@ -61,6 +61,10 @@ defmodule HookedApi.Enrichers.GeoEnricher do
       "GeoEnricher: Extracting GPS from EXIF data with keys: #{inspect(Map.keys(exif_data))}"
     )
 
+    Logger.info(
+      "GeoEnricher: FULL EXIF DATA: #{inspect(exif_data, pretty: true, limit: :infinity)}"
+    )
+
     lat = Map.get(exif_data, :gps_latitude)
     lng = Map.get(exif_data, :gps_longitude)
 
