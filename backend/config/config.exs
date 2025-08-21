@@ -48,9 +48,10 @@ config :hooked_api,
     HookedApi.Enrichers.Species.SpeciesEnricher
   ]
 
-# iNaturalist API configuration
+# Species identification provider API configurations
 config :hooked_api,
-  inaturalist_access_token: System.get_env("INATURALIST_ACCESS_TOKEN")
+  inaturalist_access_token: System.get_env("INATURALIST_ACCESS_TOKEN"),
+  google_vision_access_token: System.get_env("GOOGLE_VISION_ACCESS_TOKEN")
 
 # OpenWeatherMap API configuration
 config :hooked_api,
