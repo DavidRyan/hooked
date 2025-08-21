@@ -50,7 +50,7 @@ config :hooked_api,
 
 # iNaturalist API configuration
 config :hooked_api,
-  inaturalist_access_token: "YOUR_INATURALIST_ACCESS_TOKEN_HERE"
+  inaturalist_access_token: System.get_env("INATURALIST_ACCESS_TOKEN")
 
 # OpenWeatherMap API configuration
 config :hooked_api,

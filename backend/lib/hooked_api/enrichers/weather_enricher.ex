@@ -98,7 +98,33 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   defp is_historical_request?(caught_at) do
     now = NaiveDateTime.utc_now()
-    hours_diff = NaiveDateTime.diff(now, caught_at, :hour)
+
+    # Handle both NaiveDateTime structs and string formats
+    caught_at_datetime =
+      case caught_at do
+        %NaiveDateTime{} ->
+          caught_at
+
+        datetime_string when is_binary(datetime_string) ->
+          case NaiveDateTime.from_iso8601(datetime_string) do
+            {:ok, datetime} ->
+              datetime
+
+            {:error, _} ->
+              Logger.warning(
+                "WeatherEnricher: Could not parse caught_at datetime: #{inspect(datetime_string)}"
+              )
+
+              # Default to current time to avoid crash, will use current weather
+              now
+          end
+
+        _ ->
+          Logger.warning("WeatherEnricher: Invalid caught_at format: #{inspect(caught_at)}")
+          now
+      end
+
+    hours_diff = NaiveDateTime.diff(now, caught_at_datetime, :hour)
     is_historical = hours_diff > 1
 
     Logger.debug(
@@ -137,9 +163,44 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   end
 
   defp fetch_historical_weather(lat, lng, caught_at, api_key) do
-    timestamp = DateTime.from_naive!(caught_at, "Etc/UTC") |> DateTime.to_unix()
-    url = "#{@historical_weather_base_url}#{@historical_weather_endpoint}"
+    # Handle both NaiveDateTime structs and string formats
+    case parse_caught_at_datetime(caught_at) do
+      {:ok, caught_at_datetime} ->
+        timestamp = DateTime.from_naive!(caught_at_datetime, "Etc/UTC") |> DateTime.to_unix()
+        url = "#{@historical_weather_base_url}#{@historical_weather_endpoint}"
 
+        do_fetch_historical_weather(url, lat, lng, timestamp, caught_at_datetime, api_key)
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp parse_caught_at_datetime(caught_at) do
+    case caught_at do
+      %NaiveDateTime{} ->
+        {:ok, caught_at}
+
+      datetime_string when is_binary(datetime_string) ->
+        case NaiveDateTime.from_iso8601(datetime_string) do
+          {:ok, datetime} ->
+            {:ok, datetime}
+
+          {:error, _} ->
+            Logger.error(
+              "WeatherEnricher: Could not parse caught_at datetime: #{inspect(datetime_string)}"
+            )
+
+            {:error, :invalid_datetime}
+        end
+
+      _ ->
+        Logger.error("WeatherEnricher: Invalid caught_at format: #{inspect(caught_at)}")
+        {:error, :invalid_datetime}
+    end
+  end
+
+  defp do_fetch_historical_weather(url, lat, lng, timestamp, caught_at_datetime, api_key) do
     params = %{
       lat: lat,
       lon: lng,
@@ -154,7 +215,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
     )
 
-    Logger.debug("WeatherEnricher: Timestamp: #{timestamp} (#{caught_at})")
+    Logger.debug("WeatherEnricher: Timestamp: #{timestamp} (#{caught_at_datetime})")
 
     case make_request(url, params) do
       {:ok, response} ->

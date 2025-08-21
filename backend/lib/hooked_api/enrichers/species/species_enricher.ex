@@ -4,9 +4,10 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
   use Tesla
   require Logger
 
+  alias HookedApi.Services.ImageStorage
+
   plug(Tesla.Middleware.JSON)
   plug(Tesla.Middleware.Logger)
-  plug(Tesla.Middleware.Multipart)
   plug(Tesla.Middleware.BaseUrl, "https://api.inaturalist.org/v1")
 
   plug(Tesla.Middleware.Headers, [
@@ -21,44 +22,67 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
     Logger.debug("SpeciesEnricher: Current species: #{inspect(user_catch.species)}")
 
     try do
-      case identify_species(user_catch.image_url) do
-        {:ok, species} ->
-          Logger.info(
-            "SpeciesEnricher: Successfully identified species '#{species}' for catch #{user_catch.id}"
+      case validate_api_configuration() do
+        :ok ->
+          case identify_species(user_catch.image_url) do
+            {:ok, species} ->
+              Logger.info(
+                "SpeciesEnricher: Successfully identified species '#{species}' for catch #{user_catch.id}"
+              )
+
+              Logger.debug("SpeciesEnricher: Updating catch with identified species")
+
+              enriched_catch = %{user_catch | species: species}
+
+              Logger.info(
+                "SpeciesEnricher: Species enrichment completed successfully for catch #{user_catch.id}"
+              )
+
+              {:ok, enriched_catch}
+
+            {:error, :no_species_identified} ->
+              Logger.info(
+                "SpeciesEnricher: No species could be identified for catch #{user_catch.id}"
+              )
+
+              Logger.debug(
+                "SpeciesEnricher: Returning catch unchanged - no species identification"
+              )
+
+              {:ok, user_catch}
+
+            {:error, {:api_error, status}} ->
+              Logger.error(
+                "SpeciesEnricher: iNaturalist API error #{status} for catch #{user_catch.id}"
+              )
+
+              Logger.debug("SpeciesEnricher: Returning catch unchanged due to API error")
+              {:ok, user_catch}
+
+            {:error, reason} ->
+              Logger.error(
+                "SpeciesEnricher: Species identification failed for catch #{user_catch.id}: #{inspect(reason)}"
+              )
+
+              Logger.debug(
+                "SpeciesEnricher: Returning catch unchanged due to identification failure"
+              )
+
+              {:ok, user_catch}
+          end
+
+        {:error, :no_api_key} ->
+          Logger.warning(
+            "SpeciesEnricher: iNaturalist API token not configured for catch #{user_catch.id}"
           )
 
-          Logger.debug("SpeciesEnricher: Updating catch with identified species")
-
-          enriched_catch = %{user_catch | species: species}
-
-          Logger.info(
-            "SpeciesEnricher: Species enrichment completed successfully for catch #{user_catch.id}"
-          )
-
-          {:ok, enriched_catch}
-
-        {:error, :no_species_identified} ->
-          Logger.info(
-            "SpeciesEnricher: No species could be identified for catch #{user_catch.id}"
-          )
-
-          Logger.debug("SpeciesEnricher: Returning catch unchanged - no species identification")
           {:ok, user_catch}
 
-        {:error, {:api_error, status}} ->
+        {:error, :invalid_api_key} ->
           Logger.error(
-            "SpeciesEnricher: iNaturalist API error #{status} for catch #{user_catch.id}"
+            "SpeciesEnricher: Invalid iNaturalist API token configured for catch #{user_catch.id}"
           )
 
-          Logger.debug("SpeciesEnricher: Returning catch unchanged due to API error")
-          {:ok, user_catch}
-
-        {:error, reason} ->
-          Logger.error(
-            "SpeciesEnricher: Species identification failed for catch #{user_catch.id}: #{inspect(reason)}"
-          )
-
-          Logger.debug("SpeciesEnricher: Returning catch unchanged due to identification failure")
           {:ok, user_catch}
       end
     rescue
@@ -76,20 +100,46 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
     end
   end
 
+  defp validate_api_configuration do
+    token = Application.get_env(:hooked_api, :inaturalist_access_token)
+
+    case token do
+      nil ->
+        Logger.warning("SpeciesEnricher: No iNaturalist API token configured")
+        {:error, :no_api_key}
+
+      "YOUR_INATURALIST_ACCESS_TOKEN_HERE" ->
+        Logger.error("SpeciesEnricher: iNaturalist API token is still set to placeholder value")
+        {:error, :invalid_api_key}
+
+      token when is_binary(token) and byte_size(token) > 10 ->
+        Logger.debug("SpeciesEnricher: API token configured (#{byte_size(token)} characters)")
+        :ok
+
+      invalid ->
+        Logger.error("SpeciesEnricher: Invalid API token configuration: #{inspect(invalid)}")
+        {:error, :invalid_api_key}
+    end
+  end
+
   @spec identify_species(String.t()) :: {:ok, String.t()} | {:error, term()}
   defp identify_species(image_url) when is_binary(image_url) do
     Logger.info("SpeciesEnricher: Starting species identification process")
-    Logger.debug("SpeciesEnricher: Downloading image from #{image_url}")
+    Logger.debug("SpeciesEnricher: Reading image from #{image_url}")
 
     try do
-      with {:ok, %Tesla.Env{status: 200, body: image_data}} <- Tesla.get(image_url),
+      with {:ok, file_path} <- ImageStorage.get_image_file_path(image_url),
+           _ <- Logger.debug("SpeciesEnricher: Found image file at #{file_path}"),
+           {:ok, image_data} <- File.read(file_path),
            _ <-
              Logger.debug(
-               "SpeciesEnricher: Successfully downloaded image (#{byte_size(image_data)} bytes)"
+               "SpeciesEnricher: Successfully read image file (#{byte_size(image_data)} bytes)"
              ),
            multipart <-
              Tesla.Multipart.new()
-             |> Tesla.Multipart.add_file_content(image_data, "image.jpg", name: "image"),
+             |> Tesla.Multipart.add_file_content(image_data, Path.basename(file_path),
+               name: "image"
+             ),
            _ <-
              Logger.info("SpeciesEnricher: Sending image to iNaturalist API for identification"),
            {:ok, %Tesla.Env{status: 200, body: %{"results" => results}} = response} <-
@@ -115,6 +165,14 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
             {:error, :no_species_identified}
         end
       else
+        {:error, :file_not_found} ->
+          Logger.warning("SpeciesEnricher: Image file not found: #{image_url}")
+          {:error, :file_not_found}
+
+        {:error, reason} when reason in [:enoent, :eacces, :eisdir] ->
+          Logger.warning("SpeciesEnricher: File system error reading image: #{inspect(reason)}")
+          {:error, :file_read_error}
+
         {:ok, %Tesla.Env{status: status, body: body}} when status != 200 ->
           Logger.error("SpeciesEnricher: iNaturalist API returned error status: #{status}")
           Logger.error("SpeciesEnricher: Error response body: #{inspect(body)}")
