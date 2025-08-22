@@ -30,6 +30,7 @@ defmodule HookedApi.Accounts.User do
     field :failed_login_attempts, :integer, default: 0
     field :locked_until, :utc_datetime
     field :last_failed_login, :utc_datetime
+    has_many :catches, HookedApi.Catches.UserCatch
 
     timestamps(type: :utc_datetime)
   end

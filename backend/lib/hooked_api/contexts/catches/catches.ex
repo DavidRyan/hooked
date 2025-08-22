@@ -4,12 +4,16 @@ defmodule HookedApi.Catches do
   alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
 
-  def list_user_catches() do
-    Repo.all(UserCatch)
+  def list_user_catches(user_id) do
+    UserCatch
+    |> UserCatch.for_user(user_id)
+    |> Repo.all()
   end
 
-  def get_user_catch(id) do
-    Repo.get(UserCatch, id)
+  def get_user_catch(user_id, id) do
+    UserCatch
+    |> UserCatch.for_user_and_id(user_id, id)
+    |> Repo.one()
   end
 
   def get_user_catch!(id) do
@@ -37,9 +41,9 @@ defmodule HookedApi.Catches do
     |> Repo.update()
   end
 
-  def create_user_catch(attrs, %Plug.Upload{} = image_upload) do
+  def create_user_catch(user_id, attrs, %Plug.Upload{} = image_upload) do
     with {:ok, image_data} <- ImageStorage.upload_image(image_upload),
-         attrs_with_image <- Map.merge(attrs, image_data),
+    attrs_with_image <- Map.merge(attrs, Map.put(image_data, :user_id, user_id)),
          {:ok, user_catch} <- insert_user_catch(attrs_with_image),
          {:ok, _job} <- EnrichmentService.enqueue_enrichment(user_catch) do
       {:ok, user_catch}

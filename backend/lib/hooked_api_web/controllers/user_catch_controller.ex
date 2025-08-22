@@ -4,7 +4,7 @@ defmodule HookedApiWeb.UserCatchController do
   alias HookedApi.Catches
 
   def index(conn, _params) do
-    user_catches = Catches.list_user_catches()
+    user_catches = Catches.list_user_catches(conn.assigns[:current_user].id)
     json(conn, %{user_catches: user_catches})
   end
 
@@ -21,7 +21,7 @@ defmodule HookedApiWeb.UserCatchController do
   end
 
   def create(conn, %{"user_catch" => user_catch_params, "image" => %Plug.Upload{} = image_upload}) do
-    case Catches.create_user_catch(user_catch_params, image_upload) do
+    case Catches.create_user_catch(conn.assigns[:current_user].id, user_catch_params, image_upload) do
       {:ok, user_catch} ->
         conn
         |> put_status(:created)

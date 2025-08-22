@@ -1,6 +1,7 @@
 defmodule HookedApi.Catches.UserCatch do
   use Ecto.Schema
   import Ecto.Changeset
+  import Ecto.Query
 
   @derive {Jason.Encoder,
            only: [
@@ -18,7 +19,7 @@ defmodule HookedApi.Catches.UserCatch do
              :image_content_type,
              :image_file_size,
              :inserted_at,
-             :updated_at
+             :updated_at,
            ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -38,7 +39,7 @@ defmodule HookedApi.Catches.UserCatch do
           image_content_type: String.t() | nil,
           image_file_size: integer() | nil,
           inserted_at: DateTime.t(),
-          updated_at: DateTime.t()
+          updated_at: DateTime.t(),
         }
 
   schema "user_catches" do
@@ -50,7 +51,7 @@ defmodule HookedApi.Catches.UserCatch do
     field(:notes, :string)
     field(:weather_data, :map)
     field(:exif_data, :map)
-
+    belongs_to :user, HookedApi.Accounts.User
     field(:image_url, :string)
     field(:image_filename, :string)
     field(:image_content_type, :string)
@@ -100,5 +101,15 @@ defmodule HookedApi.Catches.UserCatch do
       "image/heic"
     ])
     |> validate_number(:image_file_size, greater_than: 0, less_than: 10_000_000)
+    |> assoc_constraint(:user)
   end
+
+  def for_user(query \\ __MODULE__, user_id) do
+    from uc in query, where: uc.user_id == ^user_id
+  end
+
+  def for_user_and_id(query \\ __MODULE__, user_id, id) do
+    from uc in query, where: uc.user_id == ^user_id and uc.id == ^id
+  end
+
 end
