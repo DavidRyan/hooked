@@ -20,6 +20,7 @@ defmodule HookedApi.Catches.UserCatch do
              :image_file_size,
              :inserted_at,
              :updated_at,
+             :user_id,
            ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -40,6 +41,7 @@ defmodule HookedApi.Catches.UserCatch do
           image_file_size: integer() | nil,
           inserted_at: DateTime.t(),
           updated_at: DateTime.t(),
+          user_id: binary(),
         }
 
   schema "user_catches" do
@@ -74,7 +76,8 @@ defmodule HookedApi.Catches.UserCatch do
       :image_url,
       :image_filename,
       :image_content_type,
-      :image_file_size
+      :image_file_size,
+      :user_id
     ])
     |> validate_required([])
     |> validate_length(:species, min: 1, max: 100)

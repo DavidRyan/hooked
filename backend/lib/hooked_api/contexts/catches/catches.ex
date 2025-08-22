@@ -43,7 +43,7 @@ defmodule HookedApi.Catches do
 
   def create_user_catch(user_id, attrs, %Plug.Upload{} = image_upload) do
     with {:ok, image_data} <- ImageStorage.upload_image(image_upload),
-    attrs_with_image <- Map.merge(attrs, Map.put(image_data, :user_id, user_id)),
+    attrs_with_image <- Map.merge(attrs, Map.put(image_data, "user_id", user_id))
          {:ok, user_catch} <- insert_user_catch(attrs_with_image),
          {:ok, _job} <- EnrichmentService.enqueue_enrichment(user_catch) do
       {:ok, user_catch}

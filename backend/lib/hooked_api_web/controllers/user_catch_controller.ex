@@ -9,7 +9,7 @@ defmodule HookedApiWeb.UserCatchController do
   end
 
   def show(conn, %{"id" => id}) do
-    case Catches.get_user_catch(id) do
+    case Catches.get_user_catch(conn.assigns[:current_user].id, id) do
       nil ->
         conn
         |> put_status(:not_found)
