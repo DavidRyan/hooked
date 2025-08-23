@@ -31,3 +31,16 @@ System.put_env(
   "JWT_SECRET",
   "test_jwt_secret_that_is_at_least_32_characters_long_for_testing_purposes"
 )
+
+# Disable Oban in tests
+config :hooked_api, Oban, testing: :manual
+
+# Disable rate limiting in tests
+config :hooked_api, HookedApiWeb.Plugs.RateLimitPlug,
+  enabled: false,
+  queues: false,
+  plugins: false
+
+
+# Disable rate limiting in tests
+config :hooked_api, HookedApiWeb.Plugs.RateLimitPlug, enabled: false

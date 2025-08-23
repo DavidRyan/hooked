@@ -1,24 +1,34 @@
 defmodule HookedApi.EnrichmentHandlerTest do
   use HookedApi.DataCase, async: false
+  import HookedApi.Factory
 
+  setup do
+    # Use shared mode for background processes to access the database
+    Ecto.Adapters.SQL.Sandbox.mode(HookedApi.Repo, {:shared, self()})
+    :ok
+  end
+
+  alias HookedApi.Catches.UserCatch
   alias HookedApi.EnrichmentHandler
-  alias HookedApi.Catches
-
-
 
   describe "handle_info/2 - enrichment_completed" do
     test "successfully updates catch with enriched data" do
-      user_catch = insert(:user_catch, %{
-        species: "Unknown Fish",
-        location: "Lake Michigan",
-        weather_data: nil
-      })
+      user = insert(:user)
 
-      enriched_user_catch = %{user_catch |
-        species: "Largemouth Bass",
-        location: "Lake Michigan, Chicago, IL",
-        weather_data: %{"temperature" => 72, "conditions" => "sunny"},
-        exif_data: %{"camera" => "iPhone 12", "timestamp" => "2024-01-15T10:30:00Z"}
+      user_catch =
+        insert(:user_catch, %{
+          user_id: user.id,
+          species: "Unknown Fish",
+          location: "Lake Michigan",
+          weather_data: nil
+        })
+
+      enriched_user_catch = %{
+        user_catch
+        | species: "Largemouth Bass",
+          location: "Lake Michigan, Chicago, IL",
+          weather_data: %{"temperature" => 72, "conditions" => "sunny"},
+          exif_data: %{"camera" => "iPhone 12", "timestamp" => "2024-01-15T10:30:00Z"}
       }
 
       {:ok, pid} = GenServer.start_link(EnrichmentHandler, [])
@@ -26,27 +36,29 @@ defmodule HookedApi.EnrichmentHandlerTest do
       send(pid, {:enrichment_completed, user_catch.id, enriched_user_catch})
       Process.sleep(50)
 
-      updated_catch = Catches.get_user_catch(user_catch.id)
+      updated_catch = HookedApi.Repo.get(UserCatch, user_catch.id)
       assert updated_catch.species == "Largemouth Bass"
       assert updated_catch.location == "Lake Michigan, Chicago, IL"
       assert updated_catch.weather_data == %{"temperature" => 72, "conditions" => "sunny"}
-      assert updated_catch.exif_data == %{"camera" => "iPhone 12", "timestamp" => "2024-01-15T10:30:00Z"}
+
+      assert updated_catch.exif_data == %{
+               "camera" => "iPhone 12",
+               "timestamp" => "2024-01-15T10:30:00Z"
+             }
     end
 
     test "handles update failure gracefully" do
-      user_catch = insert(:user_catch)
+      user = insert(:user)
+      user_catch = insert(:user_catch, user_id: user.id)
 
-      invalid_enriched_catch = %{user_catch |
-        species: "",
-        latitude: 200
-      }
+      invalid_enriched_catch = %{user_catch | species: "", latitude: 200}
 
       {:ok, pid} = GenServer.start_link(EnrichmentHandler, [])
 
       send(pid, {:enrichment_completed, user_catch.id, invalid_enriched_catch})
       Process.sleep(50)
 
-      original_catch = Catches.get_user_catch(user_catch.id)
+      original_catch = HookedApi.Repo.get(UserCatch, user_catch.id)
       assert original_catch.species == user_catch.species
       assert original_catch.latitude == user_catch.latitude
     end

@@ -11,8 +11,7 @@ config :hooked_api, HookedApi.Endpoint,
     formats: [json: HookedApiWeb.ErrorJSON],
     layout: false
   ],
-  pubsub_server: HookedApi.PubSub,
-  live_view: [signing_salt: "your-signing-salt"]
+  pubsub_server: HookedApi.PubSub
 
 config :hooked_api, Oban,
   engine: Oban.Engines.Basic,
@@ -41,7 +40,6 @@ config :hooked_api,
   image_storage_backend: :local,
   image_upload_dir: "priv/static/uploads/catches",
   max_image_size: 10_000_000,
-  # Set to false when using S3
   serve_static_images: true,
   enrichers: [
     HookedApi.Enrichers.ExifEnricher,

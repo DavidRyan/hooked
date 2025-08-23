@@ -26,15 +26,20 @@ defmodule HookedApi.Catches do
     |> Repo.update()
   end
 
+  def delete_user_catch(%UserCatch{} = user_catch) do
+    Repo.delete(user_catch)
+  end
+
   def replace_user_catch(%UserCatch{} = enriched_user_catch) do
     # Get the original record from the database to create a proper changeset
     original_catch = get_user_catch!(enriched_user_catch.id)
-    
+
     # Convert enriched struct to map and remove metadata fields
-    attrs = enriched_user_catch
-    |> Map.from_struct()
-    |> Map.drop([:__meta__, :id, :inserted_at, :updated_at])
-    
+    attrs =
+      enriched_user_catch
+      |> Map.from_struct()
+      |> Map.drop([:__meta__, :id, :inserted_at, :updated_at])
+
     # Create changeset from original record with new attributes
     original_catch
     |> UserCatch.changeset(attrs)
@@ -43,7 +48,7 @@ defmodule HookedApi.Catches do
 
   def create_user_catch(user_id, attrs, %Plug.Upload{} = image_upload) do
     with {:ok, image_data} <- ImageStorage.upload_image(image_upload),
-    attrs_with_image <- Map.merge(attrs, Map.put(image_data, "user_id", user_id))
+         attrs_with_image <- Map.merge(attrs, Map.put(image_data, "user_id", user_id)),
          {:ok, user_catch} <- insert_user_catch(attrs_with_image),
          {:ok, _job} <- EnrichmentService.enqueue_enrichment(user_catch) do
       {:ok, user_catch}

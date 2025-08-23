@@ -2,7 +2,19 @@ defmodule HookedApi.Accounts.User do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @derive {Jason.Encoder, only: [:id, :email, :first_name, :last_name, :is_active, :inserted_at, :updated_at]}
+  @derive {Jason.Encoder,
+           only: [
+             :id,
+             :email,
+             :first_name,
+             :last_name,
+             :is_active,
+             :inserted_at,
+             :updated_at
+           ]}
+
+  @derive {Jason.Encoder,
+           only: [:id, :email, :first_name, :last_name, :is_active, :inserted_at, :updated_at]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
@@ -53,7 +65,14 @@ defmodule HookedApi.Accounts.User do
 
   def update_changeset(user, attrs) do
     user
-    |> cast(attrs, [:first_name, :last_name, :is_active, :failed_login_attempts, :locked_until, :last_failed_login])
+    |> cast(attrs, [
+      :first_name,
+      :last_name,
+      :is_active,
+      :failed_login_attempts,
+      :locked_until,
+      :last_failed_login
+    ])
     |> validate_length(:first_name, min: 1, max: 50)
     |> validate_length(:last_name, min: 1, max: 50)
     |> validate_number(:failed_login_attempts, greater_than_or_equal_to: 0)
@@ -62,7 +81,9 @@ defmodule HookedApi.Accounts.User do
   defp validate_email(changeset) do
     changeset
     |> validate_required([:email])
-    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, message: "must be a valid email address")
+    |> validate_format(:email, ~r/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: "must be a valid email address"
+    )
     |> validate_length(:email, max: 160)
     |> unsafe_validate_unique(:email, HookedApi.Repo)
     |> unique_constraint(:email)
@@ -74,7 +95,9 @@ defmodule HookedApi.Accounts.User do
     |> validate_length(:password, min: 8, max: 72)
     |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")
-    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/, message: "at least one digit or punctuation character")
+    |> validate_format(:password, ~r/[!?@#$%^&*_0-9]/,
+      message: "at least one digit or punctuation character"
+    )
   end
 
   defp hash_password(changeset) do

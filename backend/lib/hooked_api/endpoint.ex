@@ -1,16 +1,13 @@
 defmodule HookedApi.Endpoint do
   use Phoenix.Endpoint, otp_app: :hooked_api
 
+  # Simplified for API-only - no LiveView needed for mobile app
   @session_options [
     store: :cookie,
-    key: "_hooked_api_key",
-    signing_salt: "your_signing_salt_here",
+    key: "_hooked_api_key", 
+    signing_salt: System.get_env("SIGNING_SALT") || "fallback-salt-for-dev",
     same_site: "Lax"
   ]
-
-  socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
-    longpoll: [connect_info: [session: @session_options]]
 
   plug Plug.Static,
     at: "/",
@@ -29,9 +26,7 @@ defmodule HookedApi.Endpoint do
     plug Phoenix.Ecto.CheckRepoStatus, otp_app: :hooked_api
   end
 
-  plug Phoenix.LiveDashboard.RequestLogger,
-    param_key: "request_logger",
-    cookie_key: "request_logger"
+  # Removed LiveDashboard.RequestLogger for API-only app
 
   plug Plug.RequestId
   plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]

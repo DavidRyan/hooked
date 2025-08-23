@@ -26,10 +26,17 @@ The following flows need to work for the MVP:
    - **Fix**: `Map.merge(attrs, Map.put(image_data, "user_id", user_id))`
    - **Impact**: User association won't be saved correctly
 
-2. **Configure Static File Serving for Images**
-   - **Issue**: Uploaded images stored in `priv/static/uploads/` but not served
-   - **Fix**: Update endpoint.ex to serve static files from uploads directory
-   - **Impact**: Image URLs return 404s
+2. **🚨 CRITICAL SECURITY: Update Default Secrets**
+   - **Issue**: Default placeholder secrets are security vulnerabilities  
+   - **Fix**: Update the following with secure random values:
+     - `config/dev.exs:41` - `secret_key_base: "DAMk5V6HNF89sXkn872MUuzpUGuGxZ6LcGZXlos6HIiL8Dz09UQb5iPYYFH5SGdC"`
+     - `lib/hooked_api/endpoint.ex:7` - `signing_salt: "6fw2xNSWL2IsJFqBDDA0zsgxajmfk0b2JnrxX0uMhhXRZhfB0GcnBeOYdHZwDAz7"`
+   - **Impact**: Anyone can forge user sessions and impersonate users
+   - **Note**: LiveView signing salt can be ignored since this is API-only for mobile
+
+3. **Configure Static File Serving for Images** ✅
+   - **Status**: COMPLETED - Added static file serving for `/uploads` path
+   - **Implementation**: Easy to swap to S3 later by removing the Plug.Static block
 
 #### Medium Priority
 

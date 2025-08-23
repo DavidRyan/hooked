@@ -38,7 +38,7 @@ config :hooked_api, HookedApi.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "your-secret-key-base-here",
+  secret_key_base: System.get_env("SECRET_KEY_BASE") || raise("SECRET_KEY_BASE environment variable is not set"),
   watchers: []
 
 config :hooked_api, :dev_routes, true
@@ -49,10 +49,10 @@ config :phoenix, :stacktrace_depth, 20
 
 config :phoenix, :plug_init_mode, :runtime
 
-# JWT Configuration
+# JWT Configuration - now loaded from environment
 config :hooked_api,
        :jwt_secret,
-       "lSecx5L/Nqhs1Lp4XezmvOA+xgpTBB0Hn9W4aT7EnRXfPswG/8wdvql9uwQROsze"
+       System.get_env("JWT_SECRET") || raise("JWT_SECRET environment variable is not set")
 
 # OpenWeatherMap API Configuration
 config :hooked_api, :openweather_api_key, System.get_env("OPENWEATHER_API_KEY")

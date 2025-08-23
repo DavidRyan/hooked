@@ -21,7 +21,11 @@ defmodule HookedApiWeb.UserCatchController do
   end
 
   def create(conn, %{"user_catch" => user_catch_params, "image" => %Plug.Upload{} = image_upload}) do
-    case Catches.create_user_catch(conn.assigns[:current_user].id, user_catch_params, image_upload) do
+    case Catches.create_user_catch(
+           conn.assigns[:current_user].id,
+           user_catch_params,
+           image_upload
+         ) do
       {:ok, user_catch} ->
         conn
         |> put_status(:created)
@@ -43,6 +47,46 @@ defmodule HookedApiWeb.UserCatchController do
     conn
     |> put_status(:bad_request)
     |> json(%{error: "Image is required"})
+  end
+
+  def update(conn, %{"id" => id, "user_catch" => user_catch_params}) do
+    case Catches.get_user_catch(conn.assigns[:current_user].id, id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "User catch not found"})
+
+      user_catch ->
+        case Catches.update_user_catch(user_catch, user_catch_params) do
+          {:ok, updated_catch} ->
+            json(conn, %{user_catch: updated_catch})
+
+          {:error, changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{errors: changeset_errors(changeset)})
+        end
+    end
+  end
+
+  def delete(conn, %{"id" => id}) do
+    case Catches.get_user_catch(conn.assigns[:current_user].id, id) do
+      nil ->
+        conn
+        |> put_status(:not_found)
+        |> json(%{error: "User catch not found"})
+
+      user_catch ->
+        case Catches.delete_user_catch(user_catch) do
+          {:ok, _deleted_catch} ->
+            json(conn, %{message: "User catch deleted successfully"})
+
+          {:error, _changeset} ->
+            conn
+            |> put_status(:unprocessable_entity)
+            |> json(%{error: "Failed to delete user catch"})
+        end
+    end
   end
 
   defp format_error_reason(:invalid_file_type),

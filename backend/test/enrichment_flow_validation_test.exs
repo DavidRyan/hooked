@@ -6,16 +6,23 @@ defmodule HookedApi.EnrichmentFlowValidationTest do
   use HookedApi.DataCase, async: false
   use Oban.Testing, repo: HookedApi.Repo
 
-  alias HookedApi.Services.EnrichmentService
   alias HookedApi.Workers.CatchEnrichmentWorker
   alias HookedApi.PubSubTopics
-  alias HookedApi.Catches.UserCatch
+
+  setup do
+    # Use shared mode for background processes to access the database  
+    Ecto.Adapters.SQL.Sandbox.mode(HookedApi.Repo, {:shared, self()})
+    :ok
+  end
 
   describe "Enrichment Flow Validation" do
     setup do
       # Use fish_2.jpg which has known EXIF data with GPS coordinates
+      user = insert(:user)
+
       user_catch =
         insert(:user_catch, %{
+          user_id: user.id,
           species: "Unknown Fish",
           location: "Original Location",
           # Will be updated by GPS from EXIF
@@ -205,8 +212,11 @@ defmodule HookedApi.EnrichmentFlowValidationTest do
 
     test "Enrichment flow is resilient to individual enricher failures" do
       # Create catch with invalid image URL to test resilience
+      user = insert(:user)
+
       invalid_catch =
         insert(:user_catch, %{
+          user_id: user.id,
           image_url: "nonexistent.jpg",
           latitude: nil,
           longitude: nil,
@@ -256,8 +266,11 @@ defmodule HookedApi.EnrichmentFlowValidationTest do
     end
 
     test "Species enricher properly handles API configuration issues" do
+      user = insert(:user)
+
       user_catch =
         insert(:user_catch, %{
+          user_id: user.id,
           species: "Original Species",
           image_url: "fish_2.jpg"
         })

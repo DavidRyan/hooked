@@ -15,6 +15,15 @@ defmodule HookedApiWeb.Plugs.RateLimitPlug do
   end
 
   def call(conn, opts) do
+    # Skip rate limiting if disabled in config (for tests)
+    if Application.get_env(:hooked_api, __MODULE__, [])[:enabled] == false do
+      conn
+    else
+      do_rate_limit(conn, opts)
+    end
+  end
+
+  defp do_rate_limit(conn, opts) do
     identifier = get_identifier(conn)
     bucket_name = "#{opts.bucket_name}:#{identifier}"
 

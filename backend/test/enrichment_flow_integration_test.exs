@@ -2,16 +2,24 @@ defmodule HookedApi.EnrichmentFlowIntegrationTest do
   use HookedApi.DataCase, async: false
   use Oban.Testing, repo: HookedApi.Repo
 
+  setup do
+    # Use shared mode for background processes to access the database
+    Ecto.Adapters.SQL.Sandbox.mode(HookedApi.Repo, {:shared, self()})
+    :ok
+  end
+
   alias HookedApi.Services.EnrichmentService
   alias HookedApi.Workers.CatchEnrichmentWorker
   alias HookedApi.PubSubTopics
-  alias HookedApi.Catches
 
   describe "Full Enrichment Flow Integration" do
     setup do
       # Create a user catch with real image data
+      user = insert(:user)
+
       user_catch =
         insert(:user_catch, %{
+          user_id: user.id,
           species: "Unknown Fish",
           location: "Test Lake",
           latitude: 42.3601,

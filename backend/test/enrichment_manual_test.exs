@@ -150,8 +150,11 @@ defmodule HookedApi.EnrichmentManualTest do
 
     test "test full enrichment worker flow with validation" do
       # Create a user catch in the database
+      user = insert(:user)
+
       user_catch =
         insert(:user_catch, %{
+          user_id: user.id,
           species: "Unknown Fish",
           location: "Test Lake",
           latitude: 42.3601,
