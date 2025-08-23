@@ -20,7 +20,8 @@ defmodule HookedApi.Catches.UserCatch do
              :image_file_size,
              :inserted_at,
              :updated_at,
-             :user_id
+             :user_id,
+             :enrichment_status
            ]}
   @derive {JSON.Encoder,
            only: [
@@ -39,7 +40,28 @@ defmodule HookedApi.Catches.UserCatch do
              :image_file_size,
              :inserted_at,
              :updated_at,
-             :user_id
+             :user_id,
+             :enrichment_status
+           ]}
+  @derive {JSON.Encoder,
+           only: [
+             :id,
+             :species,
+             :location,
+             :latitude,
+             :longitude,
+             :caught_at,
+             :notes,
+             :weather_data,
+             :exif_data,
+             :image_url,
+             :image_filename,
+             :image_content_type,
+             :image_file_size,
+             :inserted_at,
+             :updated_at,
+             :user_id,
+             :enrichment_status
            ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -60,7 +82,8 @@ defmodule HookedApi.Catches.UserCatch do
           image_file_size: integer() | nil,
           inserted_at: DateTime.t(),
           updated_at: DateTime.t(),
-          user_id: binary()
+          user_id: binary(),
+          enrichment_status: boolean() | nil
         }
 
   schema "user_catches" do
@@ -77,6 +100,7 @@ defmodule HookedApi.Catches.UserCatch do
     field(:image_filename, :string)
     field(:image_content_type, :string)
     field(:image_file_size, :integer)
+    field(:enrichment_status, :boolean)
 
     timestamps(type: :utc_datetime)
   end
@@ -96,7 +120,8 @@ defmodule HookedApi.Catches.UserCatch do
       :image_filename,
       :image_content_type,
       :image_file_size,
-      :user_id
+      :user_id,
+      :enrichment_status
     ])
     |> validate_required([])
     |> validate_length(:species, min: 1, max: 100)

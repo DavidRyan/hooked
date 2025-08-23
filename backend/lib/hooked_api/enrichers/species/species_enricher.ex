@@ -43,13 +43,13 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
                 "SpeciesEnricher: Returning catch unchanged - no species identification"
               )
 
-              {:ok, user_catch}
+              {:ok, %{user_catch | enrichment_status: false}}
 
             {:error, {:api_error, status, _body}} ->
               Logger.error("SpeciesEnricher: API error #{status} for catch #{user_catch.id}")
 
               Logger.debug("SpeciesEnricher: Returning catch unchanged due to API error")
-              {:ok, user_catch}
+              {:ok, %{user_catch | enrichment_status: false}}
 
             {:error, reason} ->
               Logger.error(
@@ -60,16 +60,16 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
                 "SpeciesEnricher: Returning catch unchanged due to identification failure"
               )
 
-              {:ok, user_catch}
+              {:ok, %{user_catch | enrichment_status: false}}
           end
 
         {:error, :no_api_key} ->
           Logger.warning("SpeciesEnricher: API token not configured for catch #{user_catch.id}")
-          {:ok, user_catch}
+          {:ok, %{user_catch | enrichment_status: false}}
 
         {:error, :invalid_api_key} ->
           Logger.error("SpeciesEnricher: Invalid API token configured for catch #{user_catch.id}")
-          {:ok, user_catch}
+          {:ok, %{user_catch | enrichment_status: false}}
       end
     rescue
       error ->
@@ -82,7 +82,7 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
         )
 
         Logger.error("SpeciesEnricher: Returning catch unchanged due to crash")
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
     end
   end
 

@@ -30,29 +30,39 @@ defmodule HookedApi.EnrichmentManualTest do
       # Test EXIF Enricher
       IO.puts("\n--- EXIF Enricher ---")
 
-      case HookedApi.Enrichers.ExifEnricher.enrich(user_catch) do
+      case HookedApi.Enrichers.ExifEnricher.enrich(%{user_catch | enrichment_status: true}) do
         {:ok, enriched_catch} ->
-          if enriched_catch.exif_data && map_size(enriched_catch.exif_data) > 0 do
+          if enriched_catch.enrichment_status do
             IO.puts(
               "✓ EXIF enrichment successful - extracted #{map_size(enriched_catch.exif_data)} fields"
             )
 
             IO.puts("EXIF data keys: #{inspect(Map.keys(enriched_catch.exif_data))}")
 
-            # Validate that GPS data was extracted from fish_2.jpg
+            # Validate that actual EXIF data was extracted
+            assert enriched_catch.exif_data != nil,
+                   "EXIF data should not be nil when enrichment succeeds"
+
+            assert map_size(enriched_catch.exif_data) > 0,
+                   "EXIF data should not be empty when enrichment succeeds"
+
+            # Validate that essential EXIF fields are present for fish_2.jpg
+            assert enriched_catch.exif_data[:make] != nil, "Expected camera make in EXIF data"
+            assert enriched_catch.exif_data[:model] != nil, "Expected camera model in EXIF data"
+
+            # GPS coordinates should be available in fish_2.jpg
             assert enriched_catch.exif_data[:gps_latitude] != nil,
                    "Expected GPS latitude in EXIF data"
 
             assert enriched_catch.exif_data[:gps_longitude] != nil,
                    "Expected GPS longitude in EXIF data"
 
-            assert enriched_catch.exif_data[:make] != nil, "Expected camera make in EXIF data"
-          else
-            IO.puts("⚠ EXIF enrichment returned success but no data extracted")
-
-            flunk(
-              "EXIF enricher should extract data from fish_2.jpg but got: #{inspect(enriched_catch.exif_data)}"
+            IO.puts(
+              "GPS coordinates: #{enriched_catch.exif_data[:gps_latitude]}, #{enriched_catch.exif_data[:gps_longitude]}"
             )
+          else
+            IO.puts("✗ EXIF enrichment failed - enrichment_status is false")
+            flunk("EXIF enricher should succeed with fish_2.jpg")
           end
 
         {:error, reason} ->
@@ -63,13 +73,19 @@ defmodule HookedApi.EnrichmentManualTest do
       # Test Geo Enricher
       IO.puts("\n--- Geo Enricher ---")
 
-      case HookedApi.Enrichers.GeoEnricher.enrich(user_catch) do
+      case HookedApi.Enrichers.GeoEnricher.enrich(%{user_catch | enrichment_status: true}) do
         {:ok, enriched_catch} ->
-          IO.puts("✓ Geo enrichment successful")
+          # Geo enricher success depends on whether GPS data is available in EXIF
+          if enriched_catch.enrichment_status do
+            IO.puts("✓ Geo enrichment successful - GPS coordinates extracted from EXIF")
+          else
+            IO.puts("◦ Geo enrichment skipped - no GPS data in EXIF (this is normal)")
+          end
+
           IO.puts("Original location: #{user_catch.location}")
           IO.puts("Enriched location: #{enriched_catch.location}")
 
-          # Geo enricher should preserve the original location if no GPS data available
+          # Geo enricher should preserve the original location
           assert enriched_catch.location != nil, "Location should not be nil after geo enrichment"
 
         {:error, reason} ->
@@ -80,11 +96,18 @@ defmodule HookedApi.EnrichmentManualTest do
       # Test Weather Enricher - with proper datetime handling validation
       IO.puts("\n--- Weather Enricher ---")
 
-      case HookedApi.Enrichers.WeatherEnricher.enrich(user_catch) do
+      case HookedApi.Enrichers.WeatherEnricher.enrich(%{user_catch | enrichment_status: true}) do
         {:ok, enriched_catch} ->
-          IO.puts("✓ Weather enrichment successful")
+          if enriched_catch.enrichment_status do
+            IO.puts("✓ Weather enrichment successful")
 
-          if enriched_catch.weather_data && map_size(enriched_catch.weather_data) > 0 do
+            # Validate that actual weather data was added
+            assert enriched_catch.weather_data != nil,
+                   "Weather data should not be nil when enrichment succeeds"
+
+            assert map_size(enriched_catch.weather_data) > 0,
+                   "Weather data should not be empty when enrichment succeeds"
+
             IO.puts("Weather data keys: #{inspect(Map.keys(enriched_catch.weather_data))}")
 
             # Validate essential weather fields are present
@@ -102,7 +125,8 @@ defmodule HookedApi.EnrichmentManualTest do
 
             assert has_weather_info, "Expected some weather information to be present"
           else
-            IO.puts("⚠ Weather enrichment returned success but no data - likely API key missing")
+            IO.puts("✗ Weather enrichment failed - enrichment_status is false")
+            flunk("Weather enricher should succeed when API key is properly configured")
           end
 
         {:error, reason} ->
@@ -118,26 +142,43 @@ defmodule HookedApi.EnrichmentManualTest do
         "API token configured: #{if token && byte_size(token) > 20, do: "Yes (#{byte_size(token)} chars)", else: "No or invalid"}"
       )
 
-      case HookedApi.Enrichers.Species.SpeciesEnricher.enrich(user_catch) do
+      case HookedApi.Enrichers.Species.SpeciesEnricher.enrich(%{
+             user_catch
+             | enrichment_status: true
+           }) do
         {:ok, enriched_catch} ->
-          IO.puts("✓ Species enrichment completed")
           IO.puts("Original species: #{user_catch.species}")
           IO.puts("Enriched species: #{enriched_catch.species}")
 
           # Species enricher should at least preserve original species
           assert enriched_catch.species != nil, "Species should not be nil after enrichment"
 
-          # Validate behavior based on API configuration
+          # Check enrichment status and validate behavior based on API configuration
           if is_nil(token) or token == "YOUR_INATURALIST_ACCESS_TOKEN_HERE" or
                byte_size(token || "") <= 10 do
+            # API not configured - should fail enrichment
+            assert enriched_catch.enrichment_status == false,
+                   "Should fail enrichment when API not configured"
+
             assert enriched_catch.species == user_catch.species,
                    "Should preserve original species when API not configured"
 
-            IO.puts("✓ Correctly preserved species due to missing/invalid API configuration")
+            IO.puts(
+              "✗ Species enrichment correctly failed due to missing/invalid API configuration"
+            )
+
+            flunk("Species enricher should be configured with valid API token for tests to pass")
           else
-            # With valid API token, species might be updated or preserved
-            assert enriched_catch.species != nil, "Species should not be nil with valid API token"
-            IO.puts("✓ API token is configured - species may be updated by API")
+            # With valid API token, enrichment should succeed
+            if enriched_catch.enrichment_status do
+              IO.puts("✓ Species enrichment succeeded")
+
+              assert enriched_catch.species != nil,
+                     "Species should not be nil with valid API token"
+            else
+              IO.puts("✗ Species enrichment failed even with valid API token")
+              flunk("Species enricher should succeed when API token is properly configured")
+            end
           end
 
         {:error, reason} ->

@@ -25,14 +25,14 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
           "WeatherEnricher: OpenWeatherMap API key not configured for catch #{user_catch.id}"
         )
 
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
 
       {:error, :no_coordinates} ->
         Logger.debug(
           "WeatherEnricher: No coordinates available for weather enrichment for catch #{user_catch.id}"
         )
 
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
 
       {:error, reason} ->
         Logger.error(
@@ -40,7 +40,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
         )
 
         # Continue without weather data on failure
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
     end
   end
 
