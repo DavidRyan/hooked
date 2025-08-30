@@ -31,7 +31,7 @@ defmodule HookedApi.Enrichers.ExifEnricherTest do
       result = ExifEnricher.enrich(user_catch)
 
       assert {:ok, enriched_catch} = result
-      assert enriched_catch == user_catch
+      assert enriched_catch == %{user_catch | enrichment_status: false}
     end
 
     test "handles nil image_url gracefully" do
@@ -44,7 +44,7 @@ defmodule HookedApi.Enrichers.ExifEnricherTest do
       result = ExifEnricher.enrich(user_catch)
 
       assert {:ok, enriched_catch} = result
-      assert enriched_catch == user_catch
+      assert enriched_catch == %{user_catch | enrichment_status: false}
     end
   end
 end

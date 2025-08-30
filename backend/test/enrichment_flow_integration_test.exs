@@ -100,7 +100,7 @@ defmodule HookedApi.EnrichmentFlowIntegrationTest do
       # Create job arguments manually to avoid struct serialization issues
       job_args = %{
         "catch_id" => user_catch.id,
-        "user_catch" => Map.from_struct(updated_catch) |> Map.drop([:__meta__])
+        "user_catch" => Map.from_struct(updated_catch) |> Map.drop([:__meta__, :user])
       }
 
       assert :ok = perform_job(CatchEnrichmentWorker, job_args)
