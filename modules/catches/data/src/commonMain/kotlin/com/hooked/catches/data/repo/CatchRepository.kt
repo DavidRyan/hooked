@@ -22,26 +22,40 @@ class CatchRepositoryImpl(
     
     override suspend fun getCatches(): Result<List<CatchEntity>> {
         return try {
-            // First try to get from local database
-            val localCatches = localDataSource.getAllCatches().first()
-            
-            if (localCatches.isNotEmpty()) {
-                Logger.info("CatchRepository", "Returning ${localCatches.size} catches from local database")
-                Result.success(localCatches.map { it.toDomainEntity() })
-            } else {
-                // If no local data, fetch from API and cache
-                when (val result = catchApiService.getCatches()) {
-                    is NetworkResult.Success -> {
-                        Logger.info("CatchRepository", "Fetched ${result.data.size} catches from API, caching locally")
-                        localDataSource.insertCatches(result.data)
-                        Result.success(result.data.map { it.toEntity() })
-                    }
-                    is NetworkResult.Error -> Result.failure(result.error)
-                    NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
+            // Always try API first
+            when (val result = catchApiService.getCatches()) {
+                is NetworkResult.Success -> {
+                    Logger.info("CatchRepository", "Fetched ${result.data.size} catches from API, caching locally")
+                    localDataSource.insertCatches(result.data)
+                    Result.success(result.data.map { it.toEntity() })
                 }
+                is NetworkResult.Error -> {
+                    // Fallback to local database
+                    val localCatches = localDataSource.getAllCatches().first()
+                    
+                    if (localCatches.isNotEmpty()) {
+                        Logger.info("CatchRepository", "Returning ${localCatches.size} catches from local database")
+                        Result.success(localCatches.map { it.toDomainEntity() })
+                    } else {
+                        // No local data either
+                        Logger.error("CatchRepository", "No local cache available")
+                        Result.failure(result.error)
+                    }
+                }
+                NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
             }
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error getting catches: ${e.message}", e)
+            try {
+                // Try local as last resort after exception
+                val localCatches = localDataSource.getAllCatches().first()
+                if (localCatches.isNotEmpty()) {
+                    Logger.info("CatchRepository", "Exception caught but returning ${localCatches.size} catches from local database")
+                    return Result.success(localCatches.map { it.toDomainEntity() })
+                }
+            } catch (dbException: Exception) {
+                Logger.error("CatchRepository", "Failed to fetch from local DB after API exception", dbException)
+            }
             Result.failure(e)
         }
     }
@@ -83,7 +97,11 @@ class CatchRepositoryImpl(
                     localDataSource.insertCatches(result.data)
                     Result.success(result.data.map { it.toEntity() })
                 }
-                is NetworkResult.Error -> Result.failure(result.error)
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Error refreshing catches from API: ${result.error.message}")
+                    // On refresh we want the latest data, so we fail if the API call fails
+                    Result.failure(result.error)
+                }
                 NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
             }
         } catch (e: Exception) {

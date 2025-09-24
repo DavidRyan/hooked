@@ -54,6 +54,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import kotlinx.coroutines.delay
 import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchGridEffect
@@ -121,7 +125,7 @@ fun CatchesScreen(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun SharedTransitionScope.CatchGridContent(
     onCatchClick: (String) -> Unit,
@@ -168,26 +172,47 @@ fun SharedTransitionScope.CatchGridContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            // Setup pull refresh state
+            val pullRefreshState = rememberPullRefreshState(
+                refreshing = state.isRefreshing,
+                onRefresh = { viewModel.sendIntent(CatchGridIntent.LoadCatches) }
+            )
+            
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
-                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
-                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+                    .pullRefresh(pullRefreshState)
             ) {
-                items(
-                    items = state.catches,
-                    key = { catch -> catch.id } // Stable key for each item
-                ) { catch ->
-                    CatchGridItem(
-                        catch = catch,
-                        onClick = {
-                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
-                        },
-                        animatedVisibilityScope = animatedVisibilityScope
-                    )
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(2),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(AnimationConstants.GRID_SPACING_DP.dp),
+                    verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+                    horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+                ) {
+                    items(
+                        items = state.catches,
+                        key = { catch -> catch.id } // Stable key for each item
+                    ) { catch ->
+                        CatchGridItem(
+                            catch = catch,
+                            onClick = {
+                                viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
+                            },
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                    }
                 }
+                
+                // Pull refresh indicator
+                PullRefreshIndicator(
+                    refreshing = state.isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    backgroundColor = HookedTheme.primary,
+                    contentColor = HookedTheme.onPrimary
+                )
             }
             
             FloatingActionButton(

@@ -18,8 +18,16 @@ class CatchGridViewModel(
     override fun handleIntent(intent: CatchGridIntent) {
         when (intent) {
             is CatchGridIntent.LoadCatches -> {
+                // Check if this is a refresh or initial load
+                val isRefresh = state.value.catches.isNotEmpty()
+                
+                if (isRefresh) {
+                    setState { copy(isRefreshing = true) }
+                } else {
+                    setState { copy(isLoading = true) }
+                }
+                
                 loadCatches()
-                setState { copy(isLoading = true) }
             }
 
             is CatchGridIntent.NavigateToCatchDetails -> sendEffect {
@@ -33,17 +41,33 @@ class CatchGridViewModel(
             try {
                 when (val result = getCatchesUseCase()) {
                     is UseCaseResult.Success -> {
-                        setState { copy(catches = result.data.map { fromEntity(it) }, isLoading = false) }
+                        setState { 
+                            copy(
+                                catches = result.data.map { fromEntity(it) }, 
+                                isLoading = false,
+                                isRefreshing = false
+                            ) 
+                        }
                     }
 
                     is UseCaseResult.Error -> {
-                        setState { copy(isLoading = false) }
+                        setState { 
+                            copy(
+                                isLoading = false,
+                                isRefreshing = false
+                            ) 
+                        }
                         sendEffect { CatchGridEffect.ShowError(result.message) }
                     }
                 }
             } catch (e: Exception) {
                 logError("Failed to load catches", e)
-                setState { copy(isLoading = false) }
+                setState { 
+                    copy(
+                        isLoading = false,
+                        isRefreshing = false
+                    ) 
+                }
                 sendEffect { CatchGridEffect.ShowError("Failed to load catches: ${e.message}") }
             }
         }
