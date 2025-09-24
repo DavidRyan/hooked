@@ -8,7 +8,7 @@ fun CatchEntity.toDomainEntity(): DomainCatchEntity {
         id = id,
         name = species,
         description = notes ?: "Caught a $species at $location",
-        dateCaught = caught_at.take(10), // Extract date part from datetime string
+        dateCaught = caught_at?.take(10), // Extract date part from datetime string
         location = location,
         imageUrl = image_url,
         weight = 0.0, // Weight not in current schema, using default
@@ -27,6 +27,6 @@ fun CatchEntity.toCatchDetailsEntity(): CatchDetailsEntity {
         timestamp = null, // Convert datetime string to timestamp if needed
         photoUrl = image_url ?: "",
         location = location,
-        dateCaught = caught_at.take(10) // Extract date part from datetime string
+        dateCaught = caught_at?.take(10) // Extract date part from datetime string
     )
 }

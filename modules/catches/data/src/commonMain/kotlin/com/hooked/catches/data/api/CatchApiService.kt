@@ -58,13 +58,13 @@ class CatchApiService(
                 setBody(MultiPartFormDataContent(
                     formData {
                         // Add catch data fields
-                        append("user_catch[species]", submitCatchDto.species)
-                        append("user_catch[location]", submitCatchDto.location)
-                        append("user_catch[caught_at]", submitCatchDto.caughtAt)
+                        submitCatchDto.species?.let { append("user_catch[species]", it) }
+                        submitCatchDto.location?.let { append("user_catch[location]", it) }
+                        submitCatchDto.caughtAt?.let { append("user_catch[caught_at]", it) }
                         submitCatchDto.latitude?.let { append("user_catch[latitude]", it.toString()) }
                         submitCatchDto.longitude?.let { append("user_catch[longitude]", it.toString()) }
                         submitCatchDto.notes?.let { append("user_catch[notes]", it) }
-                        
+
                         // Add image if provided
                         imageBytes?.let { bytes ->
                             append("image", bytes, Headers.build {

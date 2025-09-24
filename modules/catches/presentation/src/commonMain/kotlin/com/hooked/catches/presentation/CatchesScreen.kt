@@ -320,12 +320,14 @@ fun SharedTransitionScope.CatchDetailsContent(
                             verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                         ) {
                             // Species Section
-                            AnimatedDetailCard(
-                                label = "Species",
-                                value = details.species,
-                                translationY = 0f // Already animated by parent Row
-                            )
-                            
+                            details.species?.let { species ->
+                                AnimatedDetailCard(
+                                    label = "Species",
+                                    value = species,
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
+
                             // Weight Section
                             AnimatedDetailCard(
                                 label = "Weight",
@@ -342,13 +344,17 @@ fun SharedTransitionScope.CatchDetailsContent(
                         }
                         
                         // Right column - Map
-                        StaticMapCard(
-                            latitude = details.latitude,
-                            longitude = details.longitude,
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                        )
+                        details.latitude?.let { latitude ->
+                            details.longitude?.let { longitude ->
+                                StaticMapCard(
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1f)
+                                )
+                            }
+                        }
                     }
                 }
             }

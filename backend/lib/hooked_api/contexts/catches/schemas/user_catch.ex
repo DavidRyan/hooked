@@ -124,7 +124,7 @@ defmodule HookedApi.Catches.UserCatch do
       :enrichment_status
     ])
     |> validate_required([])
-    |> validate_length(:species, min: 1, max: 100)
+    |> validate_length(:species, min: 1, max: 100, allow_blank: true)
     |> validate_length(:location, min: 1, max: 200)
     |> validate_length(:notes, max: 1000)
     |> validate_coordinates()

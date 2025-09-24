@@ -39,7 +39,6 @@ class CatchLocalDataSource(
                     caught_at = catch.caughtAt,
                     notes = catch.notes,
                     weather_data = catch.weatherData?.let { Json.encodeToString(it) },
-                    exif_data = catch.exifData?.let { Json.encodeToString(it) },
                     image_url = catch.imageUrl,
                     image_filename = catch.imageFilename,
                     image_content_type = catch.imageContentType,

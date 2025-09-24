@@ -4,7 +4,7 @@ import com.hooked.catches.domain.entities.CatchEntity
 
 data class CatchModel(
     val id: String,
-    val name: String,
+    val name: String?,
     val imageUrl: String
 )
 

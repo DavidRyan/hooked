@@ -5,11 +5,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SubmitCatchDto(
-    val species: String,
-    val location: String,
+    val species: String?,
+    val location: String?,
     val latitude: Double?,
     val longitude: Double?,
-    @SerialName("caught_at") val caughtAt: String,
+    @SerialName("caught_at") val caughtAt: String?,
     val notes: String? = null
 )
 
