@@ -27,6 +27,7 @@ import com.hooked.theme.HookedTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SubmitCatchScreen(
+    Add animated progress of catch enrichment
     modifier: Modifier = Modifier,
     viewModel: SubmitCatchViewModel,
     navigate: (Screens) -> Unit,
