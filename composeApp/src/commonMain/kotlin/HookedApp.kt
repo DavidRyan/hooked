@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
+import com.hooked.catches.presentation.AnimationTestScreen
 import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.core.presentation.toast.ToastHost
 import com.hooked.catches.presentation.SubmitCatchScreen
@@ -37,10 +38,10 @@ fun HookedApp(
             // Check auth status and set initial destination
             AuthStateManager(
                 onAuthenticatedUser = { 
-                    startDestination = Screens.CatchGrid 
+                    startDestination = Screens.AnimationTest 
                 },
                 onUnauthenticatedUser = { 
-                    startDestination = Screens.Login 
+                    startDestination = Screens.AnimationTest 
                 }
             )
             
@@ -52,6 +53,9 @@ fun HookedApp(
                         startDestination = destination,
                         modifier = Modifier.background(HookedTheme.background)
                     ) {
+                composable<Screens.AnimationTest> {
+                    AnimationTestScreen()
+                }
                 composable<Screens.Login>(
                     exitTransition = {
                         when (targetState.destination.route) {
