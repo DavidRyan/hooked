@@ -98,7 +98,8 @@ fun SubmitCatchScreen(
         ) {
             PhotoSection(
                 photoUri = state.photoUri,
-                onPhotoSelected = { uri -> viewModel.sendIntent(SubmitCatchIntent.UpdatePhoto(uri)) }
+                onPhotoSelected = { uri -> viewModel.sendIntent(SubmitCatchIntent.UpdatePhoto(uri)) },
+                onRemovePhoto = { viewModel.sendIntent(SubmitCatchIntent.RemovePhoto) }
             )
             
             OutlinedTextField(
@@ -407,7 +408,8 @@ fun Bobber(
 @Composable
 private fun PhotoSection(
     photoUri: String?,
-    onPhotoSelected: (String) -> Unit
+    onPhotoSelected: (String) -> Unit,
+    onRemovePhoto: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -415,7 +417,8 @@ private fun PhotoSection(
     ) {
         PhotoSectionContent(
             photoUri = photoUri,
-            onPhotoSelected = onPhotoSelected
+            onPhotoSelected = onPhotoSelected,
+            onRemovePhoto = onRemovePhoto
         )
     }
 }
@@ -423,7 +426,8 @@ private fun PhotoSection(
 @Composable
 internal expect fun PhotoSectionContent(
     photoUri: String?,
-    onPhotoSelected: (String) -> Unit
+    onPhotoSelected: (String) -> Unit,
+    onRemovePhoto: () -> Unit
 )
 
 @Composable

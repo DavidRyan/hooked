@@ -41,6 +41,9 @@ class SubmitCatchViewModel(
             is SubmitCatchIntent.UpdatePhoto -> {
                 setState { copy(photoUri = intent.photoUri) }
             }
+            is SubmitCatchIntent.RemovePhoto -> {
+                setState { copy(photoUri = null) }
+            }
             is SubmitCatchIntent.GetCurrentLocation -> {
                 setState { copy(isLocationLoading = true) }
                 sendEffect { SubmitCatchEffect.RequestLocationPermission }

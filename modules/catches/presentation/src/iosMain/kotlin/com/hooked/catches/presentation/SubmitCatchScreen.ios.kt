@@ -14,10 +14,9 @@ import com.hooked.theme.HookedTheme
 @Composable
 internal actual fun PhotoSectionContent(
     photoUri: String?,
-    onPhotoSelected: (String) -> Unit
+    onPhotoSelected: (String) -> Unit,
+    onRemovePhoto: () -> Unit
 ) {
-    // For iOS, we'll temporarily use a placeholder implementation
-    // This would need to be implemented with UIImagePickerController or PHPickerViewController
     Column(
         modifier = Modifier.padding(16.dp).fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -27,16 +26,35 @@ internal actual fun PhotoSectionContent(
                 imageUrl = photoUri,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(300.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
             
             Row(
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = { /* TODO: iOS implementation */ }) {
-                    Text("Choose Different")
+                OutlinedButton(
+                    onClick = { /* TODO: iOS image picker implementation */ },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Change Photo")
+                }
+                
+                OutlinedButton(
+                    onClick = onRemovePhoto,
+                    modifier = Modifier.weight(1f),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, 
+                        MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Remove")
                 }
             }
         } else {
@@ -63,7 +81,7 @@ internal actual fun PhotoSectionContent(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(onClick = { /* TODO: iOS implementation */ }) {
+                OutlinedButton(onClick = { /* TODO: iOS image picker implementation */ }) {
                     Text("Choose from Gallery")
                 }
             }
