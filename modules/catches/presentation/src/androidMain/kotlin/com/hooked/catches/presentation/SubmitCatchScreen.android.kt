@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -32,16 +35,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hooked.core.animation.AnimationSpecs
 import com.hooked.core.components.AsyncImage
 import com.hooked.theme.HookedTheme
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal actual fun PhotoSectionContent(
     photoUri: String?,
     onPhotoSelected: (String) -> Unit,
-    onRemovePhoto: () -> Unit
+    onRemovePhoto: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    catchId: String?
 ) {
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -65,20 +73,32 @@ internal actual fun PhotoSectionContent(
                     Box(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        KamelImage(
-                            resource = { asyncPainterResource(Uri.parse(photoUri)) },
-                            contentDescription = "Selected catch photo",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp)
-                                .shadow(8.dp, RoundedCornerShape(16.dp))
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(
-                                    width = 2.dp,
-                                    color = HookedTheme.primary.copy(alpha = 0.3f),
-                                    shape = RoundedCornerShape(16.dp)
-                                ),
-                            contentScale = ContentScale.Crop,
+                        with(sharedTransitionScope) {
+                            KamelImage(
+                                resource = { asyncPainterResource(Uri.parse(photoUri)) },
+                                contentDescription = "Selected catch photo",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(300.dp)
+                                    .then(
+                                        if (catchId != null) {
+                                            Modifier.sharedElement(
+                                                rememberSharedContentState(key = "catch-image-$catchId"),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                boundsTransform = { _, _ ->
+                                                    AnimationSpecs.boundsTransformSpring
+                                                }
+                                            )
+                                        } else Modifier
+                                    )
+                                    .shadow(8.dp, RoundedCornerShape(16.dp))
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .border(
+                                        width = 2.dp,
+                                        color = HookedTheme.primary.copy(alpha = 0.3f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    ),
+                                contentScale = ContentScale.Crop,
                             onLoading = { progress ->
                                 Box(
                                     modifier = Modifier
@@ -125,8 +145,8 @@ internal actual fun PhotoSectionContent(
                                         )
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                         
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,

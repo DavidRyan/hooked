@@ -6,6 +6,7 @@ import com.hooked.core.photo.encodeBase64
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.usecases.SubmitCatchUseCase
 import com.hooked.core.domain.UseCaseResult
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import com.hooked.catches.presentation.model.SubmitCatchEffect
@@ -81,7 +82,15 @@ class SubmitCatchViewModel(
                 
                 when (val result = submitCatchUseCase(catchEntity)) {
                     is UseCaseResult.Success -> {
-                        setState { copy(isSubmitting = false) }
+                        setState { 
+                            copy(
+                                isSubmitting = false,
+                                submittedCatchId = result.data
+                            )
+                        }
+                        
+                        delay(150)
+                        
                         sendEffect { SubmitCatchEffect.CatchSubmittedSuccessfully }
                     }
                     is UseCaseResult.Error -> {

@@ -1,5 +1,8 @@
 package com.hooked.catches.presentation
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -11,11 +14,15 @@ import androidx.compose.ui.unit.dp
 import com.hooked.core.components.AsyncImage
 import com.hooked.theme.HookedTheme
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal actual fun PhotoSectionContent(
     photoUri: String?,
     onPhotoSelected: (String) -> Unit,
-    onRemovePhoto: () -> Unit
+    onRemovePhoto: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    catchId: String?
 ) {
     Column(
         modifier = Modifier.padding(16.dp).fillMaxSize(),

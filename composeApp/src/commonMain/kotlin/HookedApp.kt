@@ -1,6 +1,8 @@
 package com.hooked
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -27,6 +29,7 @@ import org.koin.compose.viewmodel.koinViewModel
 import com.hooked.theme.HookedTheme
 import com.hooked.core.nav.Screens
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HookedApp(
 ) {
@@ -47,8 +50,9 @@ fun HookedApp(
             
             // Only show NavHost once we know the start destination
             startDestination?.let { destination ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    NavHost(
+                SharedTransitionLayout {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        NavHost(
                         navController = navController,
                         startDestination = destination,
                         modifier = Modifier.background(HookedTheme.background)
@@ -176,7 +180,9 @@ fun HookedApp(
                     CatchesScreen(
                         navigate = { screen ->
                             navController.navigate(screen)
-                        }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this
                     )
                 }
                 composable<Screens.SubmitCatch>(
@@ -212,13 +218,16 @@ fun HookedApp(
                                 is Screens.CatchGrid -> navController.popBackStack()
                                 else -> navController.navigate(screen)
                             }
-                        }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this
                     )
                     }
                     }
                     
-                    // Toast overlay
-                    ToastHost()
+                        // Toast overlay
+                        ToastHost()
+                    }
                 }
             }
         }

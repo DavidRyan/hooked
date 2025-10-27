@@ -91,15 +91,13 @@ sealed class CatchesScreenState {
 @Composable
 fun CatchesScreen(
     navigate: (Screens) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier
 ) {
     val stateManager = rememberCatchesScreenState()
     
-    SharedTransitionLayout(
-        modifier = modifier
-            .fillMaxSize()
-            .background(HookedTheme.background)
-    ) {
+    with(sharedTransitionScope) {
         AnimatedContent(
             targetState = stateManager.screenState,
             label = "catches_screen_transition",

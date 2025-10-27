@@ -1,5 +1,8 @@
 package com.hooked.catches.presentation
 
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -36,16 +39,15 @@ import com.hooked.catches.presentation.model.SubmitCatchEffect
 import org.koin.compose.koinInject
 import com.hooked.catches.presentation.model.SubmitCatchIntent
 import com.hooked.theme.HookedTheme
-//import kotlinx.coroutines.joinAll
-//import kotlinx.serialization.json.internal.readJson
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun SubmitCatchScreen(
-    //Add animated progress of catch enrichment
     modifier: Modifier = Modifier,
     viewModel: SubmitCatchViewModel,
     navigate: (Screens) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
@@ -99,7 +101,10 @@ fun SubmitCatchScreen(
             PhotoSection(
                 photoUri = state.photoUri,
                 onPhotoSelected = { uri -> viewModel.sendIntent(SubmitCatchIntent.UpdatePhoto(uri)) },
-                onRemovePhoto = { viewModel.sendIntent(SubmitCatchIntent.RemovePhoto) }
+                onRemovePhoto = { viewModel.sendIntent(SubmitCatchIntent.RemovePhoto) },
+                sharedTransitionScope = sharedTransitionScope,
+                animatedVisibilityScope = animatedVisibilityScope,
+                catchId = state.submittedCatchId
             )
             
             OutlinedTextField(
@@ -405,11 +410,15 @@ fun Bobber(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun PhotoSection(
     photoUri: String?,
     onPhotoSelected: (String) -> Unit,
-    onRemovePhoto: () -> Unit
+    onRemovePhoto: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    catchId: String?
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -418,16 +427,23 @@ private fun PhotoSection(
         PhotoSectionContent(
             photoUri = photoUri,
             onPhotoSelected = onPhotoSelected,
-            onRemovePhoto = onRemovePhoto
+            onRemovePhoto = onRemovePhoto,
+            sharedTransitionScope = sharedTransitionScope,
+            animatedVisibilityScope = animatedVisibilityScope,
+            catchId = catchId
         )
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal expect fun PhotoSectionContent(
     photoUri: String?,
     onPhotoSelected: (String) -> Unit,
-    onRemovePhoto: () -> Unit
+    onRemovePhoto: () -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    catchId: String?
 )
 
 @Composable
