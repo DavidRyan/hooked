@@ -8,26 +8,38 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -52,6 +64,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.PaddingValues
@@ -213,39 +227,66 @@ fun SharedTransitionScope.CatchGridContent(
                     .fillMaxSize()
                     .pullRefresh(pullRefreshState)
             ) {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(AnimationConstants.GRID_SPACING_DP.dp),
-                    verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
-                    horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
-                ) {
-                    items(
-                        items = state.catches,
-                        key = { catch -> catch.id } // Stable key for each item
-                    ) { catch ->
-                        CatchGridItem(
-                            catch = catch,
-                            onClick = {
-                                viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
-                            },
-                            onLongClick = {
-                                viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
-                            },
-                            animatedVisibilityScope = animatedVisibilityScope
+                when {
+                    state.isLoading -> {
+                        LoadingSkeletonGrid()
+                    }
+                    state.catches.isEmpty() -> {
+                        EmptyStateView(
+                            onAddCatchClick = { navigate(Screens.SubmitCatch) }
                         )
+                    }
+                    else -> {
+                        AnimatedVisibility(
+                            visible = true,
+                            enter = androidx.compose.animation.fadeIn(
+                                animationSpec = tween(300)
+                            ),
+                            exit = androidx.compose.animation.fadeOut(
+                                animationSpec = tween(300)
+                            )
+                        ) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
+                                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+                                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+                            ) {
+                                items(
+                                    items = state.catches,
+                                    key = { catch -> catch.id }
+                                ) { catch ->
+                                    CatchGridItem(
+                                        catch = catch,
+                                        onClick = {
+                                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
+                                        },
+                                        onLongClick = {
+                                            viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
+                                        },
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 
-                // Pull refresh indicator
-                PullRefreshIndicator(
-                    refreshing = state.isRefreshing,
-                    state = pullRefreshState,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    backgroundColor = HookedTheme.primary,
-                    contentColor = HookedTheme.onPrimary
-                )
+                // Pull refresh indicator with enhanced styling
+                if (!state.isLoading) {
+                    PullRefreshIndicator(
+                        refreshing = state.isRefreshing,
+                        state = pullRefreshState,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp),
+                        backgroundColor = HookedTheme.primary,
+                        contentColor = HookedTheme.onPrimary,
+                        scale = true
+                    )
+                }
             }
             
             FloatingActionButton(
@@ -311,14 +352,25 @@ fun SharedTransitionScope.CatchDetailsContent(
     ) {
         // Content goes first (behind the app bar)
         if (state.isLoading) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(AnimationConstants.CONTENT_PADDING_DP.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = HookedTheme.primary)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = HookedTheme.primary,
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 4.dp
+                    )
+                    Text(
+                        text = "Loading catch details...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
             }
         } else {
             state.catchDetails?.let { details ->
@@ -411,9 +463,203 @@ fun SharedTransitionScope.CatchDetailsContent(
                                         .weight(1f)
                                         .aspectRatio(1f)
                                 )
-                            }
-                        }
-                    }
+        }
+    }
+}
+
+@Composable
+private fun LoadingSkeletonGrid(
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(AnimationConstants.GRID_SPACING_DP.dp),
+        verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+        horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+    ) {
+        items(6) { index ->
+            SkeletonCatchItem(shimmerAlpha)
+        }
+    }
+}
+
+@Composable
+private fun SkeletonCatchItem(
+    shimmerAlpha: Float,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.aspectRatio(1f),
+        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp
+        ),
+        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    HookedTheme.primary.copy(alpha = shimmerAlpha),
+                    RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(16.dp)
+                        .background(
+                            HookedTheme.surface.copy(alpha = 0.8f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(12.dp)
+                        .background(
+                            HookedTheme.surface.copy(alpha = 0.6f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyStateView(
+    onAddCatchClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    HookedTheme.primary.copy(alpha = 0.1f),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.PhotoLibrary,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .rotate(rotation),
+                tint = HookedTheme.primary.copy(alpha = 0.6f)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text(
+            text = "No Catches Yet",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Text(
+            text = "Start building your fishing collection!\nCapture your first catch to get started.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = onAddCatchClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = HookedTheme.primary
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(56.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CameraAlt,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.size(12.dp))
+            Text(
+                text = "Add Your First Catch",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            colors = CardDefaults.cardColors(
+                containerColor = HookedTheme.primary.copy(alpha = 0.05f)
+            ),
+            elevation = CardDefaults.cardElevation(0.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.CameraAlt,
+                    contentDescription = null,
+                    tint = HookedTheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Tap the + button to add a catch anytime",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
+}
+
                 }
             }
         }
