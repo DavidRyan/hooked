@@ -137,4 +137,24 @@ class CatchRepositoryImpl(
             Result.failure(e)
         }
     }
+    
+    override suspend fun deleteCatch(catchId: String): Result<Unit> {
+        return try {
+            when (val result = catchApiService.deleteCatch(catchId)) {
+                is NetworkResult.Success -> {
+                    Logger.info("CatchRepository", "Successfully deleted catch: $catchId")
+                    localDataSource.deleteCatch(catchId)
+                    Result.success(Unit)
+                }
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Failed to delete catch: ${result.error.message}", result.error)
+                    Result.failure(result.error)
+                }
+                NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
+            }
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error deleting catch: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
 }

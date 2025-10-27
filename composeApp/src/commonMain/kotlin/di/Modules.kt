@@ -9,6 +9,7 @@ import com.hooked.catches.presentation.SubmitCatchViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
 import com.hooked.catches.domain.usecases.SubmitCatchUseCase
+import com.hooked.catches.domain.usecases.DeleteCatchUseCase
 import com.hooked.catches.domain.repositories.CatchRepository as CatchesRepositoryInterface
 import com.hooked.catches.data.repo.CatchRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
@@ -67,4 +68,5 @@ val useCaseModule = module {
     single { GetCatchesUseCase(get()) }
     single { GetCatchDetailsUseCase(get()) }
     single { SubmitCatchUseCase(get()) }
+    single { DeleteCatchUseCase(get()) }
 } + authUseCaseModule

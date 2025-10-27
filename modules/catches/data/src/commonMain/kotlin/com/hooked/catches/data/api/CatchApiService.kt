@@ -6,6 +6,7 @@ import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -83,6 +84,17 @@ class CatchApiService(
         } catch (e: Exception) {
             val detailedMessage = "Failed to submit catch: ${e.message}"
             NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.submitCatch")
+        }
+    }
+    
+    suspend fun deleteCatch(catchId: String): NetworkResult<Unit> {
+        return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "deleteCatch URL: $baseUrl/user_catches/$catchId")
+            httpClient.delete("$baseUrl/user_catches/$catchId")
+            NetworkResult.Success(Unit)
+        } catch (e: Exception) {
+            val detailedMessage = "Failed to delete catch: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.deleteCatch")
         }
     }
 }

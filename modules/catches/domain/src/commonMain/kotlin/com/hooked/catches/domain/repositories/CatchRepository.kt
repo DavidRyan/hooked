@@ -8,4 +8,5 @@ interface CatchRepository {
     suspend fun getCatches(): Result<List<CatchEntity>>
     suspend fun getCatchDetails(catchId: String): Result<CatchDetailsEntity>
     suspend fun submitCatch(catchEntity: SubmitCatchEntity): Result<String>
+    suspend fun deleteCatch(catchId: String): Result<Unit>
 }

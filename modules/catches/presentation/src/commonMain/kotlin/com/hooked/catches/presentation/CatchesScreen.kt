@@ -28,6 +28,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -146,8 +150,36 @@ fun SharedTransitionScope.CatchGridContent(
                 is CatchGridEffect.ShowError -> {
                     toastManager.showError(effect.message)
                 }
+                is CatchGridEffect.ShowSuccess -> {
+                    toastManager.showSuccess(effect.message)
+                }
             }
         }
+    }
+    
+    if (state.showDeleteDialog && state.catchToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.sendIntent(CatchGridIntent.HideDeleteDialog) },
+            title = { Text("Delete Catch") },
+            text = { Text("Are you sure you want to delete this catch? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        viewModel.sendIntent(CatchGridIntent.DeleteCatch(state.catchToDelete))
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.sendIntent(CatchGridIntent.HideDeleteDialog) }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     Column(
@@ -199,6 +231,9 @@ fun SharedTransitionScope.CatchGridContent(
                             catch = catch,
                             onClick = {
                                 viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
+                            },
+                            onLongClick = {
+                                viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
                             },
                             animatedVisibilityScope = animatedVisibilityScope
                         )
