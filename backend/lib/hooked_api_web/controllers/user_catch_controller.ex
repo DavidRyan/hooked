@@ -89,6 +89,11 @@ defmodule HookedApiWeb.UserCatchController do
     end
   end
 
+  def stats(conn, %{"user_id" => user_id}) do
+    stats = Catches.get_user_catch_stats(user_id)
+    json(conn, %{stats: stats})
+  end
+
   defp format_error_reason(:invalid_file_type),
     do: "Invalid file type. Only JPEG, PNG, WebP, and HEIC images are allowed."
 

@@ -33,5 +33,6 @@ defmodule HookedApiWeb.Router do
 
     # User catches routes
     resources "/user_catches", UserCatchController, except: [:new, :edit]
+    get "/user_catches/stats", UserCatchController, :stats
   end
 end

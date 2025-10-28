@@ -4,6 +4,51 @@ defmodule HookedApi.Catches do
   alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
 
+#
+#data class StatsEntity(
+#    val totalCatches: Int, - 
+#    val speciesBreakdown: Map<String, Int>, - 
+#    val uniqueSpecies: Int, -
+#    val uniqueLocations: Int, - 
+#)
+
+#data class SpeciesData(
+#    val name: String,
+#    val count: Int,
+#    val percentage: Float
+#)
+
+  def get_user_catch_stats(user_id) do
+    catches = UserCatch
+    |> UserCatch.for_user(user_id)
+    |> Repo.all()
+
+    total_catches = Enum.count(catches)
+
+    species_breakdown = catches
+    |> Enum.group_by(fn x -> x.species end)
+    |> Enum.map(fn {species, group} -> {species, Enum.count(group)} end)
+
+    unique_species = catches
+    |> Enum.map(& &1.species)
+    |> Enum.uniq()
+    |> Enum.count()
+
+    # round up lat and long to 6 decimal places
+    unique_locations = catches
+    |> Enum.map(fn x -> "#{Float.round(x.latitude, 6)},#{Float.round(x.longitude, 6)}" end)
+    |> Enum.uniq()
+
+    result = %{
+      total_catches: total_catches,
+      species_breakdown: species_breakdown,
+      unique_species: unique_species,
+      unique_locations: unique_locations
+    }
+    {:ok, result}
+
+  end
+
   def list_user_catches(user_id) do
     UserCatch
     |> UserCatch.for_user(user_id)
