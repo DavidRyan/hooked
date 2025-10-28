@@ -14,5 +14,7 @@ sealed class Screens() {
     @Serializable
     object SubmitCatch : Screens()
     @Serializable
+    object Stats : Screens()
+    @Serializable
     object AnimationTest : Screens()
 }

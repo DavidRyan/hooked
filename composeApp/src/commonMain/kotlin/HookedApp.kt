@@ -24,6 +24,7 @@ import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.core.presentation.toast.ToastHost
 import com.hooked.catches.presentation.SubmitCatchScreen
 import com.hooked.catches.presentation.SubmitCatchViewModel
+import com.hooked.catches.presentation.StatsScreen
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import com.hooked.theme.HookedTheme
@@ -221,15 +222,20 @@ fun HookedApp(
                         },
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this
-                    )
-                    }
-                    }
-                    
-                        // Toast overlay
-                        ToastHost()
-                    }
-                }
-            }
-        }
-    }
+                     )
+                     }
+                 composable<Screens.Stats> {
+                     StatsScreen(
+                         onNavigateBack = { navController.popBackStack() }
+                     )
+                 }
+                     }
+
+                         // Toast overlay
+                         ToastHost()
+                     }
+                 }
+             }
+         }
+     }
 }

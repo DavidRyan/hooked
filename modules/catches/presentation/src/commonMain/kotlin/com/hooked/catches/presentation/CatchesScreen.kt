@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.AlertDialog
@@ -289,16 +290,32 @@ fun SharedTransitionScope.CatchGridContent(
                 }
             }
             
-            FloatingActionButton(
-                onClick = { navigate(Screens.SubmitCatch) },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(AnimationConstants.FAB_PADDING_DP.dp)
+                    .padding(AnimationConstants.FAB_PADDING_DP.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.End
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add new catch"
-                )
+                FloatingActionButton(
+                    onClick = { navigate(Screens.Stats) },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BarChart,
+                        contentDescription = "Statistics"
+                    )
+                }
+
+                FloatingActionButton(
+                    onClick = { navigate(Screens.SubmitCatch) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add new catch"
+                    )
+                }
             }
         }
     }

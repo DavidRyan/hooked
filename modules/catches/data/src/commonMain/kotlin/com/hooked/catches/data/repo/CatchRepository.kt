@@ -9,6 +9,7 @@ import com.hooked.catches.data.model.toCatchDetailsEntity
 import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.StatsEntity
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository as CatchRepositoryInterface
 import com.hooked.core.domain.NetworkResult
@@ -154,6 +155,34 @@ class CatchRepositoryImpl(
             }
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error deleting catch: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCatchStats(): Result<StatsEntity> {
+        return try {
+            // For now, calculate stats client-side from all catches
+            val catches = getCatches().getOrNull() ?: emptyList()
+
+            val speciesBreakdown = catches
+                .mapNotNull { it.name }
+                .groupingBy { it }
+                .eachCount()
+
+            val stats = StatsEntity(
+                totalCatches = catches.size,
+                speciesBreakdown = speciesBreakdown,
+                uniqueSpecies = speciesBreakdown.keys.size,
+                uniqueLocations = catches.mapNotNull { it.location }.distinct().size,
+                averageWeight = catches.mapNotNull { it.weight }.average().takeIf { !it.isNaN() },
+                averageLength = catches.mapNotNull { it.length }.average().takeIf { !it.isNaN() },
+                biggestCatch = catches.maxByOrNull { it.weight ?: 0.0 },
+                mostRecentCatch = catches.maxByOrNull { it.dateCaught ?: "" }
+            )
+
+            Result.success(stats)
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error calculating catch stats: ${e.message}", e)
             Result.failure(e)
         }
     }
