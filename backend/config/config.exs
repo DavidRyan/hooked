@@ -57,6 +57,11 @@ config :hooked_api,
 config :hooked_api,
   openweather_api_key: System.get_env("OPENWEATHER_API_KEY")
 
+# AI Provider configuration
+config :hooked_api,
+  ai_provider: HookedApi.Services.AiProviders.OpenaiProvider,
+  openai_api_key: System.get_env("OPENAI_API_KEY")
+
 # Tesla configuration
 config :tesla, disable_deprecated_builder_warning: true
 

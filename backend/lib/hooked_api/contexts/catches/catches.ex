@@ -4,20 +4,6 @@ defmodule HookedApi.Catches do
   alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
 
-#
-#data class StatsEntity(
-#    val totalCatches: Int, - 
-#    val speciesBreakdown: Map<String, Int>, - 
-#    val uniqueSpecies: Int, -
-#    val uniqueLocations: Int, - 
-#)
-
-#data class SpeciesData(
-#    val name: String,
-#    val count: Int,
-#    val percentage: Float
-#)
-
   def get_user_catch_stats(user_id) do
     catches = UserCatch
     |> UserCatch.for_user(user_id)
@@ -34,7 +20,6 @@ defmodule HookedApi.Catches do
     |> Enum.uniq()
     |> Enum.count()
 
-    # round up lat and long to 6 decimal places
     unique_locations = catches
     |> Enum.map(fn x -> "#{Float.round(x.latitude, 6)},#{Float.round(x.longitude, 6)}" end)
     |> Enum.uniq()
