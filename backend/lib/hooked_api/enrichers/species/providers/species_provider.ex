@@ -5,7 +5,7 @@ defmodule HookedApi.Enrichers.Species.Providers.SpeciesProvider do
   This module defines the contract that all species identification providers must implement.
   """
 
-  alias HookedApi.Enrichers.Species.Providers.SpeciesResult
+  alias HookedApi.Enrichers.Species.SpeciesResult
 
   @doc """
   Identifies species from image data.

@@ -25,10 +25,6 @@ defmodule HookedApi.Utils.ExifExtractor do
           {:error, reason} ->
             Logger.error("EXIF extraction failed for #{file_path}: #{inspect(reason)}")
             %{}
-
-          other ->
-            Logger.error("Unexpected EXIF extraction result for #{file_path}: #{inspect(other)}")
-            %{}
         end
     end
   end
@@ -85,11 +81,6 @@ defmodule HookedApi.Utils.ExifExtractor do
     end
 
     normalized
-  end
-
-  defp normalize_exif_data(invalid_data) do
-    Logger.warning("Invalid EXIF data provided for normalization: #{inspect(invalid_data)}")
-    %{}
   end
 
   # Extract GPS coordinates from Exexif.Data.Gps struct

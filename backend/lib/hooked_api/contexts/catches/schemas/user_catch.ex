@@ -23,46 +23,6 @@ defmodule HookedApi.Catches.UserCatch do
              :user_id,
              :enrichment_status
            ]}
-  @derive {JSON.Encoder,
-           only: [
-             :id,
-             :species,
-             :location,
-             :latitude,
-             :longitude,
-             :caught_at,
-             :notes,
-             :weather_data,
-             :exif_data,
-             :image_url,
-             :image_filename,
-             :image_content_type,
-             :image_file_size,
-             :inserted_at,
-             :updated_at,
-             :user_id,
-             :enrichment_status
-           ]}
-  @derive {JSON.Encoder,
-           only: [
-             :id,
-             :species,
-             :location,
-             :latitude,
-             :longitude,
-             :caught_at,
-             :notes,
-             :weather_data,
-             :exif_data,
-             :image_url,
-             :image_filename,
-             :image_content_type,
-             :image_file_size,
-             :inserted_at,
-             :updated_at,
-             :user_id,
-             :enrichment_status
-           ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
@@ -95,7 +55,7 @@ defmodule HookedApi.Catches.UserCatch do
     field(:notes, :string)
     field(:weather_data, :map)
     field(:exif_data, :map)
-    belongs_to :user, HookedApi.Accounts.User
+    belongs_to(:user, HookedApi.Accounts.User)
     field(:image_url, :string)
     field(:image_filename, :string)
     field(:image_content_type, :string)
@@ -152,10 +112,10 @@ defmodule HookedApi.Catches.UserCatch do
   end
 
   def for_user(query \\ __MODULE__, user_id) do
-    from uc in query, where: uc.user_id == ^user_id
+    from(uc in query, where: uc.user_id == ^user_id)
   end
 
   def for_user_and_id(query \\ __MODULE__, user_id, id) do
-    from uc in query, where: uc.user_id == ^user_id and uc.id == ^id
+    from(uc in query, where: uc.user_id == ^user_id and uc.id == ^id)
   end
 end
