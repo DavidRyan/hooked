@@ -9,6 +9,7 @@ import com.hooked.catches.data.model.toCatchDetailsEntity
 import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.FishingInsightsEntity
 import com.hooked.catches.domain.entities.StatsEntity
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository as CatchRepositoryInterface
@@ -161,7 +162,6 @@ class CatchRepositoryImpl(
 
     override suspend fun getCatchStats(): Result<StatsEntity> {
         return try {
-            // For now, calculate stats client-side from all catches
             val catches = getCatches().getOrNull() ?: emptyList()
 
             val speciesBreakdown = catches
@@ -183,6 +183,26 @@ class CatchRepositoryImpl(
             Result.success(stats)
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error calculating catch stats: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getFishingInsights(): Result<FishingInsightsEntity> {
+        return try {
+            when (val result = catchApiService.getAiInsights()) {
+                is NetworkResult.Success -> {
+                    Result.success(FishingInsightsEntity(insights = result.data))
+                }
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Failed to fetch AI insights: ${result.error.message}")
+                    Result.failure(result.error)
+                }
+                else -> {
+                    Result.failure(Exception("Unexpected state"))
+                }
+            }
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error fetching fishing insights: ${e.message}", e)
             Result.failure(e)
         }
     }

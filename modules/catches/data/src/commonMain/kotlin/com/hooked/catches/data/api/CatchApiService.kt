@@ -97,4 +97,21 @@ class CatchApiService(
             NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.deleteCatch")
         }
     }
+    
+    suspend fun getAiInsights(): NetworkResult<String> {
+        return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "getAiInsights URL: $baseUrl/ai/insights")
+            val response = httpClient
+                .get("$baseUrl/ai/insights")
+                .body<Map<String, String>>()
+            
+            val insights = response["insights"] 
+                ?: return NetworkResult.Error(Exception("No insights returned"), "CatchApiService.getAiInsights")
+            
+            NetworkResult.Success(insights)
+        } catch (e: Exception) {
+            val detailedMessage = "Failed to fetch AI insights: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.getAiInsights")
+        }
+    }
 }

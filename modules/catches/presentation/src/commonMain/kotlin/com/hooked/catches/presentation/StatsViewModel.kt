@@ -2,6 +2,7 @@ package com.hooked.catches.presentation
 
 import com.hooked.core.HookedViewModel
 import com.hooked.catches.domain.usecases.GetCatchStatsUseCase
+import com.hooked.catches.domain.usecases.GetFishingInsightsUseCase
 import com.hooked.catches.domain.entities.SpeciesData
 import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
@@ -11,17 +12,23 @@ import com.hooked.catches.presentation.model.StatsState
 import com.hooked.core.logging.logError
 
 class StatsViewModel(
-    private val getCatchStatsUseCase: GetCatchStatsUseCase
+    private val getCatchStatsUseCase: GetCatchStatsUseCase,
+    private val getFishingInsightsUseCase: GetFishingInsightsUseCase
 ) : HookedViewModel<StatsIntent, StatsState, StatsEffect>() {
 
     init {
         handleIntent(StatsIntent.LoadStats)
+        handleIntent(StatsIntent.LoadInsights)
     }
 
     override fun handleIntent(intent: StatsIntent) {
         when (intent) {
             is StatsIntent.LoadStats -> loadStats()
-            is StatsIntent.Refresh -> loadStats()
+            is StatsIntent.LoadInsights -> loadInsights()
+            is StatsIntent.Refresh -> {
+                loadStats()
+                loadInsights()
+            }
             is StatsIntent.NavigateBack -> sendEffect { StatsEffect.NavigateBack }
         }
     }
@@ -77,6 +84,42 @@ class StatsViewModel(
                     )
                 }
                 sendEffect { StatsEffect.ShowError("Failed to load stats: ${e.message}") }
+            }
+        }
+    }
+    
+    private fun loadInsights() {
+        setState { copy(isLoadingInsights = true) }
+        
+        viewModelScope.launch {
+            try {
+                when (val result = getFishingInsightsUseCase()) {
+                    is UseCaseResult.Success -> {
+                        setState {
+                            copy(
+                                isLoadingInsights = false,
+                                aiInsights = result.data.insights
+                            )
+                        }
+                    }
+                    is UseCaseResult.Error -> {
+                        setState {
+                            copy(
+                                isLoadingInsights = false,
+                                aiInsights = null
+                            )
+                        }
+                        logError("Failed to load fishing insights", result.exception)
+                    }
+                }
+            } catch (e: Exception) {
+                logError("Failed to load fishing insights", e)
+                setState {
+                    copy(
+                        isLoadingInsights = false,
+                        aiInsights = null
+                    )
+                }
             }
         }
     }

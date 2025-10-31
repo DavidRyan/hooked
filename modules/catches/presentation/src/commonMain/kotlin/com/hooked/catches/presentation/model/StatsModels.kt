@@ -12,11 +12,14 @@ data class StatsState(
     val averageLength: String? = null,
     val biggestCatchName: String? = null,
     val biggestCatchWeight: String? = null,
+    val aiInsights: String? = null,
+    val isLoadingInsights: Boolean = false,
     val error: String? = null
 )
 
 sealed class StatsIntent {
     object LoadStats : StatsIntent()
+    object LoadInsights : StatsIntent()
     object Refresh : StatsIntent()
     object NavigateBack : StatsIntent()
 }
