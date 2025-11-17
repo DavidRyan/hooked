@@ -58,10 +58,10 @@ class StatsViewModel(
                                 speciesData = speciesData,
                                 uniqueSpecies = stats.uniqueSpecies,
                                 uniqueLocations = stats.uniqueLocations,
-                                averageWeight = stats.averageWeight?.let { "%.1f lbs".format(it) },
-                                averageLength = stats.averageLength?.let { "%.1f in".format(it) },
+                                averageWeight = stats.averageWeight?.let { "${it.toString()} lbs" },
+                                averageLength = stats.averageLength?.let { "${it.toString()} in" },
                                 biggestCatchName = stats.biggestCatch?.name,
-                                biggestCatchWeight = stats.biggestCatch?.weight?.let { "%.1f lbs".format(it) }
+                                biggestCatchWeight = stats.biggestCatch?.weight?.let { "${it.toString()} lbs" }
                             )
                         }
                     }
@@ -109,7 +109,9 @@ class StatsViewModel(
                                 aiInsights = null
                             )
                         }
-                        logError("Failed to load fishing insights", result.exception)
+                        result.throwable?.let { throwable ->
+                            logError("Failed to load fishing insights", throwable)
+                        }
                     }
                 }
             } catch (e: Exception) {

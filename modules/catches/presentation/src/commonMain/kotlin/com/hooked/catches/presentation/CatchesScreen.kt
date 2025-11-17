@@ -3,6 +3,7 @@ package com.hooked.catches.presentation
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
@@ -38,9 +39,8 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.outlined.PhotoLibrary
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -177,9 +177,11 @@ fun SharedTransitionScope.CatchGridContent(
             text = { Text("Are you sure you want to delete this catch? This action cannot be undone.") },
             confirmButton = {
                 Button(
-                    onClick = { 
-                        viewModel.sendIntent(CatchGridIntent.DeleteCatch(state.catchToDelete))
-                    },
+                     onClick = { 
+                        state.catchToDelete?.let { catchId ->
+                            viewModel.sendIntent(CatchGridIntent.DeleteCatch(catchId))
+                        }
+                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error
                     )
@@ -228,25 +230,30 @@ fun SharedTransitionScope.CatchGridContent(
                     .fillMaxSize()
                     .pullRefresh(pullRefreshState)
             ) {
-                when {
-                    state.isLoading -> {
-                        LoadingSkeletonGrid()
-                    }
-                    state.catches.isEmpty() -> {
-                        EmptyStateView(
-                            onAddCatchClick = { navigate(Screens.SubmitCatch) }
+                AnimatedContent(
+                    targetState = when {
+                        state.isLoading -> "loading"
+                        state.catches.isEmpty() -> "empty"
+                        else -> "content"
+                    },
+                    transitionSpec = {
+                        androidx.compose.animation.fadeIn(
+                            animationSpec = tween(300)
+                        ) togetherWith androidx.compose.animation.fadeOut(
+                            animationSpec = tween(300)
                         )
                     }
-                    else -> {
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = androidx.compose.animation.fadeIn(
-                                animationSpec = tween(300)
-                            ),
-                            exit = androidx.compose.animation.fadeOut(
-                                animationSpec = tween(300)
+                ) { targetState ->
+                    when (targetState) {
+                        "loading" -> {
+                            LoadingSkeletonGrid()
+                        }
+                        "empty" -> {
+                            EmptyStateView(
+                                onAddCatchClick = { navigate(Screens.SubmitCatch) }
                             )
-                        ) {
+                        }
+                        "content" -> {
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),
                                 modifier = Modifier
@@ -303,7 +310,7 @@ fun SharedTransitionScope.CatchGridContent(
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
                     Icon(
-                        imageVector = Icons.Default.BarChart,
+                        imageVector = Icons.Default.                                        List,
                         contentDescription = "Statistics"
                     )
                 }
@@ -401,7 +408,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                         ),
                     verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                 ) {
-                    // Photo Section with shared element
+                    // Add Section with shared element
                     Card(
                         modifier = Modifier
                             //.padding(top = AnimationConstants.DETAIL_CARD_TOP_PADDING_DP.dp)
@@ -485,7 +492,7 @@ fun SharedTransitionScope.CatchDetailsContent(
 }
 
 @Composable
-private fun LoadingSkeletonGrid(
+fun LoadingSkeletonGrid(
     modifier: Modifier = Modifier
 ) {
     val infiniteTransition = rememberInfiniteTransition()
@@ -513,7 +520,7 @@ private fun LoadingSkeletonGrid(
 }
 
 @Composable
-private fun SkeletonCatchItem(
+fun SkeletonCatchItem(
     shimmerAlpha: Float,
     modifier: Modifier = Modifier
 ) {
@@ -564,7 +571,7 @@ private fun SkeletonCatchItem(
 }
 
 @Composable
-private fun EmptyStateView(
+fun EmptyStateView(
     onAddCatchClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -595,7 +602,7 @@ private fun EmptyStateView(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = Icons.Outlined.PhotoLibrary,
+                imageVector = Icons.Filled.Add,
                 contentDescription = null,
                 modifier = Modifier
                     .size(64.dp)
@@ -634,7 +641,7 @@ private fun EmptyStateView(
                 .height(56.dp)
         ) {
             Icon(
-                imageVector = Icons.Filled.CameraAlt,
+                imageVector = Icons.Filled.Add,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp)
             )
@@ -662,7 +669,7 @@ private fun EmptyStateView(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.CameraAlt,
+                    imageVector = Icons.Default.Add,
                     contentDescription = null,
                     tint = HookedTheme.primary,
                     modifier = Modifier.size(20.dp)
@@ -713,3 +720,4 @@ private fun EmptyStateView(
         }
     }
 }
+                                                                                                                                                                                                                                                                                                                                                                                                      

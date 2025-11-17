@@ -39,7 +39,7 @@ fun StatsScreen(
     val state by viewModel.state.collectAsState()
 
     LaunchedEffect(Unit) {
-        viewModel.effects.collectLatest { effect ->
+        viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is StatsEffect.NavigateBack -> onNavigateBack()
                 is StatsEffect.ShowError -> toastManager.showError(effect.message)
@@ -52,12 +52,12 @@ fun StatsScreen(
             TopAppBar(
                 title = { Text("Statistics") },
                 navigationIcon = {
-                    IconButton(onClick = { viewModel.handleIntent(StatsIntent.NavigateBack) }) {
+                    IconButton(onClick = { viewModel.sendIntent(StatsIntent.NavigateBack) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.handleIntent(StatsIntent.Refresh) }) {
+                    IconButton(onClick = { viewModel.sendIntent(StatsIntent.Refresh) }) {
                         Icon(Icons.Default.Refresh, "Refresh")
                     }
                 },
@@ -220,7 +220,7 @@ fun StatsScreen(
                             }
                             state.aiInsights != null -> {
                                 TypewriterText(
-                                    text = state.aiInsights,
+                                    text = state.aiInsights!!,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                     lineHeight = MaterialTheme.typography.bodyLarge.lineHeight.times(1.5f)
