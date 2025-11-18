@@ -6,6 +6,7 @@ sealed class SubmitCatchIntent {
     data class UpdateLength(val length: String) : SubmitCatchIntent()
     data class UpdateLocation(val latitude: Double, val longitude: Double) : SubmitCatchIntent()
     data class UpdatePhoto(val photoUri: String?) : SubmitCatchIntent()
+    object RemovePhoto : SubmitCatchIntent()
     object GetCurrentLocation : SubmitCatchIntent()
     object SubmitCatch : SubmitCatchIntent()
     object NavigateBack : SubmitCatchIntent()

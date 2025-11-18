@@ -3,31 +3,46 @@ package com.hooked.catches.presentation
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +52,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -48,12 +64,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Scaffold
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import kotlinx.coroutines.delay
 import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchGridEffect
@@ -83,15 +105,13 @@ sealed class CatchesScreenState {
 @Composable
 fun CatchesScreen(
     navigate: (Screens) -> Unit,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier = Modifier
 ) {
     val stateManager = rememberCatchesScreenState()
     
-    SharedTransitionLayout(
-        modifier = modifier
-            .fillMaxSize()
-            .background(HookedTheme.background)
-    ) {
+    with(sharedTransitionScope) {
         AnimatedContent(
             targetState = stateManager.screenState,
             label = "catches_screen_transition",
@@ -121,7 +141,7 @@ fun CatchesScreen(
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun SharedTransitionScope.CatchGridContent(
     onCatchClick: (String) -> Unit,
@@ -142,8 +162,38 @@ fun SharedTransitionScope.CatchGridContent(
                 is CatchGridEffect.ShowError -> {
                     toastManager.showError(effect.message)
                 }
+                is CatchGridEffect.ShowSuccess -> {
+                    toastManager.showSuccess(effect.message)
+                }
             }
         }
+    }
+    
+    if (state.showDeleteDialog && state.catchToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.sendIntent(CatchGridIntent.HideDeleteDialog) },
+            title = { Text("Delete Catch") },
+            text = { Text("Are you sure you want to delete this catch? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = { 
+                        state.catchToDelete?.let { catchId ->
+                            viewModel.sendIntent(CatchGridIntent.DeleteCatch(catchId))
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.sendIntent(CatchGridIntent.HideDeleteDialog) }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
     
     Column(
@@ -168,43 +218,112 @@ fun SharedTransitionScope.CatchGridContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+            // Setup pull refresh state
+            val pullRefreshState = rememberPullRefreshState(
+                refreshing = state.isRefreshing,
+                onRefresh = { viewModel.sendIntent(CatchGridIntent.LoadCatches) }
+            )
+            
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
-                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
-                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+                    .pullRefresh(pullRefreshState)
             ) {
-                items(
-                    items = state.catches,
-                    key = { catch -> catch.id } // Stable key for each item
-                ) { catch ->
-                    CatchGridItem(
-                        catch = catch,
-                        onClick = {
-                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
-                        },
-                        animatedVisibilityScope = animatedVisibilityScope
-                    )
+                AnimatedContent(
+                    targetState = when {
+                        state.isLoading -> "loading"
+                        state.catches.isEmpty() -> "empty"
+                        else -> "content"
+                    },
+                    transitionSpec = {
+                        androidx.compose.animation.fadeIn(
+                            animationSpec = tween(300)
+                        ) togetherWith androidx.compose.animation.fadeOut(
+                            animationSpec = tween(300)
+                        )
+                    }
+                ) { targetState ->
+                    when (targetState) {
+                        "loading" -> {
+                            LoadingSkeletonGrid()
+                        }
+                        "empty" -> {
+                            EmptyStateView(
+                                onAddCatchClick = { navigate(Screens.SubmitCatch) }
+                            )
+                        }
+                        "content" -> {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
+                                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+                                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+                            ) {
+                                items(
+                                    items = state.catches,
+                                    key = { catch -> catch.id }
+                                ) { catch ->
+                                    CatchGridItem(
+                                        catch = catch,
+                                        onClick = {
+                                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
+                                        },
+                                        onLongClick = {
+                                            viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
+                                        },
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
+                
+                // Pull refresh indicator with enhanced styling
+                PullRefreshIndicator(
+                    refreshing = state.isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp),
+                    backgroundColor = HookedTheme.primary,
+                    contentColor = HookedTheme.onPrimary,
+                    scale = true
+                )
             }
             
-            FloatingActionButton(
-                onClick = { navigate(Screens.SubmitCatch) },
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
-                    .padding(AnimationConstants.FAB_PADDING_DP.dp)
+                    .padding(AnimationConstants.FAB_PADDING_DP.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.End
             ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "Add new catch"
-                )
+                FloatingActionButton(
+                    onClick = { navigate(Screens.Stats) },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.List,
+                        contentDescription = "Statistics"
+                    )
+                }
+
+                FloatingActionButton(
+                    onClick = { navigate(Screens.SubmitCatch) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add new catch"
+                    )
+                }
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -253,14 +372,25 @@ fun SharedTransitionScope.CatchDetailsContent(
     ) {
         // Content goes first (behind the app bar)
         if (state.isLoading) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(AnimationConstants.CONTENT_PADDING_DP.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = HookedTheme.primary)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = HookedTheme.primary,
+                        modifier = Modifier.size(48.dp),
+                        strokeWidth = 4.dp
+                    )
+                    Text(
+                        text = "Loading catch details...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                }
             }
         } else {
             state.catchDetails?.let { details ->
@@ -274,7 +404,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                         ),
                     verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                 ) {
-                    // Photo Section with shared element
+                    // Add Section with shared element
                     Card(
                         modifier = Modifier
                             //.padding(top = AnimationConstants.DETAIL_CARD_TOP_PADDING_DP.dp)
@@ -320,35 +450,64 @@ fun SharedTransitionScope.CatchDetailsContent(
                             verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                         ) {
                             // Species Section
-                            AnimatedDetailCard(
-                                label = "Species",
-                                value = details.species,
-                                translationY = 0f // Already animated by parent Row
-                            )
-                            
+                            details.species?.let { species ->
+                                AnimatedDetailCard(
+                                    label = "Species",
+                                    value = species,
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
+
                             // Weight Section
-                            AnimatedDetailCard(
-                                label = "Weight",
-                                value = "${details.weight} kg",
-                                translationY = 0f // Already animated by parent Row
-                            )
-                            
+                            details.weight?.takeIf { it > 0 }?.let { weight ->
+                                AnimatedDetailCard(
+                                    label = "Weight",
+                                    value = "$weight kg",
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
+
                             // Length Section
-                            AnimatedDetailCard(
-                                label = "Length",
-                                value = "${details.length} cm",
-                                translationY = 0f // Already animated by parent Row
-                            )
+                            details.length?.takeIf { it > 0 }?.let { length ->
+                                AnimatedDetailCard(
+                                    label = "Length",
+                                    value = "$length cm",
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
+
+                            // Location Section
+                            details.location?.let { location ->
+                                AnimatedDetailCard(
+                                    label = "Location",
+                                    value = location,
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
+
+                            // Weather Section
+                            details.weatherData?.let { weather ->
+                                val weatherText = weather.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+                                AnimatedDetailCard(
+                                    label = "Weather",
+                                    value = weatherText,
+                                    translationY = 0f // Already animated by parent Row
+                                )
+                            }
                         }
                         
                         // Right column - Map
-                        StaticMapCard(
-                            latitude = details.latitude,
-                            longitude = details.longitude,
-                            modifier = Modifier
-                                .weight(1f)
-                                .aspectRatio(1f)
-                        )
+                        details.latitude?.let { latitude ->
+                            details.longitude?.let { longitude ->
+                                StaticMapCard(
+                                    latitude = latitude,
+                                    longitude = longitude,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .aspectRatio(1f)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -383,6 +542,199 @@ fun SharedTransitionScope.CatchDetailsContent(
                     navigationIconContentColor = HookedTheme.onPrimary
                 )
             )
+        }
+    }
+}
+
+@Composable
+fun LoadingSkeletonGrid(
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val shimmerAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(AnimationConstants.GRID_SPACING_DP.dp),
+        verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
+        horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
+    ) {
+        items(6) { index ->
+            SkeletonCatchItem(shimmerAlpha)
+        }
+    }
+}
+
+@Composable
+fun SkeletonCatchItem(
+    shimmerAlpha: Float,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.aspectRatio(1f),
+        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp
+        ),
+        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    HookedTheme.primary.copy(alpha = shimmerAlpha),
+                    RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(12.dp)
+                    .fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .height(16.dp)
+                        .background(
+                            HookedTheme.surface.copy(alpha = 0.8f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.4f)
+                        .height(12.dp)
+                        .background(
+                            HookedTheme.surface.copy(alpha = 0.6f),
+                            RoundedCornerShape(4.dp)
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EmptyStateView(
+    onAddCatchClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+    val rotation by infiniteTransition.animateFloat(
+        initialValue = -10f,
+        targetValue = 10f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+    
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(120.dp)
+                .background(
+                    HookedTheme.primary.copy(alpha = 0.1f),
+                    CircleShape
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(64.dp)
+                    .rotate(rotation),
+                tint = HookedTheme.primary.copy(alpha = 0.6f)
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Text(
+            text = "No Catches Yet",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        
+        Spacer(modifier = Modifier.height(12.dp))
+        
+        Text(
+            text = "Start building your fishing collection!\nCapture your first catch to get started.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = onAddCatchClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = HookedTheme.primary
+            ),
+            modifier = Modifier
+                .fillMaxWidth(0.7f)
+                .height(56.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = null,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.size(12.dp))
+            Text(
+                text = "Add Your First Catch",
+                style = MaterialTheme.typography.titleMedium
+            )
+        }
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Card(
+            modifier = Modifier.fillMaxWidth(0.9f),
+            colors = CardDefaults.cardColors(
+                containerColor = HookedTheme.primary.copy(alpha = 0.05f)
+            ),
+            elevation = CardDefaults.cardElevation(0.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    tint = HookedTheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = "Tap the + button to add a catch anytime",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                )
+            }
         }
     }
 }

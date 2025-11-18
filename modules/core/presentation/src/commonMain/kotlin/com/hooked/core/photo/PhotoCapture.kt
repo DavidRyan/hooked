@@ -17,7 +17,6 @@ data class CameraInfo(
 data class PhotoMetadata(
     val location: LocationData? = null,
     val timestamp: Long? = null,
-    val cameraInfo: CameraInfo? = null
 )
 
 data class CapturedPhoto(

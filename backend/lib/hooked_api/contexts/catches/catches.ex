@@ -3,6 +3,38 @@ defmodule HookedApi.Catches do
   alias HookedApi.Repo
   alias HookedApi.Catches.UserCatch
   alias HookedApi.Services.{ImageStorage, EnrichmentService}
+  alias HookedApi.Utils.ExifExtractor
+  require Logger
+
+  def get_user_catch_stats(user_id) do
+    catches = UserCatch
+    |> UserCatch.for_user(user_id)
+    |> Repo.all()
+
+    total_catches = Enum.count(catches)
+
+    species_breakdown = catches
+    |> Enum.group_by(fn x -> x.species end)
+    |> Enum.map(fn {species, group} -> {species, Enum.count(group)} end)
+
+    unique_species = catches
+    |> Enum.map(& &1.species)
+    |> Enum.uniq()
+    |> Enum.count()
+
+    unique_locations = catches
+    |> Enum.map(fn x -> "#{Float.round(x.latitude, 6)},#{Float.round(x.longitude, 6)}" end)
+    |> Enum.uniq()
+
+    result = %{
+      total_catches: total_catches,
+      species_breakdown: species_breakdown,
+      unique_species: unique_species,
+      unique_locations: unique_locations
+    }
+    {:ok, result}
+
+  end
 
   def list_user_catches(user_id) do
     UserCatch
@@ -46,7 +78,17 @@ defmodule HookedApi.Catches do
     |> Repo.update()
   end
 
-  def create_user_catch(user_id, attrs, %Plug.Upload{} = image_upload) do
+  def create_user_catch(user_id, attrs, %Plug.Upload{path: temp_path} = image_upload) do
+    # Read the image file to extract EXIF data
+    binary_data = File.read!(temp_path)
+    exif_data = ExifExtractor.extract_from_file(temp_path)
+
+    # Add EXIF data directly to attrs
+    attrs = Map.put(attrs, "latitude", exif_data[:gps_latitude] || attrs["latitude"])
+    attrs = Map.put(attrs, "longitude", exif_data[:gps_longitude] || attrs["longitude"])
+    attrs = Map.put(attrs, "caught_at", exif_data[:datetime] || attrs["caught_at"])
+
+    # Upload image and create catch
     with {:ok, image_data} <- ImageStorage.upload_image(image_upload),
          attrs_with_image <- Map.merge(attrs, Map.put(image_data, "user_id", user_id)),
          {:ok, user_catch} <- insert_user_catch(attrs_with_image),

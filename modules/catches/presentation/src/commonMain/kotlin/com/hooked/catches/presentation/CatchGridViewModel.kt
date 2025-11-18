@@ -2,6 +2,7 @@ package com.hooked.catches.presentation
 
 import com.hooked.core.HookedViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
+import com.hooked.catches.domain.usecases.DeleteCatchUseCase
 import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
 import com.hooked.catches.presentation.model.CatchGridEffect
@@ -12,18 +13,48 @@ import com.hooked.catches.presentation.model.fromEntity
 import com.hooked.core.logging.logError
 
 class CatchGridViewModel(
-    private val getCatchesUseCase: GetCatchesUseCase
+    private val getCatchesUseCase: GetCatchesUseCase,
+    private val deleteCatchUseCase: DeleteCatchUseCase
 ) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
 
     override fun handleIntent(intent: CatchGridIntent) {
         when (intent) {
             is CatchGridIntent.LoadCatches -> {
+                val isRefresh = state.value.catches.isNotEmpty()
+                
+                if (isRefresh) {
+                    setState { copy(isRefreshing = true) }
+                } else {
+                    setState { copy(isLoading = true) }
+                }
+                
                 loadCatches()
-                setState { copy(isLoading = true) }
             }
 
             is CatchGridIntent.NavigateToCatchDetails -> sendEffect {
                 CatchGridEffect.NavigateToCatchDetails(intent.catchId)
+            }
+            
+            is CatchGridIntent.ShowDeleteDialog -> {
+                setState { 
+                    copy(
+                        showDeleteDialog = true,
+                        catchToDelete = intent.catchId
+                    )
+                }
+            }
+            
+            is CatchGridIntent.HideDeleteDialog -> {
+                setState { 
+                    copy(
+                        showDeleteDialog = false,
+                        catchToDelete = null
+                    )
+                }
+            }
+            
+            is CatchGridIntent.DeleteCatch -> {
+                deleteCatch(intent.catchId)
             }
         }
     }
@@ -33,18 +64,57 @@ class CatchGridViewModel(
             try {
                 when (val result = getCatchesUseCase()) {
                     is UseCaseResult.Success -> {
-                        setState { copy(catches = result.data.map { fromEntity(it) }, isLoading = false) }
+                        setState { 
+                            copy(
+                                catches = result.data.map { fromEntity(it) }, 
+                                isLoading = false,
+                                isRefreshing = false
+                            ) 
+                        }
                     }
 
                     is UseCaseResult.Error -> {
-                        setState { copy(isLoading = false) }
+                        setState { 
+                            copy(
+                                isLoading = false,
+                                isRefreshing = false
+                            ) 
+                        }
                         sendEffect { CatchGridEffect.ShowError(result.message) }
                     }
                 }
             } catch (e: Exception) {
                 logError("Failed to load catches", e)
-                setState { copy(isLoading = false) }
+                setState { 
+                    copy(
+                        isLoading = false,
+                        isRefreshing = false
+                    ) 
+                }
                 sendEffect { CatchGridEffect.ShowError("Failed to load catches: ${e.message}") }
+            }
+        }
+    }
+    
+    private fun deleteCatch(catchId: String) {
+        viewModelScope.launch {
+            try {
+                setState { copy(showDeleteDialog = false, catchToDelete = null) }
+                
+                when (val result = deleteCatchUseCase(catchId)) {
+                    is UseCaseResult.Success -> {
+                        setState { 
+                            copy(catches = catches.filter { it.id != catchId })
+                        }
+                        sendEffect { CatchGridEffect.ShowSuccess("Catch deleted successfully") }
+                    }
+                    is UseCaseResult.Error -> {
+                        sendEffect { CatchGridEffect.ShowError(result.message) }
+                    }
+                }
+            } catch (e: Exception) {
+                logError("Failed to delete catch", e)
+                sendEffect { CatchGridEffect.ShowError("Failed to delete catch: ${e.message}") }
             }
         }
     }

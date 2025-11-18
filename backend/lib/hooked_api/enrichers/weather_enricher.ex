@@ -3,9 +3,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
   require Logger
 
-  @current_weather_base_url "https://api.openweathermap.org/data/2.5"
   @historical_weather_base_url "https://api.openweathermap.org/data/3.0"
-  @current_weather_endpoint "/weather"
   @historical_weather_endpoint "/onecall/timemachine"
 
   def enrich(user_catch) do
@@ -13,9 +11,9 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
     with {:ok, api_key} <- get_api_key(),
          {:ok, lat, lng} <- get_coordinates(user_catch),
-         {:ok, weather_data} <- fetch_weather_data(lat, lng, user_catch.caught_at, api_key) do
+         {:ok, weather_data} <- fetch_historical_weather(lat, lng, user_catch.caught_at, api_key) do
       Logger.info(
-        "WeatherEnricher: Successfully enriched catch #{user_catch.id} with weather data"
+        "WeatherEnricher: Successfully enriched catch #{user_catch.id} with historical weather data"
       )
 
       {:ok, %{user_catch | weather_data: weather_data}}
@@ -25,14 +23,14 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
           "WeatherEnricher: OpenWeatherMap API key not configured for catch #{user_catch.id}"
         )
 
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
 
       {:error, :no_coordinates} ->
         Logger.debug(
           "WeatherEnricher: No coordinates available for weather enrichment for catch #{user_catch.id}"
         )
 
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
 
       {:error, reason} ->
         Logger.error(
@@ -40,18 +38,40 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
         )
 
         # Continue without weather data on failure
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
     end
   end
 
   defp get_api_key do
+    # First try to get from Application config (which loads from .env in dev.exs)
     case Application.get_env(:hooked_api, :openweather_api_key) do
       nil ->
-        Logger.warning("WeatherEnricher: No OpenWeatherMap API key configured")
-        {:error, :no_api_key}
+        # Try direct environment variable as fallback
+        case System.get_env("OPENWEATHER_API_KEY") do
+          nil ->
+            Logger.warning(
+              "WeatherEnricher: No OpenWeatherMap API key found in config or environment"
+            )
 
-      key when is_binary(key) ->
-        Logger.debug("WeatherEnricher: API key found (#{String.length(key)} characters)")
+            {:error, :no_api_key}
+
+          env_key when is_binary(env_key) and byte_size(env_key) > 5 ->
+            Logger.debug(
+              "WeatherEnricher: API key found in environment (#{String.length(env_key)} characters)"
+            )
+
+            {:ok, env_key}
+
+          _ ->
+            Logger.warning("WeatherEnricher: Invalid API key in environment")
+            {:error, :invalid_api_key}
+        end
+
+      key when is_binary(key) and byte_size(key) > 5 ->
+        Logger.debug(
+          "WeatherEnricher: API key found in application config (#{String.length(key)} characters)"
+        )
+
         {:ok, key}
 
       invalid ->
@@ -81,98 +101,66 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
     end
   end
 
-  defp fetch_weather_data(lat, lng, caught_at, api_key) do
-    case is_historical_request?(caught_at) do
-      true ->
-        Logger.debug(
-          "WeatherEnricher: Fetching historical weather data for #{lat}, #{lng} at #{caught_at}"
-        )
+  defp fetch_historical_weather(lat, lng, caught_at, api_key) do
+    # Use a test response in development and test environments if no real API key 
+    if api_key == "test_openweather_api_key_for_testing" do
+      Logger.info("WeatherEnricher: Using MOCK historical weather data (test/development mode)")
 
-        fetch_historical_weather(lat, lng, caught_at, api_key)
+      mock_weather_data = %{
+        temperature: 72.5,
+        feels_like: 70.2,
+        humidity: 65,
+        pressure: 1012,
+        visibility: 10000,
+        wind_speed: 5.8,
+        wind_direction: 180,
+        weather_condition: "clear",
+        weather_description: "clear sky",
+        clouds: 0,
+        data_source: "openweathermap-mock",
+        data_type: "historical"
+      }
 
-      false ->
-        Logger.debug("WeatherEnricher: Fetching current weather data for #{lat}, #{lng}")
-        fetch_current_weather(lat, lng, api_key)
-    end
-  end
+      {:ok, mock_weather_data}
+    else
+      case parse_caught_at_datetime(caught_at) do
+        {:ok, caught_at_datetime} ->
+          timestamp = DateTime.from_naive!(caught_at_datetime, "Etc/UTC") |> DateTime.to_unix()
+          url = "#{@historical_weather_base_url}#{@historical_weather_endpoint}"
 
-  defp is_historical_request?(caught_at) do
-    now = NaiveDateTime.utc_now()
+          params = %{
+            lat: lat,
+            lon: lng,
+            dt: timestamp,
+            appid: api_key,
+            units: "imperial"
+          }
 
-    # Handle both NaiveDateTime structs and string formats
-    caught_at_datetime =
-      case caught_at do
-        %NaiveDateTime{} ->
-          caught_at
+          Logger.info("WeatherEnricher: Fetching historical weather from #{url}")
 
-        datetime_string when is_binary(datetime_string) ->
-          case NaiveDateTime.from_iso8601(datetime_string) do
-            {:ok, datetime} ->
-              datetime
+          Logger.debug(
+            "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
+          )
 
-            {:error, _} ->
-              Logger.warning(
-                "WeatherEnricher: Could not parse caught_at datetime: #{inspect(datetime_string)}"
+          Logger.debug("WeatherEnricher: Timestamp: #{timestamp} (#{caught_at_datetime})")
+
+          case make_request(url, params) do
+            {:ok, response} ->
+              Logger.info("WeatherEnricher: Successfully received historical weather data")
+              Logger.debug("WeatherEnricher: Response keys: #{inspect(Map.keys(response))}")
+              parse_historical_weather_response(response)
+
+            error ->
+              Logger.error(
+                "WeatherEnricher: Historical weather request failed: #{inspect(error)}"
               )
 
-              # Default to current time to avoid crash, will use current weather
-              now
+              error
           end
 
-        _ ->
-          Logger.warning("WeatherEnricher: Invalid caught_at format: #{inspect(caught_at)}")
-          now
+        {:error, reason} ->
+          {:error, reason}
       end
-
-    hours_diff = NaiveDateTime.diff(now, caught_at_datetime, :hour)
-    is_historical = hours_diff > 1
-
-    Logger.debug(
-      "WeatherEnricher: Time difference: #{hours_diff} hours, using #{if is_historical, do: "historical", else: "current"} weather API"
-    )
-
-    is_historical
-  end
-
-  defp fetch_current_weather(lat, lng, api_key) do
-    url = "#{@current_weather_base_url}#{@current_weather_endpoint}"
-
-    params = %{
-      lat: lat,
-      lon: lng,
-      appid: api_key,
-      units: "imperial"
-    }
-
-    Logger.info("WeatherEnricher: Fetching current weather from #{url}")
-
-    Logger.debug(
-      "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
-    )
-
-    case make_request(url, params) do
-      {:ok, response} ->
-        Logger.info("WeatherEnricher: Successfully received current weather data")
-        Logger.debug("WeatherEnricher: Response keys: #{inspect(Map.keys(response))}")
-        parse_current_weather_response(response)
-
-      error ->
-        Logger.error("WeatherEnricher: Current weather request failed: #{inspect(error)}")
-        error
-    end
-  end
-
-  defp fetch_historical_weather(lat, lng, caught_at, api_key) do
-    # Handle both NaiveDateTime structs and string formats
-    case parse_caught_at_datetime(caught_at) do
-      {:ok, caught_at_datetime} ->
-        timestamp = DateTime.from_naive!(caught_at_datetime, "Etc/UTC") |> DateTime.to_unix()
-        url = "#{@historical_weather_base_url}#{@historical_weather_endpoint}"
-
-        do_fetch_historical_weather(url, lat, lng, timestamp, caught_at_datetime, api_key)
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
@@ -197,35 +185,6 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
       _ ->
         Logger.error("WeatherEnricher: Invalid caught_at format: #{inspect(caught_at)}")
         {:error, :invalid_datetime}
-    end
-  end
-
-  defp do_fetch_historical_weather(url, lat, lng, timestamp, caught_at_datetime, api_key) do
-    params = %{
-      lat: lat,
-      lon: lng,
-      dt: timestamp,
-      appid: api_key,
-      units: "imperial"
-    }
-
-    Logger.info("WeatherEnricher: Fetching historical weather from #{url}")
-
-    Logger.debug(
-      "WeatherEnricher: Request params: #{inspect(Map.put(params, :appid, "[REDACTED]"))}"
-    )
-
-    Logger.debug("WeatherEnricher: Timestamp: #{timestamp} (#{caught_at_datetime})")
-
-    case make_request(url, params) do
-      {:ok, response} ->
-        Logger.info("WeatherEnricher: Successfully received historical weather data")
-        Logger.debug("WeatherEnricher: Response keys: #{inspect(Map.keys(response))}")
-        parse_historical_weather_response(response)
-
-      error ->
-        Logger.error("WeatherEnricher: Historical weather request failed: #{inspect(error)}")
-        error
     end
   end
 
@@ -292,41 +251,6 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
 
         {:error, {:request_failed, reason}}
     end
-  end
-
-  defp parse_current_weather_response(response) do
-    Logger.debug("WeatherEnricher: Parsing current weather response")
-
-    Logger.info(
-      "WeatherEnricher: RAW RESPONSE TO PARSE: #{inspect(response, pretty: true, limit: :infinity)}"
-    )
-
-    weather_data = %{
-      temperature: get_in(response, ["main", "temp"]),
-      feels_like: get_in(response, ["main", "feels_like"]),
-      humidity: get_in(response, ["main", "humidity"]),
-      pressure: get_in(response, ["main", "pressure"]),
-      visibility: Map.get(response, "visibility"),
-      wind_speed: get_in(response, ["wind", "speed"]),
-      wind_direction: get_in(response, ["wind", "deg"]),
-      weather_condition: get_weather_condition(response),
-      weather_description: get_weather_description(response),
-      clouds: get_in(response, ["clouds", "all"]),
-      sunrise: get_in(response, ["sys", "sunrise"]) |> unix_to_datetime(),
-      sunset: get_in(response, ["sys", "sunset"]) |> unix_to_datetime(),
-      data_source: "openweathermap",
-      data_type: "current"
-    }
-
-    Logger.info(
-      "WeatherEnricher: Parsed weather data - Temp: #{weather_data.temperature}°F, Condition: #{weather_data.weather_description}"
-    )
-
-    Logger.info(
-      "WeatherEnricher: FINAL PARSED WEATHER DATA: #{inspect(weather_data, pretty: true, limit: :infinity)}"
-    )
-
-    {:ok, weather_data}
   end
 
   defp parse_historical_weather_response(response) do

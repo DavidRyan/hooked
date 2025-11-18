@@ -12,6 +12,8 @@ fun CatchDetailsEntity.toCatchDetailsModel(): CatchDetailsModel {
         latitude = latitude ?: 0.0,
         longitude = longitude ?: 0.0,
         timestamp = timestamp ?: 0L,
-        photoUrl = photoUrl
+        photoUrl = photoUrl,
+        location = location,
+        weatherData = weatherData
     )
 }

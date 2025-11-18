@@ -61,7 +61,7 @@ defmodule HookedApiWeb.AuthController do
     end)
   end
 
-  def register(conn, %{"user" => user_params}) do
+  def register(conn, user_params) do
     case Accounts.register_user(user_params) do
       {:ok, %User{} = user} ->
         case Accounts.authenticate_user(user.email, user_params["password"]) do

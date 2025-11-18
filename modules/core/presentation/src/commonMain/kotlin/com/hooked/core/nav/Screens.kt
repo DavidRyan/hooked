@@ -13,4 +13,8 @@ sealed class Screens() {
     data class CatchDetails(val catchId: String) : Screens()
     @Serializable
     object SubmitCatch : Screens()
+    @Serializable
+    object Stats : Screens()
+    @Serializable
+    object AnimationTest : Screens()
 }

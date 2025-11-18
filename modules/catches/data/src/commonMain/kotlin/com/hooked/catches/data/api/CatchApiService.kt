@@ -6,6 +6,7 @@ import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.request.delete
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
@@ -51,26 +52,23 @@ class CatchApiService(
         }
     }
     
-    suspend fun submitCatch(submitCatchDto: SubmitCatchDto, imageBytes: ByteArray? = null): NetworkResult<String> {
+    suspend fun submitCatch(submitCatchDto: SubmitCatchDto): NetworkResult<String> {
         return try {
             com.hooked.core.logging.Logger.debug("CatchApiService", "submitCatch URL: $baseUrl/user_catches")
             val response = httpClient.post("$baseUrl/user_catches") {
                 setBody(MultiPartFormDataContent(
                     formData {
                         // Add catch data fields
-                        append("user_catch[species]", submitCatchDto.species)
-                        append("user_catch[location]", submitCatchDto.location)
-                        append("user_catch[caught_at]", submitCatchDto.caughtAt)
+                        submitCatchDto.species?.let { append("user_catch[species]", it) }
+                        submitCatchDto.location?.let { append("user_catch[location]", it) }
+                        submitCatchDto.caughtAt?.let { append("user_catch[caught_at]", it) }
                         submitCatchDto.latitude?.let { append("user_catch[latitude]", it.toString()) }
                         submitCatchDto.longitude?.let { append("user_catch[longitude]", it.toString()) }
                         submitCatchDto.notes?.let { append("user_catch[notes]", it) }
                         
-                        // Add image if provided
-                        imageBytes?.let { bytes ->
-                            append("image", bytes, Headers.build {
-                                append(HttpHeaders.ContentType, "image/jpeg")
-                                append(HttpHeaders.ContentDisposition, "filename=\"catch.jpg\"")
-                            })
+                        // Add base64-encoded image if provided
+                        submitCatchDto.imageBase64?.let { base64 ->
+                            append("user_catch[image_base64]", base64)
                         }
                     }
                 ))
@@ -83,6 +81,34 @@ class CatchApiService(
         } catch (e: Exception) {
             val detailedMessage = "Failed to submit catch: ${e.message}"
             NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.submitCatch")
+        }
+    }
+    
+    suspend fun deleteCatch(catchId: String): NetworkResult<Unit> {
+        return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "deleteCatch URL: $baseUrl/user_catches/$catchId")
+            httpClient.delete("$baseUrl/user_catches/$catchId")
+            NetworkResult.Success(Unit)
+        } catch (e: Exception) {
+            val detailedMessage = "Failed to delete catch: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.deleteCatch")
+        }
+    }
+    
+    suspend fun getAiInsights(): NetworkResult<String> {
+        return try {
+            com.hooked.core.logging.Logger.debug("CatchApiService", "getAiInsights URL: $baseUrl/ai/insights")
+            val response = httpClient
+                .get("$baseUrl/ai/insights")
+                .body<Map<String, String>>()
+            
+            val insights = response["insights"] 
+                ?: return NetworkResult.Error(Exception("No insights returned"), "CatchApiService.getAiInsights")
+            
+            NetworkResult.Success(insights)
+        } catch (e: Exception) {
+            val detailedMessage = "Failed to fetch AI insights: ${e.message}"
+            NetworkResult.Error(Exception(detailedMessage, e), "CatchApiService.getAiInsights")
         }
     }
 }

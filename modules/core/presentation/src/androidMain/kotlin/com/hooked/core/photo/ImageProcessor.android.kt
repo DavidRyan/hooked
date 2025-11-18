@@ -6,14 +6,6 @@ import android.util.Base64
 
 actual class ImageProcessor(private val context: Context) {
     
-    actual suspend fun processImageWithExif(imageBytes: ByteArray): ByteArray {
-        return imageBytes
-    }
-    
-    actual suspend fun extractMetadata(imageBytes: ByteArray): PhotoMetadata? {
-        return null
-    }
-    
     actual suspend fun loadImageFromUri(uri: String): ByteArray {
         return try {
             val inputStream = context.contentResolver.openInputStream(Uri.parse(uri))

@@ -38,14 +38,18 @@ defmodule HookedApi.MixProject do
       {:bandit, "~> 1.5"},
       {:oban, "~> 2.17"},
       {:tesla, "~> 1.8"},
-      {:hackney, "~> 1.18"},
       {:exexif, "~> 0.0.5"},
+      {:hackney, "~> 1.18"},
       {:ex_machina, "~> 2.8", only: :test},
       {:mox, "~> 1.0", only: :test},
       {:mock, "~> 0.3.0", only: :test},
       {:joken, "~> 2.6"},
       {:bcrypt_elixir, "~> 3.0"},
-      {:hammer, "~> 6.1"}
+      {:hammer, "~> 6.1"},
+      {:ex_aws, "~> 2.4"},
+      {:ex_aws_s3, "~> 2.4"},
+      {:sweet_xml, "~> 0.7"},
+      {:dotenvy, "~> 0.8"}
     ]
   end
 

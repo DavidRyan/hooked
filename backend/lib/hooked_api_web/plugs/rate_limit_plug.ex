@@ -9,7 +9,8 @@ defmodule HookedApiWeb.Plugs.RateLimitPlug do
   def init(opts) do
     %{
       max_requests: Keyword.get(opts, :max_requests, 5),
-      window_ms: Keyword.get(opts, :window_ms, 60_000), # 1 minute
+      # 1 minute
+      window_ms: Keyword.get(opts, :window_ms, 60_000),
       bucket_name: Keyword.get(opts, :bucket_name, "auth")
     }
   end
@@ -45,10 +46,8 @@ defmodule HookedApiWeb.Plugs.RateLimitPlug do
   defp get_identifier(conn) do
     # Use IP address as identifier
     case get_peer_data(conn) do
-      %{address: address} -> 
+      %{address: address} ->
         address |> :inet.ntoa() |> to_string()
-      _ -> 
-        "unknown"
     end
   end
 end

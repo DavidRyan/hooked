@@ -9,6 +9,8 @@ import com.hooked.catches.data.model.toCatchDetailsEntity
 import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.FishingInsightsEntity
+import com.hooked.catches.domain.entities.StatsEntity
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository as CatchRepositoryInterface
 import com.hooked.core.domain.NetworkResult
@@ -22,26 +24,40 @@ class CatchRepositoryImpl(
     
     override suspend fun getCatches(): Result<List<CatchEntity>> {
         return try {
-            // First try to get from local database
-            val localCatches = localDataSource.getAllCatches().first()
-            
-            if (localCatches.isNotEmpty()) {
-                Logger.info("CatchRepository", "Returning ${localCatches.size} catches from local database")
-                Result.success(localCatches.map { it.toDomainEntity() })
-            } else {
-                // If no local data, fetch from API and cache
-                when (val result = catchApiService.getCatches()) {
-                    is NetworkResult.Success -> {
-                        Logger.info("CatchRepository", "Fetched ${result.data.size} catches from API, caching locally")
-                        localDataSource.insertCatches(result.data)
-                        Result.success(result.data.map { it.toEntity() })
-                    }
-                    is NetworkResult.Error -> Result.failure(result.error)
-                    NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
+            // Always try API first
+            when (val result = catchApiService.getCatches()) {
+                is NetworkResult.Success -> {
+                    Logger.info("CatchRepository", "Fetched ${result.data.size} catches from API, caching locally")
+                    localDataSource.insertCatches(result.data)
+                    Result.success(result.data.map { it.toEntity() })
                 }
+                is NetworkResult.Error -> {
+                    // Fallback to local database
+                    val localCatches = localDataSource.getAllCatches().first()
+                    
+                    if (localCatches.isNotEmpty()) {
+                        Logger.info("CatchRepository", "Returning ${localCatches.size} catches from local database")
+                        Result.success(localCatches.map { it.toDomainEntity() })
+                    } else {
+                        // No local data either
+                        Logger.error("CatchRepository", "No local cache available")
+                        Result.failure(result.error)
+                    }
+                }
+                NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
             }
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error getting catches: ${e.message}", e)
+            try {
+                // Try local as last resort after exception
+                val localCatches = localDataSource.getAllCatches().first()
+                if (localCatches.isNotEmpty()) {
+                    Logger.info("CatchRepository", "Exception caught but returning ${localCatches.size} catches from local database")
+                    return Result.success(localCatches.map { it.toDomainEntity() })
+                }
+            } catch (dbException: Exception) {
+                Logger.error("CatchRepository", "Failed to fetch from local DB after API exception", dbException)
+            }
             Result.failure(e)
         }
     }
@@ -83,7 +99,11 @@ class CatchRepositoryImpl(
                     localDataSource.insertCatches(result.data)
                     Result.success(result.data.map { it.toEntity() })
                 }
-                is NetworkResult.Error -> Result.failure(result.error)
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Error refreshing catches from API: ${result.error.message}")
+                    // On refresh we want the latest data, so we fail if the API call fails
+                    Result.failure(result.error)
+                }
                 NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
             }
         } catch (e: Exception) {
@@ -99,11 +119,12 @@ class CatchRepositoryImpl(
             latitude = catchEntity.latitude,
             longitude = catchEntity.longitude,
             caughtAt = catchEntity.caughtAt ?: "2024-01-01T00:00:00Z",
-            notes = catchEntity.notes
+            notes = catchEntity.notes,
+            imageBase64 = catchEntity.imageBase64
         )
         
         return try {
-            when(val result = catchApiService.submitCatch(submitDto, catchEntity.imageBytes)) {
+            when(val result = catchApiService.submitCatch(submitDto)) {
                 is NetworkResult.Success -> {
                     Logger.info("CatchRepository", "Successfully submitted catch, received ID: ${result.data}")
                     Result.success(result.data)
@@ -116,6 +137,73 @@ class CatchRepositoryImpl(
             }
         } catch (e: Exception) {
             Logger.error("CatchRepository", "Error submitting catch: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun deleteCatch(catchId: String): Result<Unit> {
+        return try {
+            when (val result = catchApiService.deleteCatch(catchId)) {
+                is NetworkResult.Success -> {
+                    Logger.info("CatchRepository", "Successfully deleted catch: $catchId")
+                    localDataSource.deleteCatch(catchId)
+                    Result.success(Unit)
+                }
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Failed to delete catch: ${result.error.message}", result.error)
+                    Result.failure(result.error)
+                }
+                NetworkResult.Loading -> Result.failure(Exception("Loading state not handled"))
+            }
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error deleting catch: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getCatchStats(): Result<StatsEntity> {
+        return try {
+            val catches = getCatches().getOrNull() ?: emptyList()
+
+            val speciesBreakdown = catches
+                .mapNotNull { it.name }
+                .groupingBy { it }
+                .eachCount()
+
+            val stats = StatsEntity(
+                totalCatches = catches.size,
+                speciesBreakdown = speciesBreakdown,
+                uniqueSpecies = speciesBreakdown.keys.size,
+                uniqueLocations = catches.mapNotNull { it.location }.distinct().size,
+                averageWeight = catches.mapNotNull { it.weight }.average().takeIf { !it.isNaN() },
+                averageLength = catches.mapNotNull { it.length }.average().takeIf { !it.isNaN() },
+                biggestCatch = catches.maxByOrNull { it.weight ?: 0.0 },
+                mostRecentCatch = catches.maxByOrNull { it.dateCaught ?: "" }
+            )
+
+            Result.success(stats)
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error calculating catch stats: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+    
+    override suspend fun getFishingInsights(): Result<FishingInsightsEntity> {
+        return try {
+            when (val result = catchApiService.getAiInsights()) {
+                is NetworkResult.Success -> {
+                    Result.success(FishingInsightsEntity(insights = result.data))
+                }
+                is NetworkResult.Error -> {
+                    Logger.error("CatchRepository", "Failed to fetch AI insights: ${result.error.message}")
+                    Result.failure(result.error)
+                }
+                else -> {
+                    Result.failure(Exception("Unexpected state"))
+                }
+            }
+        } catch (e: Exception) {
+            Logger.error("CatchRepository", "Error fetching fishing insights: ${e.message}", e)
             Result.failure(e)
         }
     }

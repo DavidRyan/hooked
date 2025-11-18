@@ -1,13 +1,4 @@
 defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
-  @moduledoc """
-  Google Cloud Vision API provider for species identification.
-
-  Uses Google Cloud Vision's label detection to identify animals and objects.
-  Note: This is a basic implementation - Google Vision is not specialized for species
-  identification like iNaturalist, but serves as an example of the abstraction layer.
-
-  API Documentation: https://cloud.google.com/vision/docs/labels
-  """
 
   @behaviour HookedApi.Enrichers.Species.SpeciesProvider
 
@@ -20,15 +11,9 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
   plug(Tesla.Middleware.Logger)
   plug(Tesla.Middleware.BaseUrl, "https://vision.googleapis.com/v1")
 
-  plug(Tesla.Middleware.Headers, [
-    {"Authorization", "Bearer #{Application.get_env(:hooked_api, :google_vision_access_token)}"}
-  ])
-
-  adapter(Tesla.Adapter.Hackney)
-
   @impl true
   def validate_configuration do
-    token = Application.get_env(:hooked_api, :google_vision_access_token)
+    token = System.get_env("GOOGLE_VISION_ACCESS_TOKEN")
 
     case token do
       nil ->
@@ -52,12 +37,13 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
   def identify_species(image_data, _filename) do
     Logger.info("GoogleVisionProvider: Starting species identification")
     Logger.debug("GoogleVisionProvider: Processing image file (#{byte_size(image_data)} bytes)")
+    token = System.get_env("GOOGLE_VISION_ACCESS_TOKEN")
 
     try do
       with request_body <- build_vision_request(image_data),
            _ <- Logger.info("GoogleVisionProvider: Sending image to Google Vision API"),
            {:ok, %Tesla.Env{status: 200, body: body} = response} <-
-             post("/images:annotate", request_body) do
+             post("/images:annotate?key=#{token}", request_body) do
         Logger.info(
           "GoogleVisionProvider: Received identification results from Google Vision API"
         )
@@ -112,6 +98,10 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
             %{
               "type" => "LABEL_DETECTION",
               "maxResults" => 10
+            },
+            %{
+              "type" => "WEB_DETECTION",
+              "maxResults" => 10
             }
           ]
         }
@@ -120,7 +110,27 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
   end
 
   defp parse_response(%{"responses" => [response | _]}, full_response) do
+    Logger.info("GoogleVisionProvider: Response body: #{inspect(full_response)}")
+
     case response do
+      %{"webDetection" => %{"bestGuessLabels" => [%{"label" => best_guess} | _]}} ->
+        species_result =
+          SpeciesResult.new(%{
+            common_name: best_guess,
+            scientific_name: nil,
+            confidence: 1.0,
+            provider: "google_vision",
+            provider_id: nil,
+            taxonomy: nil,
+            raw_response: full_response.body
+          })
+
+        Logger.info(
+          "GoogleVisionProvider: Found best guess species match: #{species_result.species_name}"
+        )
+
+        {:ok, species_result}
+
       %{"labelAnnotations" => labels} when is_list(labels) ->
         Logger.debug("GoogleVisionProvider: Number of labels: #{length(labels)}")
         find_best_species_match(labels, full_response.body)

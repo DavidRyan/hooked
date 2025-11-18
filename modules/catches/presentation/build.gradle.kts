@@ -23,6 +23,7 @@ kotlin {
                 implementation(compose.runtime)
                 implementation(compose.foundation)
                 implementation(compose.material3)
+                implementation(compose.material) // Added for PullRefresh
                 implementation(compose.ui)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
@@ -32,6 +33,8 @@ kotlin {
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
                 implementation(libs.kotlinx.datetime)
+                
+                implementation("media.kamel:kamel-image-default:1.0.5")
             }
         }
 

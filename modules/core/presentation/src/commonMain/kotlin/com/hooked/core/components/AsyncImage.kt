@@ -21,12 +21,17 @@ import com.hooked.theme.HookedTheme
 
 @Composable
 fun AsyncImage(
-    imageUrl: String,
+    imageUrl: String?,
     contentDescription: String? = null,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     shape: Shape? = null
 ) {
+    if (imageUrl == null) {
+        return
+    }
+
+    com.hooked.core.logging.Logger.debug("AsyncImage", "Loading image from URL: $imageUrl")
     val getPainterResource: @Composable (BoxWithConstraintsScope.() -> Resource<Painter>) = {
         asyncPainterResource(
             imageUrl,

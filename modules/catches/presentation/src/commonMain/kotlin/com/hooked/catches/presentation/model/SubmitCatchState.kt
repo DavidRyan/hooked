@@ -10,7 +10,8 @@ data class SubmitCatchState(
     val isLoading: Boolean = false,
     val isSubmitting: Boolean = false,
     val isLocationLoading: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val submittedCatchId: String? = null
 ) {
     val isFormValid: Boolean
         get() = photoUri != null

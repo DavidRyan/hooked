@@ -32,6 +32,9 @@ System.put_env(
   "test_jwt_secret_that_is_at_least_32_characters_long_for_testing_purposes"
 )
 
+# OpenWeatherMap API key for testing (dummy key)
+config :hooked_api, :openweather_api_key, "test_openweather_api_key_for_testing"
+
 # Disable Oban in tests
 config :hooked_api, Oban, testing: :manual
 
@@ -40,7 +43,6 @@ config :hooked_api, HookedApiWeb.Plugs.RateLimitPlug,
   enabled: false,
   queues: false,
   plugins: false
-
 
 # Disable rate limiting in tests
 config :hooked_api, HookedApiWeb.Plugs.RateLimitPlug, enabled: false

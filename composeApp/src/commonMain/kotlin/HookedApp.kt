@@ -1,6 +1,8 @@
 package com.hooked
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,18 +16,20 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
+import com.hooked.catches.presentation.AnimationTestScreen
 import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.core.presentation.toast.ToastHost
 import com.hooked.catches.presentation.SubmitCatchScreen
 import com.hooked.catches.presentation.SubmitCatchViewModel
+import com.hooked.catches.presentation.StatsScreen
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import com.hooked.theme.HookedTheme
 import com.hooked.core.nav.Screens
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun HookedApp(
 ) {
@@ -37,21 +41,25 @@ fun HookedApp(
             // Check auth status and set initial destination
             AuthStateManager(
                 onAuthenticatedUser = { 
-                    startDestination = Screens.CatchGrid 
+                    startDestination = Screens.CatchGrid
                 },
                 onUnauthenticatedUser = { 
-                    startDestination = Screens.Login 
+                    startDestination = Screens.Login
                 }
             )
             
             // Only show NavHost once we know the start destination
             startDestination?.let { destination ->
-                Box(modifier = Modifier.fillMaxSize()) {
-                    NavHost(
+                SharedTransitionLayout {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        NavHost(
                         navController = navController,
                         startDestination = destination,
                         modifier = Modifier.background(HookedTheme.background)
                     ) {
+                composable<Screens.AnimationTest> {
+                    AnimationTestScreen()
+                }
                 composable<Screens.Login>(
                     exitTransition = {
                         when (targetState.destination.route) {
@@ -172,7 +180,9 @@ fun HookedApp(
                     CatchesScreen(
                         navigate = { screen ->
                             navController.navigate(screen)
-                        }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this
                     )
                 }
                 composable<Screens.SubmitCatch>(
@@ -208,15 +218,23 @@ fun HookedApp(
                                 is Screens.CatchGrid -> navController.popBackStack()
                                 else -> navController.navigate(screen)
                             }
-                        }
-                    )
-                    }
-                    }
-                    
-                    // Toast overlay
-                    ToastHost()
-                }
-            }
-        }
-    }
+                        },
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this
+                     )
+                     }
+                 composable<Screens.Stats> {
+                     StatsScreen(
+                         onNavigateBack = { navController.popBackStack() }
+                     )
+                 }
+                     }
+
+                         // Toast overlay
+                         ToastHost()
+                     }
+                 }
+             }
+         }
+     }
 }

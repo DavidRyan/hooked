@@ -1,10 +1,9 @@
 package com.hooked.submit.presentation
 
 import com.hooked.core.HookedViewModel
-import com.hooked.core.photo.ImageProcessor
-import com.hooked.core.photo.encodeBase64
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.usecases.SubmitCatchUseCase
+import com.hooked.submit.domain.usecases.ConvertImageToBytesUseCase
 import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
@@ -15,7 +14,7 @@ import com.hooked.core.logging.logError
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
-    private val imageProcessor: ImageProcessor
+    private val convertImageToBytesUseCase: ConvertImageToBytesUseCase
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
 
     override fun handleIntent(intent: SubmitCatchIntent) {
@@ -72,7 +71,14 @@ class SubmitCatchViewModel(
                     length = currentState.length.toDouble(),
                     latitude = currentState.latitude,
                     longitude = currentState.longitude,
-                    photoBase64 = currentState.photoUri?.let { convertImageToBase64(it) },
+                    photoBase64 = currentState.photoUri?.let { 
+                        when (val result = convertImageToBytesUseCase.convertToBase64(it)) {
+                            is UseCaseResult.Success -> result.data
+                            is UseCaseResult.Error -> {
+                                throw IllegalStateException(result.message)
+                            }
+                        }
+                    },
                     timestamp = Clock.System.now().toEpochMilliseconds()
                 )
                 
@@ -94,20 +100,7 @@ class SubmitCatchViewModel(
         }
     }
 
-    
 
-    private suspend fun convertImageToBase64(imageUri: String): String {
-        return try {
-            val imageBytes = imageProcessor.loadImageFromUri(imageUri)
-            
-            val processedBytes = imageProcessor.processImageWithExif(imageBytes)
-            
-            processedBytes.encodeBase64()
-        } catch (e: Exception) {
-            logError("Failed to process image", e)
-            throw IllegalStateException("Failed to process image: ${e.message}")
-        }
-    }
 
     override fun createInitialState(): SubmitCatchState {
         return SubmitCatchState()

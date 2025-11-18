@@ -1,13 +1,12 @@
 CREATE TABLE CatchEntity (
     id TEXT PRIMARY KEY,
-    species TEXT NOT NULL,
-    location TEXT NOT NULL,
+    species TEXT,
+    location TEXT,
     latitude REAL,
     longitude REAL,
-    caught_at TEXT NOT NULL,
+    caught_at TEXT,
     notes TEXT,
     weather_data TEXT,
-    exif_data TEXT,
     image_url TEXT,
     image_filename TEXT,
     image_content_type TEXT,
@@ -30,10 +29,10 @@ SELECT * FROM CatchEntity WHERE id = ?;
 insert:
 INSERT OR REPLACE INTO CatchEntity(
     id, species, location, latitude, longitude, caught_at, notes, 
-    weather_data, exif_data, image_url, image_filename, 
+    weather_data, image_url, image_filename,
     image_content_type, image_file_size, inserted_at, updated_at
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?);
 
 deleteById:
 DELETE FROM CatchEntity WHERE id = ?;

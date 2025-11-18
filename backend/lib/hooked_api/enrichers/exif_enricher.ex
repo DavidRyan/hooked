@@ -33,7 +33,7 @@ defmodule HookedApi.Enrichers.ExifEnricher do
           )
 
           Logger.debug("ExifEnricher: Returning catch unchanged due to EXIF extraction failure")
-          {:ok, user_catch}
+          {:ok, %{user_catch | enrichment_status: false}}
       end
     rescue
       error ->
@@ -43,7 +43,7 @@ defmodule HookedApi.Enrichers.ExifEnricher do
 
         Logger.error("ExifEnricher: Stacktrace: #{Exception.format_stacktrace(__STACKTRACE__)}")
         Logger.error("ExifEnricher: Returning catch unchanged due to crash")
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
     end
   end
 

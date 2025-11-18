@@ -6,9 +6,13 @@ import com.hooked.auth.presentation.di.authPresentationModule
 import com.hooked.catches.presentation.CatchGridViewModel
 import com.hooked.catches.presentation.CatchDetailsViewModel
 import com.hooked.catches.presentation.SubmitCatchViewModel
+import com.hooked.catches.presentation.StatsViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
 import com.hooked.catches.domain.usecases.SubmitCatchUseCase
+import com.hooked.catches.domain.usecases.DeleteCatchUseCase
+import com.hooked.catches.domain.usecases.GetCatchStatsUseCase
+import com.hooked.catches.domain.usecases.GetFishingInsightsUseCase
 import com.hooked.catches.domain.repositories.CatchRepository as CatchesRepositoryInterface
 import com.hooked.catches.data.repo.CatchRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
@@ -30,6 +34,7 @@ val presentationModule = module {
     viewModelOf(::CatchGridViewModel)
     viewModelOf(::CatchDetailsViewModel)
     viewModel { SubmitCatchViewModel(get(), get()) }
+    viewModel { StatsViewModel(get(), get()) }
 } + authPresentationModule
 
 val dataModule = module {
@@ -67,4 +72,7 @@ val useCaseModule = module {
     single { GetCatchesUseCase(get()) }
     single { GetCatchDetailsUseCase(get()) }
     single { SubmitCatchUseCase(get()) }
+    single { DeleteCatchUseCase(get()) }
+    single { GetCatchStatsUseCase(get()) }
+    single { GetFishingInsightsUseCase(get()) }
 } + authUseCaseModule

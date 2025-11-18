@@ -37,10 +37,12 @@ config :phoenix, :json_library, Jason
 
 # Image storage configuration
 config :hooked_api,
-  image_storage_backend: :local,
+  image_storage_backend: :s3,
   image_upload_dir: "priv/static/uploads/catches",
   max_image_size: 10_000_000,
   serve_static_images: true,
+  s3_bucket: System.get_env("S3_BUCKET"),
+  s3_region: System.get_env("S3_REGION"),
   enrichers: [
     HookedApi.Enrichers.ExifEnricher,
     HookedApi.Enrichers.GeoEnricher,
@@ -57,10 +59,25 @@ config :hooked_api,
 config :hooked_api,
   openweather_api_key: System.get_env("OPENWEATHER_API_KEY")
 
+# AI Provider configuration
+config :hooked_api,
+  ai_provider: HookedApi.Services.AiProviders.OpenaiProvider,
+  openai_api_key: System.get_env("OPENAI_API_KEY")
+
 # Tesla configuration
 config :tesla, disable_deprecated_builder_warning: true
 
 # JWT configuration - secret now loaded at runtime for security
+
+# ExAws configuration
+config :ex_aws,
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
+  json_codec: Jason
+
+config :ex_aws, :s3,
+  region: System.get_env("S3_REGION"),
+  scheme: "https://"
 
 # Hammer rate limiting configuration
 config :hammer,

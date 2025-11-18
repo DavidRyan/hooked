@@ -6,6 +6,7 @@ defmodule HookedApiWeb do
       use Phoenix.Controller, namespace: HookedApiWeb
 
       import Plug.Conn
+
       alias HookedApiWeb.Router.Helpers, as: Routes
     end
   end

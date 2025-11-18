@@ -12,9 +12,6 @@ defmodule HookedApi.Accounts.User do
              :inserted_at,
              :updated_at
            ]}
-
-  @derive {Jason.Encoder,
-           only: [:id, :email, :first_name, :last_name, :is_active, :inserted_at, :updated_at]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
 
@@ -33,16 +30,16 @@ defmodule HookedApi.Accounts.User do
         }
 
   schema "users" do
-    field :email, :string
-    field :password_hash, :string
-    field :password, :string, virtual: true, redact: true
-    field :first_name, :string
-    field :last_name, :string
-    field :is_active, :boolean, default: true
-    field :failed_login_attempts, :integer, default: 0
-    field :locked_until, :utc_datetime
-    field :last_failed_login, :utc_datetime
-    has_many :catches, HookedApi.Catches.UserCatch
+    field(:email, :string)
+    field(:password_hash, :string)
+    field(:password, :string, virtual: true, redact: true)
+    field(:first_name, :string)
+    field(:last_name, :string)
+    field(:is_active, :boolean, default: true)
+    field(:failed_login_attempts, :integer, default: 0)
+    field(:locked_until, :utc_datetime)
+    field(:last_failed_login, :utc_datetime)
+    has_many(:catches, HookedApi.Catches.UserCatch)
 
     timestamps(type: :utc_datetime)
   end

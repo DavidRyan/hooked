@@ -35,14 +35,6 @@ defmodule HookedApi.Enrichers.GeoEnricher do
 
           Logger.debug("GeoEnricher: Returning catch unchanged - no GPS data available")
           {:ok, user_catch}
-
-        {:error, reason} ->
-          Logger.warning(
-            "GeoEnricher: GPS extraction failed for catch #{user_catch.id}: #{inspect(reason)}"
-          )
-
-          Logger.debug("GeoEnricher: Returning catch unchanged due to GPS extraction failure")
-          {:ok, user_catch}
       end
     rescue
       error ->
@@ -52,7 +44,7 @@ defmodule HookedApi.Enrichers.GeoEnricher do
 
         Logger.error("GeoEnricher: Stacktrace: #{Exception.format_stacktrace(__STACKTRACE__)}")
         Logger.error("GeoEnricher: Returning catch unchanged due to crash")
-        {:ok, user_catch}
+        {:ok, %{user_catch | enrichment_status: false}}
     end
   end
 

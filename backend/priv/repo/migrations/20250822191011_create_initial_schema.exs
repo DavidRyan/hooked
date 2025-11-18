@@ -38,6 +38,7 @@ defmodule HookedApi.Repo.Migrations.CreateInitialSchema do
       add(:image_filename, :string)
       add(:image_content_type, :string)
       add(:image_file_size, :integer)
+      add(:enrichment_status, :boolean)
 
       timestamps(type: :utc_datetime)
     end

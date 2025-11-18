@@ -38,12 +38,26 @@ config :hooked_api, HookedApi.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: System.get_env("SECRET_KEY_BASE") || raise("SECRET_KEY_BASE environment variable is not set"),
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") || raise("SECRET_KEY_BASE environment variable is not set"),
   watchers: []
 
 config :hooked_api, :dev_routes, true
 
-config :logger, :console, format: "[$level] $message\n"
+config :logger, :console,
+  format: "[$level] $message $metadata\n",
+  level: :debug,
+  metadata: [
+    :access_key_id,
+    :secret_key_set,
+    :region,
+    :s3_bucket,
+    :bucket,
+    :key,
+    :error,
+    :exception,
+    :stacktrace
+  ]
 
 config :phoenix, :stacktrace_depth, 20
 
@@ -56,3 +70,12 @@ config :hooked_api,
 
 # OpenWeatherMap API Configuration
 config :hooked_api, :openweather_api_key, System.get_env("OPENWEATHER_API_KEY")
+
+# S3 configuration
+config :ex_aws,
+  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
+  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
+  region: System.get_env("S3_REGION")
+
+config :hooked_api,
+  s3_bucket: System.get_env("S3_BUCKET")

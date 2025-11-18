@@ -7,7 +7,7 @@ data class SubmitCatchEntity(
     val longitude: Double?,
     val caughtAt: String?,
     val notes: String?,
-    val imageBytes: ByteArray? = null
+    val imageBase64: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -21,10 +21,7 @@ data class SubmitCatchEntity(
         if (longitude != other.longitude) return false
         if (caughtAt != other.caughtAt) return false
         if (notes != other.notes) return false
-        if (imageBytes != null) {
-            if (other.imageBytes == null) return false
-            if (!imageBytes.contentEquals(other.imageBytes)) return false
-        } else if (other.imageBytes != null) return false
+        if (imageBase64 != other.imageBase64) return false
 
         return true
     }
@@ -36,7 +33,7 @@ data class SubmitCatchEntity(
         result = 31 * result + (longitude?.hashCode() ?: 0)
         result = 31 * result + (caughtAt?.hashCode() ?: 0)
         result = 31 * result + (notes?.hashCode() ?: 0)
-        result = 31 * result + (imageBytes?.contentHashCode() ?: 0)
+        result = 31 * result + (imageBase64?.hashCode() ?: 0)
         return result
     }
 }

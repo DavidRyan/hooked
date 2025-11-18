@@ -20,26 +20,8 @@ defmodule HookedApi.Catches.UserCatch do
              :image_file_size,
              :inserted_at,
              :updated_at,
-             :user_id
-           ]}
-  @derive {JSON.Encoder,
-           only: [
-             :id,
-             :species,
-             :location,
-             :latitude,
-             :longitude,
-             :caught_at,
-             :notes,
-             :weather_data,
-             :exif_data,
-             :image_url,
-             :image_filename,
-             :image_content_type,
-             :image_file_size,
-             :inserted_at,
-             :updated_at,
-             :user_id
+             :user_id,
+             :enrichment_status
            ]}
   @primary_key {:id, :binary_id, autogenerate: true}
   @foreign_key_type :binary_id
@@ -60,7 +42,8 @@ defmodule HookedApi.Catches.UserCatch do
           image_file_size: integer() | nil,
           inserted_at: DateTime.t(),
           updated_at: DateTime.t(),
-          user_id: binary()
+          user_id: binary(),
+          enrichment_status: boolean() | nil
         }
 
   schema "user_catches" do
@@ -72,11 +55,12 @@ defmodule HookedApi.Catches.UserCatch do
     field(:notes, :string)
     field(:weather_data, :map)
     field(:exif_data, :map)
-    belongs_to :user, HookedApi.Accounts.User
+    belongs_to(:user, HookedApi.Accounts.User)
     field(:image_url, :string)
     field(:image_filename, :string)
     field(:image_content_type, :string)
     field(:image_file_size, :integer)
+    field(:enrichment_status, :boolean)
 
     timestamps(type: :utc_datetime)
   end
@@ -96,10 +80,11 @@ defmodule HookedApi.Catches.UserCatch do
       :image_filename,
       :image_content_type,
       :image_file_size,
-      :user_id
+      :user_id,
+      :enrichment_status
     ])
     |> validate_required([])
-    |> validate_length(:species, min: 1, max: 100)
+    |> validate_length(:species, min: 1, max: 100, allow_blank: true)
     |> validate_length(:location, min: 1, max: 200)
     |> validate_length(:notes, max: 1000)
     |> validate_coordinates()
@@ -127,10 +112,10 @@ defmodule HookedApi.Catches.UserCatch do
   end
 
   def for_user(query \\ __MODULE__, user_id) do
-    from uc in query, where: uc.user_id == ^user_id
+    from(uc in query, where: uc.user_id == ^user_id)
   end
 
   def for_user_and_id(query \\ __MODULE__, user_id, id) do
-    from uc in query, where: uc.user_id == ^user_id and uc.id == ^id
+    from(uc in query, where: uc.user_id == ^user_id and uc.id == ^id)
   end
 end

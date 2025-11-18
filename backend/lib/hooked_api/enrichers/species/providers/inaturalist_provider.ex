@@ -21,8 +21,6 @@ defmodule HookedApi.Enrichers.Species.Providers.InaturalistProvider do
     {"Authorization", "Bearer #{Application.get_env(:hooked_api, :inaturalist_access_token)}"}
   ])
 
-  adapter(Tesla.Adapter.Hackney)
-
   @impl true
   def validate_configuration do
     token = Application.get_env(:hooked_api, :inaturalist_access_token)

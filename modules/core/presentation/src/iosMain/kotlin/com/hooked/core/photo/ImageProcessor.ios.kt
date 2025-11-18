@@ -4,29 +4,13 @@ import kotlinx.cinterop.*
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.CoreFoundation.*
+import platform.ImageIO.*
+import platform.CoreGraphics.*
 import platform.posix.memcpy
 
 @OptIn(ExperimentalForeignApi::class)
 
 actual class ImageProcessor {
-    
-    actual suspend fun processImageWithExif(imageBytes: ByteArray): ByteArray {
-        return try {
-            val nsData = imageBytes.toNSData()
-            
-            val image = UIImage.imageWithData(nsData)
-            
-            val compressedData = image?.let { UIImageJPEGRepresentation(it, 0.85) }
-            
-            compressedData?.toByteArray() ?: imageBytes
-        } catch (e: Exception) {
-            imageBytes
-        }
-    }
-    
-    actual suspend fun extractMetadata(imageBytes: ByteArray): PhotoMetadata? {
-        return null
-    }
     
     actual suspend fun loadImageFromUri(uri: String): ByteArray {
         return try {

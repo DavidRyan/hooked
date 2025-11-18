@@ -5,12 +5,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val HookedTheme = darkColorScheme(
-    primary = Colors.blue,
-    secondary = Colors.mauve,
-    tertiary = Colors.teal,
+    primary = Colors.deepOcean,
+    secondary = Colors.coral,
+    tertiary = Colors.seaFoam,
     background = Colors.base,
     surface = Colors.surface0,
-    onPrimary = Colors.crust,
+    onPrimary = Colors.pearl,
     onSecondary = Colors.crust,
     onTertiary = Colors.crust,
     onBackground = Colors.text,

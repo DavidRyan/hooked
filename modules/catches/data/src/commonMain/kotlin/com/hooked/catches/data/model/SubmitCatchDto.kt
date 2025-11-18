@@ -5,12 +5,13 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SubmitCatchDto(
-    val species: String,
-    val location: String,
+    val species: String?,
+    val location: String?,
     val latitude: Double?,
     val longitude: Double?,
-    @SerialName("caught_at") val caughtAt: String,
-    val notes: String? = null
+    @SerialName("caught_at") val caughtAt: String?,
+    val notes: String? = null,
+    @SerialName("image_base64") val imageBase64: String? = null
 )
 
 sealed class CatchSubmissionResult {

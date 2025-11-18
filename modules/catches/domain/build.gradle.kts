@@ -21,6 +21,7 @@ kotlin {
             dependencies {
                 implementation(project(":modules:core:domain"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.koin.core)
             }
         }
 

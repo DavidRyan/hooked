@@ -71,6 +71,9 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
       "CatchEnrichmentWorker: Starting enricher application process for catch #{user_catch.id}"
     )
 
+    # Initialize enrichment_status to true - enrichers will flip it to false on failure
+    user_catch = %{user_catch | enrichment_status: true}
+
     enrichers = EnrichmentService.get_configured_enrichers()
 
     Logger.info(

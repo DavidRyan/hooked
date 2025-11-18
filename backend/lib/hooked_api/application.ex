@@ -5,6 +5,9 @@ defmodule HookedApi.Application do
 
   @impl true
   def start(_type, _args) do
+    # Apply patches to ExAws to fix nil secret key issues
+    ExAwsPatches.SignaturesPatch.apply_patch()
+
     children = [
       HookedApi.Repo,
       {Oban, Application.fetch_env!(:hooked_api, Oban)},

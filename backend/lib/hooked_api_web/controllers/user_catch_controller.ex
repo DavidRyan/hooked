@@ -31,15 +31,40 @@ defmodule HookedApiWeb.UserCatchController do
         |> put_status(:created)
         |> json(%{user_catch: user_catch})
 
+      # Handle atom reasons (like :invalid_file_type)
       {:error, reason} when is_atom(reason) ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{error: format_error_reason(reason)})
 
-      {:error, changeset} ->
+      # Handle S3-specific errors that come back as tuples
+      {:error, {:s3_upload_exception, message}} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Failed to upload image to storage: #{message}"})
+
+      {:error, {:s3_upload_caught, {kind, reason}}} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Failed to upload image: #{kind} - #{reason}"})
+
+      # Handle missing S3 configuration
+      {:error, :missing_s3_configuration} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Server storage configuration error. Please contact support."})
+
+      # Handle normal Ecto changeset errors
+      {:error, %Ecto.Changeset{} = changeset} ->
         conn
         |> put_status(:unprocessable_entity)
         |> json(%{errors: changeset_errors(changeset)})
+
+      # Fallback case for any other error format
+      {:error, other} ->
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: "Upload failed: #{inspect(other)}"})
     end
   end
 
@@ -87,6 +112,11 @@ defmodule HookedApiWeb.UserCatchController do
             |> json(%{error: "Failed to delete user catch"})
         end
     end
+  end
+
+  def stats(conn, %{"user_id" => user_id}) do
+    stats = Catches.get_user_catch_stats(user_id)
+    json(conn, %{stats: stats})
   end
 
   defp format_error_reason(:invalid_file_type),
