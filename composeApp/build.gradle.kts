@@ -16,9 +16,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
+                // Coil for KMP
+                implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha05")
+                implementation("io.coil-kt.coil3:coil-network-ktor:3.0.0-alpha05")
                 implementation(libs.runtime)
                 implementation(libs.kotlinx.coroutines.core)
-                implementation("media.kamel:kamel-image-default:1.0.5")
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
                 implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
@@ -47,22 +49,32 @@ kotlin {
                 implementation(libs.koin.androidx.compose)
                 implementation("androidx.exifinterface:exifinterface:1.3.7")
                 implementation(libs.ktor.client.android)
+                // Coil Android-specific dependencies
+                implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha05")
+
+
             }
         }
 
         val iosX64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                // Coil iOS-specific dependencies
+                implementation("io.coil-kt.coil3:coil-network-ktor:3.0.0-alpha05")
             }
         }
         val iosArm64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                // Coil iOS-specific dependencies
+                implementation("io.coil-kt.coil3:coil-network-ktor:3.0.0-alpha05")
             }
         }
         val iosSimulatorArm64Main by getting {
             dependencies {
                 implementation(libs.ktor.client.darwin)
+                // Coil iOS-specific dependencies
+                implementation("io.coil-kt.coil3:coil-network-ktor:3.0.0-alpha05")
             }
         }
 

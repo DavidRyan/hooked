@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.hooked.core.animation.AnimationSpecs
 import com.hooked.core.components.AsyncImage
 import com.hooked.theme.HookedTheme
+import io.kamel.core.utils.URI
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
