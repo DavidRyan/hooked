@@ -15,13 +15,25 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.annotation.ExperimentalCoilApi
+import coil3.compose.AsyncImage as CoilAsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
 import com.hooked.theme.HookedTheme
 import com.hooked.core.logging.Logger
 import androidx.compose.foundation.layout.size
+import coil3.request.crossfade
 
+/**
+ * Cross-platform AsyncImage component using Coil3 for Compose Multiplatform.
+ * Handles both remote URLs and local URIs (file://, content://).
+ * Uses CoilAsyncImage for better shared element transition support.
+ * 
+ * Note: For shared element transitions to work properly, modifiers are applied directly 
+ * to the image rather than wrapping it in additional containers. This creates a simpler
+ * component hierarchy which is essential for transitions to work correctly.
+ */
+@OptIn(ExperimentalCoilApi::class)
 @Composable
 fun AsyncImage(
     imageUrl: String?,
@@ -34,44 +46,38 @@ fun AsyncImage(
         return
     }
 
+    val sourceType = when {
+        imageUrl.startsWith("http://") -> "HTTP URL"
+        imageUrl.startsWith("https://") -> "HTTPS URL"
+        imageUrl.startsWith("file://") -> "File URI"
+        imageUrl.startsWith("content://") -> "Content URI"
+        else -> "Unknown URI type"
+    }
+    
+    Logger.debug("AsyncImage", "Loading image from $sourceType: $imageUrl")
+    
     val context = LocalPlatformContext.current
     
+    // Optimize image request for shared element transitions
     val imageRequest = ImageRequest.Builder(context)
         .data(imageUrl)
+        .crossfade(false)
+        .placeholder(null) // No placeholder for shared element transitions
+        .size(coil3.size.Size.ORIGINAL) // Use original size to avoid resizing
         .build()
 
-    SubcomposeAsyncImage(
+    // Using CoilAsyncImage for better shared element transition support
+    // The key is to avoid any animation or placeholder changes during transitions
+    CoilAsyncImage(
         model = imageRequest,
         contentDescription = contentDescription,
         contentScale = contentScale,
+        // Apply modifiers directly to the image without wrapping in a Box
+        // This is crucial for shared element transitions to work
         modifier = if (shape != null) {
-            modifier
-                .clip(shape)
+            modifier.clip(shape)
         } else {
             modifier
-        },
-        loading = {
-            Box(
-                modifier = Modifier.fillMaxSize().background(HookedTheme.surface),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    color = HookedTheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
-        },
-        error = {
-            Logger.info("AsyncImage", "Failed to load image: ${it.result.throwable.message}")
-            Box(
-                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Failed to load image",
-                    color = MaterialTheme.colorScheme.error
-                )
-            }
         }
     )
 }
