@@ -58,7 +58,6 @@ class CatchApiService(
             val response = httpClient.post("$baseUrl/user_catches") {
                 setBody(MultiPartFormDataContent(
                     formData {
-                        // Add catch data fields
                         submitCatchDto.species?.let { append("user_catch[species]", it) }
                         submitCatchDto.location?.let { append("user_catch[location]", it) }
                         submitCatchDto.caughtAt?.let { append("user_catch[caught_at]", it) }
@@ -66,7 +65,6 @@ class CatchApiService(
                         submitCatchDto.longitude?.let { append("user_catch[longitude]", it.toString()) }
                         submitCatchDto.notes?.let { append("user_catch[notes]", it) }
                         
-                        // Add base64-encoded image if provided
                         submitCatchDto.imageBase64?.let { base64 ->
                             append("user_catch[image_base64]", base64)
                         }
