@@ -1,10 +1,13 @@
 package com.hooked.catches.presentation
 
+
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.togetherWith
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
@@ -110,14 +113,15 @@ fun CatchesScreen(
     modifier: Modifier = Modifier
 ) {
     val stateManager = rememberCatchesScreenState()
-    
+
     with(sharedTransitionScope) {
         AnimatedContent(
             targetState = stateManager.screenState,
-            label = "catches_screen_transition",
             transitionSpec = {
-                AnimationSpecs.contentTransitionSpec
-            }
+                fadeIn(animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)) togetherWith
+                fadeOut(animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS))
+            },
+            label = "catches_screen_transition"
         ) { state ->
             when (state) {
                 is CatchesScreenState.Grid -> {
@@ -412,19 +416,19 @@ fun SharedTransitionScope.CatchDetailsContent(
                             .fillMaxWidth()
                             .aspectRatio(1f), // Keep same aspect ratio as grid
                         elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
-                        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
+                        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
+                        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
                     ) {
                         AsyncImage(
                             imageUrl = details.photoUrl,
                             modifier = Modifier
                                 .fillMaxSize()
-                                .sharedElement(
+                                .sharedBounds(
                                     rememberSharedContentState(key = "catch-image-${catchId}"),
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     boundsTransform = { _, _ ->
                                         AnimationSpecs.boundsTransformSpring
-                                    },
-                                    renderInOverlayDuringTransition = true
+                                    }
                                 )
                                 .border(
                                     width = AnimationConstants.IMAGE_BORDER_WIDTH_DP.dp,

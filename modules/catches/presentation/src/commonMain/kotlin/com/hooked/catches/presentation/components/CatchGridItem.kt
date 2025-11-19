@@ -55,7 +55,7 @@ fun SharedTransitionScope.CatchGridItem(
             imageUrl = catch.imageUrl,
             modifier = Modifier
                 .fillMaxSize()
-                .sharedElement(
+                .sharedBounds(
                     rememberSharedContentState(key = "catch-image-${catch.id}"),
                     animatedVisibilityScope = animatedVisibilityScope,
                     boundsTransform = { _, _ ->
