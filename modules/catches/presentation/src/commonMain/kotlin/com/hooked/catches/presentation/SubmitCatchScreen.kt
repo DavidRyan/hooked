@@ -106,38 +106,6 @@ fun SubmitCatchScreen(
                 catchId = state.submittedCatchId
             )
             
-            OutlinedTextField(
-                value = state.species,
-                onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateSpecies(it)) },
-                label = { Text("Species") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true
-            )
-            
-            OutlinedTextField(
-                value = state.weight,
-                onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateWeight(it)) },
-                label = { Text("Weight (kg)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
-            )
-            
-            OutlinedTextField(
-                value = state.length,
-                onValueChange = { viewModel.sendIntent(SubmitCatchIntent.UpdateLength(it)) },
-                label = { Text("Length (cm)") },
-                modifier = Modifier.fillMaxWidth(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true
-            )
-            
-            LocationSection(
-                locationText = state.locationText,
-                isLoading = state.isLocationLoading,
-                onGetLocation = { viewModel.sendIntent(SubmitCatchIntent.GetCurrentLocation) }
-            )
-            
             Spacer(modifier = Modifier.height(24.dp))
             
             Button(

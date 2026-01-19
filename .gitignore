@@ -11,6 +11,7 @@ local.properties
 .idea/
 *.iml
 *.log
+*.md
 .kotlin/
 build/
 gradlew
