@@ -7,11 +7,16 @@ import com.hooked.auth.presentation.model.LoginIntent
 import com.hooked.auth.presentation.model.LoginState
 import com.hooked.core.HookedViewModel
 import com.hooked.core.domain.UseCaseResult
+import com.hooked.core.logging.Logger
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
     private val loginUseCase: LoginUseCase
 ) : HookedViewModel<LoginIntent, LoginState, LoginEffect>() {
+
+    companion object {
+        private const val TAG = "LoginViewModel"
+    }
 
     override fun createInitialState(): LoginState {
         return LoginState()
@@ -74,6 +79,7 @@ class LoginViewModel(
                     sendEffect { LoginEffect.NavigateToHome }
                 }
                 is UseCaseResult.Error -> {
+                    Logger.error(TAG, "Login failed: ${result.message}")
                     setState { copy(isLoading = false) }
                     sendEffect { LoginEffect.ShowError(result.message) }
                 }

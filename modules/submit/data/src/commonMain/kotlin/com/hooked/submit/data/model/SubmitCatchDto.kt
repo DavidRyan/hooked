@@ -12,9 +12,3 @@ data class SubmitCatchDto(
     val photoBase64: String?,
     val timestamp: Long
 )
-
-sealed class CatchSubmissionResult {
-    data class Success(val catchId: String) : CatchSubmissionResult()
-    data class Error(val message: String) : CatchSubmissionResult()
-    object Loading : CatchSubmissionResult()
-}

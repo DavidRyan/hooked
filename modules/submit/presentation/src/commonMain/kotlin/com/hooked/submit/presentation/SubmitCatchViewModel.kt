@@ -10,12 +10,16 @@ import kotlinx.datetime.Clock
 import com.hooked.submit.presentation.model.SubmitCatchEffect
 import com.hooked.submit.presentation.model.SubmitCatchIntent
 import com.hooked.submit.presentation.model.SubmitCatchState
-import com.hooked.core.logging.logError
+import com.hooked.core.logging.Logger
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
     private val convertImageToBytesUseCase: ConvertImageToBytesUseCase
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
+
+    companion object {
+        private const val TAG = "SubmitCatchViewModel"
+    }
 
     override fun handleIntent(intent: SubmitCatchIntent) {
         when (intent) {
@@ -93,7 +97,7 @@ class SubmitCatchViewModel(
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to submit catch", e)
+                Logger.error(TAG, "Failed to submit catch: ${e.message}", e)
                 setState { copy(isSubmitting = false) }
                 sendEffect { SubmitCatchEffect.ShowError("Failed to submit catch: ${e.message}") }
             }

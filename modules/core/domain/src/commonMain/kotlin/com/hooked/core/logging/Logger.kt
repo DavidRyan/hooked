@@ -1,40 +1,113 @@
 package com.hooked.core.logging
 
+/**
+ * Log levels in order of verbosity (most verbose to least verbose)
+ */
+enum class LogLevel {
+    VERBOSE,
+    TRACE,
+    DEBUG,
+    INFO,
+    WARNING,
+    ERROR,
+    NONE  // Disables all logging
+}
+
+/**
+ * Configuration for the Logger
+ */
+data class LoggerConfig(
+    val isEnabled: Boolean = true,
+    val minLogLevel: LogLevel = LogLevel.DEBUG,
+    val appTag: String = "Hooked"
+)
+
+/**
+ * Cross-platform Logger with structured output formatting.
+ * 
+ * Output format: [AppTag] [LEVEL] [tag] message
+ * Example: [Hooked] [DEBUG] [CatchApiService] → GET /user_catches
+ * 
+ * Configure in your Application class:
+ * ```
+ * Logger.configure(
+ *     isEnabled = true,
+ *     minLogLevel = if (BuildConfig.DEBUG) LogLevel.DEBUG else LogLevel.ERROR,
+ *     appTag = "Hooked"
+ * )
+ * ```
+ */
 expect object Logger {
+    /**
+     * Current logger configuration
+     */
+    var config: LoggerConfig
+    
+    /**
+     * Configure the logger
+     */
+    fun configure(
+        isEnabled: Boolean = true,
+        minLogLevel: LogLevel = LogLevel.DEBUG,
+        appTag: String = "Hooked"
+    )
+    
+    // Standard log levels
+    fun verbose(tag: String, message: String)
+    fun verbose(tag: String, message: String, throwable: Throwable)
+    
+    fun trace(tag: String, message: String)
+    fun trace(tag: String, message: String, throwable: Throwable)
+    
     fun debug(tag: String, message: String)
     fun debug(tag: String, message: String, throwable: Throwable)
+    
     fun info(tag: String, message: String)
+    fun info(tag: String, message: String, throwable: Throwable)
+    
     fun warning(tag: String, message: String)
     fun warning(tag: String, message: String, throwable: Throwable)
+    
     fun error(tag: String, message: String)
     fun error(tag: String, message: String, throwable: Throwable)
 }
 
-// Extension functions for easier usage
-inline fun <reified T> T.logDebug(message: String) {
-    Logger.debug(T::class.simpleName ?: "Unknown", message)
+// =============================================================================
+// Network Logging Helpers
+// =============================================================================
+
+/**
+ * Log an outgoing network request
+ * Output: → METHOD /endpoint
+ */
+fun Logger.logRequest(tag: String, method: String, endpoint: String) {
+    debug(tag, "→ $method $endpoint")
 }
 
-inline fun <reified T> T.logDebug(message: String, throwable: Throwable) {
-    Logger.debug(T::class.simpleName ?: "Unknown", message, throwable)
+/**
+ * Log a successful network response
+ * Output: ← STATUS_CODE STATUS_TEXT
+ */
+fun Logger.logResponse(tag: String, statusCode: Int, statusText: String = "OK") {
+    info(tag, "← $statusCode $statusText")
 }
 
-inline fun <reified T> T.logInfo(message: String) {
-    Logger.info(T::class.simpleName ?: "Unknown", message)
+/**
+ * Log a failed network response
+ * Output: ← STATUS_CODE | error message
+ */
+fun Logger.logResponseError(tag: String, statusCode: Int, errorMessage: String) {
+    error(tag, "← $statusCode | $errorMessage")
 }
 
-inline fun <reified T> T.logWarning(message: String) {
-    Logger.warning(T::class.simpleName ?: "Unknown", message)
-}
-
-inline fun <reified T> T.logWarning(message: String, throwable: Throwable) {
-    Logger.warning(T::class.simpleName ?: "Unknown", message, throwable)
-}
-
-inline fun <reified T> T.logError(message: String) {
-    Logger.error(T::class.simpleName ?: "Unknown", message)
-}
-
-inline fun <reified T> T.logError(message: String, throwable: Throwable) {
-    Logger.error(T::class.simpleName ?: "Unknown", message, throwable)
+/**
+ * Log a network error (no response received)
+ * Output: ← ERROR | error message
+ */
+fun Logger.logNetworkError(tag: String, errorMessage: String, throwable: Throwable? = null) {
+    if (throwable != null) {
+        error(tag, "← ERROR | $errorMessage", throwable)
+    } else {
+        error(tag, "← ERROR | $errorMessage")
+    }
 }

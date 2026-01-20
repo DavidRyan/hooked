@@ -1,8 +1,13 @@
 package com.hooked.catches.presentation
 
 import androidx.compose.runtime.Composable
+import com.hooked.core.logging.Logger
 
 class IosPhotoPicker : PhotoPicker {
+    companion object {
+        private const val TAG = "IosPhotoPicker"
+    }
+    
     @Composable
     override fun rememberPhotoPickerLauncher(onPhotoSelected: (String) -> Unit): () -> Unit {
         // For now, return a stub function
@@ -10,7 +15,7 @@ class IosPhotoPicker : PhotoPicker {
         // This would need platform-specific code to actually work
         return { 
             // TODO: Implement iOS photo picker
-            println("iOS photo picker not yet implemented")
+            Logger.warning(TAG, "iOS photo picker not yet implemented")
         }
     }
 }

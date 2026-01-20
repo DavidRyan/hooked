@@ -10,12 +10,16 @@ import com.hooked.catches.presentation.model.CatchGridIntent
 import com.hooked.catches.presentation.model.CatchGridState
 import com.hooked.catches.presentation.model.CatchModel
 import com.hooked.catches.presentation.model.fromEntity
-import com.hooked.core.logging.logError
+import com.hooked.core.logging.Logger
 
 class CatchGridViewModel(
     private val getCatchesUseCase: GetCatchesUseCase,
     private val deleteCatchUseCase: DeleteCatchUseCase
 ) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
+
+    companion object {
+        private const val TAG = "CatchGridViewModel"
+    }
 
     override fun handleIntent(intent: CatchGridIntent) {
         when (intent) {
@@ -84,7 +88,7 @@ class CatchGridViewModel(
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to load catches", e)
+                Logger.error(TAG, "Failed to load catches: ${e.message}", e)
                 setState { 
                     copy(
                         isLoading = false,
@@ -113,7 +117,7 @@ class CatchGridViewModel(
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to delete catch", e)
+                Logger.error(TAG, "Failed to delete catch: ${e.message}", e)
                 sendEffect { CatchGridEffect.ShowError("Failed to delete catch: ${e.message}") }
             }
         }
