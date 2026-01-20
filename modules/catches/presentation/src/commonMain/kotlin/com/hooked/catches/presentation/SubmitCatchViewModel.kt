@@ -12,12 +12,16 @@ import kotlinx.coroutines.launch
 import com.hooked.catches.presentation.model.SubmitCatchEffect
 import com.hooked.catches.presentation.model.SubmitCatchIntent
 import com.hooked.catches.presentation.model.SubmitCatchState
-import com.hooked.core.logging.logError
+import com.hooked.core.logging.Logger
 
 class SubmitCatchViewModel(
     private val submitCatchUseCase: SubmitCatchUseCase,
     private val imageProcessor: ImageProcessor,
 ) : HookedViewModel<SubmitCatchIntent, SubmitCatchState, SubmitCatchEffect>() {
+
+    companion object {
+        private const val TAG = "SubmitCatchViewModel"
+    }
 
     override fun handleIntent(intent: SubmitCatchIntent) {
         when (intent) {
@@ -76,7 +80,7 @@ class SubmitCatchViewModel(
                         val imageBytes = imageProcessor.loadImageFromUri(it)
                         imageBytes.encodeBase64()
                     } catch (e: Exception) {
-                        logError("Failed to convert image to base64", e)
+                        Logger.error(TAG, "Failed to convert image to base64: ${e.message}", e)
                         null // Continue with submission even if base64 conversion fails
                     }
                 }
@@ -110,7 +114,7 @@ class SubmitCatchViewModel(
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to submit catch", e)
+                Logger.error(TAG, "Failed to submit catch: ${e.message}", e)
                 setState { copy(isSubmitting = false) }
                 sendEffect { SubmitCatchEffect.ShowError("Failed to submit catch: ${e.message}") }
             }

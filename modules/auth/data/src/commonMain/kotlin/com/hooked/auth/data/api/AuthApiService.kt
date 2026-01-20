@@ -1,12 +1,14 @@
 package com.hooked.auth.data.api
 
-import com.hooked.auth.data.model.AuthErrorDto
 import com.hooked.auth.data.model.AuthResponseDto
 import com.hooked.auth.data.model.LoginRequestDto
 import com.hooked.auth.data.model.RegisterRequestDto
 import com.hooked.auth.data.model.UserResponseDto
 import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
+import com.hooked.core.logging.Logger
+import com.hooked.core.logging.logRequest
+import com.hooked.core.logging.logResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
@@ -17,40 +19,31 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 
 class AuthApiService(
     private val httpClient: HttpClient,
     private val baseUrl: String = NetworkConfig.BASE_URL
 ) {
+    companion object {
+        private const val TAG = "AuthApiService"
+    }
     
     suspend fun login(email: String, password: String): NetworkResult<AuthResponseDto> {
+        val endpoint = "/auth/login"
+        Logger.logRequest(TAG, "POST", endpoint)
         return try {
-            com.hooked.core.logging.Logger.debug("AuthApiService", "Login URL: $baseUrl/auth/login")
-            val response = httpClient.post("$baseUrl/auth/login") {
+            val response = httpClient.post("$baseUrl$endpoint") {
                 contentType(ContentType.Application.Json)
                 setBody(LoginRequestDto(email = email, password = password))
             }.body<AuthResponseDto>()
             
+            Logger.logResponse(TAG, 200, "OK - Login successful")
             NetworkResult.Success(response)
         } catch (e: ClientRequestException) {
-            when (e.response.status) {
-                HttpStatusCode.Unauthorized -> {
-                    try {
-                        val errorResponse = e.response.body<AuthErrorDto>()
-                        val detailedMessage = buildDetailedErrorMessage(errorResponse)
-                        NetworkResult.Error(Exception(detailedMessage), "AuthApiService.login")
-                    } catch (parseError: Exception) {
-                        val rawResponse = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
-                        val errorMessage = "Login failed - Parse error: ${parseError.message}, Raw response: $rawResponse"
-                        NetworkResult.Error(Exception(errorMessage), "AuthApiService.login")
-                    }
-                }
-                else -> NetworkResult.Error(e, "AuthApiService.login")
-            }
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "AuthApiService.login")
+            NetworkResult.Error(Exception("Login failed: ${e.message}", e), TAG)
         }
     }
     
@@ -60,9 +53,10 @@ class AuthApiService(
         firstName: String,
         lastName: String
     ): NetworkResult<AuthResponseDto> {
+        val endpoint = "/auth/register"
+        Logger.logRequest(TAG, "POST", endpoint)
         return try {
-            com.hooked.core.logging.Logger.debug("AuthApiService", "Register URL: $baseUrl/auth/register")
-            val response = httpClient.post("$baseUrl/auth/register") {
+            val response = httpClient.post("$baseUrl$endpoint") {
                 contentType(ContentType.Application.Json)
                 setBody(RegisterRequestDto(
                     email = email,
@@ -72,76 +66,53 @@ class AuthApiService(
                 ))
             }.body<AuthResponseDto>()
             
+            Logger.logResponse(TAG, 201, "Created - Registration successful")
             NetworkResult.Success(response)
         } catch (e: ClientRequestException) {
-            when (e.response.status) {
-                HttpStatusCode.UnprocessableEntity -> {
-                    try {
-                        val errorResponse = e.response.body<AuthErrorDto>()
-                        val detailedMessage = buildDetailedErrorMessage(errorResponse)
-                        NetworkResult.Error(Exception(detailedMessage), "AuthApiService.register")
-                    } catch (parseError: Exception) {
-                        // Log the parsing error and raw response for debugging
-                        val rawResponse = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
-                        val errorMessage = "Registration failed - Parse error: ${parseError.message}, Raw response: $rawResponse"
-                        NetworkResult.Error(Exception(errorMessage), "AuthApiService.register")
-                    }
-                }
-                else -> NetworkResult.Error(e, "AuthApiService.register")
-            }
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "AuthApiService.register")
+            NetworkResult.Error(Exception("Registration failed: ${e.message}", e), TAG)
         }
     }
     
     suspend fun getCurrentUser(token: String): NetworkResult<UserResponseDto> {
+        val endpoint = "/auth/me"
+        Logger.logRequest(TAG, "GET", endpoint)
         return try {
-            val response = httpClient.get("$baseUrl/auth/me") {
+            val response = httpClient.get("$baseUrl$endpoint") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }.body<UserResponseDto>()
             
+            Logger.logResponse(TAG, 200, "OK")
             NetworkResult.Success(response)
         } catch (e: ClientRequestException) {
-            when (e.response.status) {
-                HttpStatusCode.Unauthorized -> {
-                    NetworkResult.Error(Exception("Token expired or invalid"), "AuthApiService.getCurrentUser")
-                }
-                else -> NetworkResult.Error(e, "AuthApiService.getCurrentUser")
-            }
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "AuthApiService.getCurrentUser")
+            NetworkResult.Error(Exception("Failed to get current user: ${e.message}", e), TAG)
         }
     }
     
     suspend fun refreshToken(token: String): NetworkResult<AuthResponseDto> {
+        val endpoint = "/auth/refresh"
+        Logger.logRequest(TAG, "POST", endpoint)
         return try {
-            val response = httpClient.post("$baseUrl/auth/refresh") {
+            val response = httpClient.post("$baseUrl$endpoint") {
                 header(HttpHeaders.Authorization, "Bearer $token")
             }.body<AuthResponseDto>()
             
+            Logger.logResponse(TAG, 200, "OK - Token refreshed")
             NetworkResult.Success(response)
         } catch (e: ClientRequestException) {
-            when (e.response.status) {
-                HttpStatusCode.Unauthorized -> {
-                    NetworkResult.Error(Exception("Token expired or invalid"), "AuthApiService.refreshToken")
-                }
-                else -> NetworkResult.Error(e, "AuthApiService.refreshToken")
-            }
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
         } catch (e: Exception) {
-            NetworkResult.Error(e, "AuthApiService.refreshToken")
+            NetworkResult.Error(Exception("Token refresh failed: ${e.message}", e), TAG)
         }
     }
     
-    private fun buildDetailedErrorMessage(errorResponse: AuthErrorDto): String {
-        val baseMessage = errorResponse.message ?: errorResponse.error
-        
-        return if (errorResponse.details != null && errorResponse.details.isNotEmpty()) {
-            val fieldErrors = errorResponse.details.entries.joinToString("; ") { (field, messages) ->
-                "$field: ${messages.joinToString(", ")}"
-            }
-            "$baseMessage - $fieldErrors"
-        } else {
-            baseMessage
-        }
+    private suspend fun formatHttpError(e: ClientRequestException): String {
+        val statusCode = e.response.status.value
+        val statusText = e.response.status.description
+        val body = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
+        return "[$statusCode $statusText] $body"
     }
 }

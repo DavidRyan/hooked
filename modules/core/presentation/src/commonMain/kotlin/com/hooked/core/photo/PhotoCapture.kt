@@ -1,5 +1,6 @@
 package com.hooked.core.photo
 
+import com.hooked.core.logging.Logger
 import kotlinx.coroutines.flow.Flow
 
 data class LocationData(
@@ -28,9 +29,8 @@ sealed class PhotoCaptureResult {
     data class Success(val photo: CapturedPhoto) : PhotoCaptureResult()
     data class Error(val message: String, val context: String? = null) : PhotoCaptureResult() {
         init {
-            // Automatically log photo capture errors when they are created
-            val contextInfo = context?.let { " [$it]" } ?: ""
-            com.hooked.core.logging.Logger.error("PhotoCapture", "Photo capture error$contextInfo: $message")
+            val tag = context ?: "PhotoCapture"
+            Logger.error(tag, message)
         }
     }
     object Cancelled : PhotoCaptureResult()

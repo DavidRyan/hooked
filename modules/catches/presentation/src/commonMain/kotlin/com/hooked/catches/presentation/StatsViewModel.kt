@@ -9,12 +9,16 @@ import kotlinx.coroutines.launch
 import com.hooked.catches.presentation.model.StatsEffect
 import com.hooked.catches.presentation.model.StatsIntent
 import com.hooked.catches.presentation.model.StatsState
-import com.hooked.core.logging.logError
+import com.hooked.core.logging.Logger
 
 class StatsViewModel(
     private val getCatchStatsUseCase: GetCatchStatsUseCase,
     private val getFishingInsightsUseCase: GetFishingInsightsUseCase
 ) : HookedViewModel<StatsIntent, StatsState, StatsEffect>() {
+
+    companion object {
+        private const val TAG = "StatsViewModel"
+    }
 
     init {
         handleIntent(StatsIntent.LoadStats)
@@ -76,7 +80,7 @@ class StatsViewModel(
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to load stats", e)
+                Logger.error(TAG, "Failed to load stats: ${e.message}", e)
                 setState {
                     copy(
                         isLoading = false,
@@ -110,12 +114,12 @@ class StatsViewModel(
                             )
                         }
                         result.throwable?.let { throwable ->
-                            logError("Failed to load fishing insights", throwable)
+                            Logger.error(TAG, "Failed to load fishing insights: ${result.message}", throwable)
                         }
                     }
                 }
             } catch (e: Exception) {
-                logError("Failed to load fishing insights", e)
+                Logger.error(TAG, "Failed to load fishing insights: ${e.message}", e)
                 setState {
                     copy(
                         isLoadingInsights = false,

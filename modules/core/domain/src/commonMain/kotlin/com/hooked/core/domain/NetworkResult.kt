@@ -8,8 +8,8 @@ sealed class NetworkResult<out T> {
     data class Error(val error: Throwable, val context: String? = null) : NetworkResult<Nothing>() {
         init {
             // Automatically log errors when they are created
-            val contextInfo = context?.let { " [$it]" } ?: ""
-            Logger.error("NetworkResult", "Network error$contextInfo: ${error.message}", error)
+            val tag = context ?: "NetworkResult"
+            Logger.error(tag, "← ERROR | ${error.message}", error)
         }
     }
 }

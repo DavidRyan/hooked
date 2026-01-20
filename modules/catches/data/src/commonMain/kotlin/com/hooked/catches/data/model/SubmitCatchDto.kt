@@ -13,9 +13,3 @@ data class SubmitCatchDto(
     val notes: String? = null,
     @SerialName("image_base64") val imageBase64: String? = null
 )
-
-sealed class CatchSubmissionResult {
-    data class Success(val catchId: String) : CatchSubmissionResult()
-    data class Error(val message: String) : CatchSubmissionResult()
-    object Loading : CatchSubmissionResult()
-}
