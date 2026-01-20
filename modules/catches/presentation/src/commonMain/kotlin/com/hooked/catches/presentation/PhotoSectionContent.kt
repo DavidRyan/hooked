@@ -174,6 +174,7 @@ internal fun PhotoSectionContent(
                     Box(
                         modifier = Modifier
                             .size(64.dp)
+                            .padding(top= 16.dp)
                             .background(
                                 HookedTheme.primary.copy(alpha = 0.1f),
                                 CircleShape
@@ -208,6 +209,7 @@ internal fun PhotoSectionContent(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Button(
+                        modifier = Modifier.padding(bottom = 16.dp),
                         onClick = launchPhotoPicker,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = HookedTheme.primary

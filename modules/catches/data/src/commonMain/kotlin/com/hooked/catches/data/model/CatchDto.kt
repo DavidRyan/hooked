@@ -51,15 +51,3 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
         weatherData = weatherData
     )
 }
-
-sealed class CatchResult {
-    data class Success(val catches: List<CatchDto>) : CatchResult()
-    data class Error(val message: String) : CatchResult()
-    object Loading : CatchResult()
-}
-
-sealed class CatchDetailsResult {
-    data class Success(val catch: CatchDto) : CatchDetailsResult()
-    data class Error(val message: String) : CatchDetailsResult()
-    object Loading : CatchDetailsResult()
-}

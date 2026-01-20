@@ -7,11 +7,16 @@ import com.hooked.catches.presentation.model.CatchDetailsState
 import com.hooked.catches.presentation.model.toCatchDetailsModel
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
 import com.hooked.core.domain.UseCaseResult
+import com.hooked.core.logging.Logger
 import kotlinx.coroutines.launch
 
 class CatchDetailsViewModel(
     private val getCatchDetailsUseCase: GetCatchDetailsUseCase
 ) : HookedViewModel<CatchDetailsIntent, CatchDetailsState, CatchDetailsEffect>() {
+
+    companion object {
+        private const val TAG = "CatchDetailsViewModel"
+    }
 
     override fun handleIntent(intent: CatchDetailsIntent) {
         when (intent) {
@@ -34,6 +39,7 @@ class CatchDetailsViewModel(
                     }
                 }
                 is UseCaseResult.Error -> {
+                    Logger.error(TAG, "Failed to load catch details: ${result.message}")
                     setState { copy(isLoading = false) }
                     sendEffect { CatchDetailsEffect.OnError(result.message) }
                 }

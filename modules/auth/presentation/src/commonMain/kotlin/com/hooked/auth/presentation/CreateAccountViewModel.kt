@@ -7,11 +7,16 @@ import com.hooked.auth.presentation.model.CreateAccountIntent
 import com.hooked.auth.presentation.model.CreateAccountState
 import com.hooked.core.HookedViewModel
 import com.hooked.core.domain.UseCaseResult
+import com.hooked.core.logging.Logger
 import kotlinx.coroutines.launch
 
 class CreateAccountViewModel(
     private val registerUseCase: RegisterUseCase
 ) : HookedViewModel<CreateAccountIntent, CreateAccountState, CreateAccountEffect>() {
+
+    companion object {
+        private const val TAG = "CreateAccountViewModel"
+    }
 
     override fun createInitialState(): CreateAccountState {
         return CreateAccountState()
@@ -111,6 +116,7 @@ class CreateAccountViewModel(
                     sendEffect { CreateAccountEffect.NavigateToHome }
                 }
                 is UseCaseResult.Error -> {
+                    Logger.error(TAG, "Registration failed: ${result.message}")
                     setState { copy(isLoading = false) }
                     sendEffect { CreateAccountEffect.ShowError(result.message) }
                 }
