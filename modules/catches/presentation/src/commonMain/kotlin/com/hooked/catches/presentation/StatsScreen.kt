@@ -101,6 +101,7 @@ fun StatsScreen(
                 }
             }
         } else {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -108,6 +109,61 @@ fun StatsScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp)
             ) {
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text(
+                                text = "🤖",
+                                style = MaterialTheme.typography.titleLarge
+                            )
+                            Text(
+                                text = "AI Insights",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        when {
+                            state.isLoadingInsights -> {
+                                AiLoadingAnimation()
+                            }
+                            state.aiInsights != null -> {
+                                TypewriterText(
+                                    text = state.aiInsights!!,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight.times(1.5f)
+                                )
+                            }
+                            else -> {
+                                Text(
+                                    text = "Unable to generate insights at this time.",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 // Summary Cards
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -126,29 +182,6 @@ fun StatsScreen(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    state.averageWeight?.let {
-                        StatCard(
-                            title = "Avg Weight",
-                            value = it,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                    state.averageLength?.let {
-                        StatCard(
-                            title = "Avg Length",
-                            value = it,
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
                 // Species Breakdown Chart
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -179,60 +212,6 @@ fun StatsScreen(
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                             )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Text(
-                                text = "🤖",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                text = "AI Insights",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        when {
-                            state.isLoadingInsights -> {
-                                AiLoadingAnimation()
-                            }
-                            state.aiInsights != null -> {
-                                TypewriterText(
-                                    text = state.aiInsights!!,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight.times(1.5f)
-                                )
-                            }
-                            else -> {
-                                Text(
-                                    text = "Unable to generate insights at this time.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                                )
-                            }
                         }
                     }
                 }
