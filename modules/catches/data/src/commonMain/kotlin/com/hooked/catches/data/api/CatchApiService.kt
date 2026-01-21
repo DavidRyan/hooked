@@ -39,7 +39,7 @@ class CatchApiService(
                 .body<Map<String, List<CatchDto>>>()
             
             val catches = response["user_catches"] ?: emptyList()
-            Logger.logResponse(TAG, 200, "OK - ${catches.size} catches")
+            Logger.logResponse(TAG, 200, "OK - $catches catches")
             NetworkResult.Success(catches)
         } catch (e: ClientRequestException) {
             NetworkResult.Error(Exception(formatHttpError(e)), TAG)

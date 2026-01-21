@@ -1,9 +1,19 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20"
+}
+
+// Load .env file from project root
+val envFile = rootProject.file(".env")
+val envProperties = Properties().apply {
+    if (envFile.exists()) {
+        envFile.inputStream().use { load(it) }
+    }
 }
 
 kotlin {
@@ -116,6 +126,15 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
         }
+        
+        buildConfigField("String", "MAPBOX_ACCESS_TOKEN",
+            envProperties.getProperty("MAPBOX_ACCESS_TOKEN", "")
+        )
+        buildConfigField("String", "API_BASE_URL", "\"${envProperties.getProperty("API_BASE_URL", "http://10.0.2.2:4000/api")}\"")
+    }
+    
+    buildFeatures {
+        buildConfig = true
     }
     packaging {
         resources {

@@ -76,7 +76,8 @@ actual class PhotoCapture(
             }
             
             try {
-                launchers.galleryLauncher.launch("image/*")
+                // OpenDocument takes an array of MIME types
+                launchers.galleryLauncher.launch(arrayOf("image/*"))
             } catch (e: Exception) {
                 captureCallback?.invoke(PhotoCaptureResult.Error("Failed to open gallery: ${e.message}", "PhotoCapture.pickFromGallery"))
             }

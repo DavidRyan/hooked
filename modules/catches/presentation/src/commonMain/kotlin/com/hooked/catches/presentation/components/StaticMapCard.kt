@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.hooked.core.animation.AnimationConstants
 import com.hooked.core.components.AsyncImage
-import com.hooked.core.config.MapConfig
+import com.hooked.core.config.AppConfig
 
 @Composable
 fun StaticMapCard(
@@ -54,7 +54,7 @@ fun StaticMapCard(
                     // Image size
                     append("${width}x$height@2x")
                     // Access token
-                    append("?access_token=${MapConfig.MAPBOX_ACCESS_TOKEN}")
+                    append("?access_token=${AppConfig.MAPBOX_ACCESS_TOKEN}")
                     // Additional parameters
                     append("&attribution=false")
                     append("&logo=false")

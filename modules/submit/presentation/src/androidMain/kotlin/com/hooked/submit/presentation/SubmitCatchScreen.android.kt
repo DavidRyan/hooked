@@ -18,8 +18,11 @@ internal actual fun PhotoSectionContent(
     photoUri: String?,
     onPhotoSelected: (String) -> Unit
 ) {
+    // Use OpenDocument instead of GetContent to preserve EXIF metadata (including GPS location)
+    // The photo picker and GetContent strip location data for privacy, but OpenDocument
+    // provides access to the original file with all metadata intact
     val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri ->
         uri?.toString()?.let(onPhotoSelected)
     }
@@ -41,7 +44,7 @@ internal actual fun PhotoSectionContent(
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                TextButton(onClick = { galleryLauncher.launch("image/*") }) {
+                TextButton(onClick = { galleryLauncher.launch(arrayOf("image/*")) }) {
                     Text("Choose Different")
                 }
             }
@@ -69,7 +72,7 @@ internal actual fun PhotoSectionContent(
                 modifier = Modifier.align(Alignment.CenterHorizontally),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                OutlinedButton(onClick = { galleryLauncher.launch("image/*") }) {
+                OutlinedButton(onClick = { galleryLauncher.launch(arrayOf("image/*")) }) {
                     Text("Choose from Gallery")
                 }
             }

@@ -1,3 +1,7 @@
 TEAM_ID=
 BUNDLE_ID=com.hooked.hooked
 APP_NAME=hooked
+
+// Environment configuration - set these values for your environment
+MAPBOX_ACCESS_TOKEN=
+API_BASE_URL=http://localhost:4000/api
