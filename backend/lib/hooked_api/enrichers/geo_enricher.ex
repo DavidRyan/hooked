@@ -18,15 +18,19 @@ defmodule HookedApi.Enrichers.GeoEnricher do
             "GeoEnricher: Successfully extracted GPS coordinates for catch #{user_catch.id}: #{lat}, #{lng}"
           )
 
-          Logger.debug("GeoEnricher: Updating catch with GPS coordinates from EXIF")
-
+        case get_location_from_coords(lat, lng) do
+          {:ok, location_name} ->
+            enriched_catch = %{user_catch | latitude: lat, longitude: lng, location: location_name}
+            Logger.debug("GeoEnricher: Updating catch with GPS coordinates from EXIF")
+            Logger.info("GeoEnricher: GPS enrichment completed successfully for catch #{user_catch.id}")
+            {:ok, enriched_catch}
+          {:error, _} ->
           enriched_catch = %{user_catch | latitude: lat, longitude: lng}
-
-          Logger.info(
-            "GeoEnricher: GPS enrichment completed successfully for catch #{user_catch.id}"
-          )
-
+            Logger.debug("GeoEnricher: Updating catch with GPS coordinates from EXIF")
+            Logger.info("GeoEnricher: GPS enrichment completed successfully for catch #{user_catch.id}")
           {:ok, enriched_catch}
+        end
+
 
         {:error, :no_gps} ->
           Logger.info(
@@ -46,6 +50,17 @@ defmodule HookedApi.Enrichers.GeoEnricher do
         Logger.error("GeoEnricher: Returning catch unchanged due to crash")
         {:ok, %{user_catch | enrichment_status: false}}
     end
+  end
+
+  defp get_location_from_coords(lat, lng) do 
+      case HookedApi.Services.GeocodingService.get_location(lat, lng) do
+        {:ok, location_name} ->
+          Logger.info("GeoEnricher: Successfully retrieved location name from GPS coordinates: #{location_name}")
+          {:ok, location_name}
+        {:error, error} ->
+          Logger.error("GeoEnricher: Error retrieving location name from GPS coordinates: #{inspect(error)}")
+          {:error, error}
+      end
   end
 
   defp get_gps_from_exif(exif_data) when is_map(exif_data) do

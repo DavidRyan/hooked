@@ -41,8 +41,6 @@ config :hooked_api,
   image_upload_dir: "priv/static/uploads/catches",
   max_image_size: 10_000_000,
   serve_static_images: true,
-  s3_bucket: System.get_env("S3_BUCKET"),
-  s3_region: System.get_env("S3_REGION"),
   enrichers: [
     HookedApi.Enrichers.ExifEnricher,
     HookedApi.Enrichers.GeoEnricher,
@@ -50,34 +48,16 @@ config :hooked_api,
     HookedApi.Enrichers.Species.SpeciesEnricher
   ]
 
-# Species identification provider API configurations
+# AI Provider configuration (provider module only - API key loaded at runtime)
 config :hooked_api,
-  inaturalist_access_token: System.get_env("INATURALIST_ACCESS_TOKEN"),
-  google_vision_access_token: System.get_env("GOOGLE_VISION_ACCESS_TOKEN")
-
-# OpenWeatherMap API configuration
-config :hooked_api,
-  openweather_api_key: System.get_env("OPENWEATHER_API_KEY")
-
-# AI Provider configuration
-config :hooked_api,
-  ai_provider: HookedApi.Services.AiProviders.OpenaiProvider,
-  openai_api_key: System.get_env("OPENAI_API_KEY")
+  ai_provider: HookedApi.Services.AiProviders.OpenaiProvider
 
 # Tesla configuration
 config :tesla, disable_deprecated_builder_warning: true
 
 # JWT configuration - secret now loaded at runtime for security
 
-# ExAws configuration
-config :ex_aws,
-  access_key_id: System.get_env("AWS_ACCESS_KEY_ID"),
-  secret_access_key: System.get_env("AWS_SECRET_ACCESS_KEY"),
-  json_codec: Jason
-
-config :ex_aws, :s3,
-  region: System.get_env("S3_REGION"),
-  scheme: "https://"
+# ExAws configuration - credentials loaded at runtime in runtime.exs
 
 # Hammer rate limiting configuration
 config :hammer,
