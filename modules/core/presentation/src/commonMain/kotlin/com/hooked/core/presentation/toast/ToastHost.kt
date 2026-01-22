@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.hooked.theme.Colors
 import kotlinx.coroutines.delay
 import org.koin.compose.koinInject
 
@@ -76,10 +77,10 @@ private fun ToastItem(
                 .clip(RoundedCornerShape(8.dp)),
             colors = CardDefaults.cardColors(
                 containerColor = when (toast.type) {
-                    ToastType.SUCCESS -> Color(0xFF4CAF50)
-                    ToastType.ERROR -> Color(0xFFF44336)
-                    ToastType.WARNING -> Color(0xFFFF9800)
-                    ToastType.INFO -> Color(0xFF2196F3)
+                    ToastType.SUCCESS -> Colors.success
+                    ToastType.ERROR -> Colors.error
+                    ToastType.WARNING -> Colors.warning
+                    ToastType.INFO -> Colors.info
                 }
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)

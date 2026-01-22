@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.hooked.catches.domain.entities.SpeciesData
+import com.hooked.theme.Colors
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -25,16 +26,7 @@ fun SpeciesPieChart(
     speciesData: List<SpeciesData>,
     modifier: Modifier = Modifier
 ) {
-    val colors = listOf(
-        Color(0xFF6200EE),
-        Color(0xFF03DAC5),
-        Color(0xFFFF5722),
-        Color(0xFF4CAF50),
-        Color(0xFFFFC107),
-        Color(0xFF9C27B0),
-        Color(0xFF00BCD4),
-        Color(0xFFFF9800)
-    )
+    val colors = Colors.chartColors
 
     var startAnimation by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(

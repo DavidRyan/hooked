@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hooked.core.animation.AnimationSpecs
+import com.hooked.theme.Colors
 import com.hooked.core.components.AsyncImage
 import com.hooked.theme.HookedTheme
 
@@ -90,13 +91,13 @@ internal fun PhotoSectionContent(
                         Icon(
                             imageVector = Icons.Filled.CheckCircle,
                             contentDescription = "Photo selected",
-                            tint = Color(0xFF4CAF50),
+                            tint = Colors.success,
                             modifier = Modifier
                                 .align(Alignment.TopEnd)
                                 .padding(12.dp)
                                 .size(32.dp)
                                 .shadow(4.dp, CircleShape)
-                                .background(Color.White, CircleShape)
+                                .background(Colors.white, CircleShape)
                                 .padding(4.dp)
                         )
                     }

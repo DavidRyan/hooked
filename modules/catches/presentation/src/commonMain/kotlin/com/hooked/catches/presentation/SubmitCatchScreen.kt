@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import com.hooked.theme.Colors
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -206,7 +207,7 @@ fun ProgressIndicator(
             )
             
             val backgroundColor by animateColorAsState(
-                targetValue = if (animationComplete) Color(0xFFFFD700) else HookedTheme.tertiary,
+                targetValue = if (animationComplete) Color(0xFFFFD700) else Colors.mutedTeal,
                 animationSpec = tween(
                     durationMillis = 400,
                     easing = LinearEasing
