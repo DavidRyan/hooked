@@ -2,6 +2,7 @@ package com.hooked.catches.data.database
 
 import com.hooked.catches.domain.entities.CatchEntity as DomainCatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.core.logging.Logger
 import kotlinx.serialization.json.Json
 
 fun CatchEntity.toDomainEntity(): DomainCatchEntity {
@@ -20,8 +21,11 @@ fun CatchEntity.toDomainEntity(): DomainCatchEntity {
 fun CatchEntity.toCatchDetailsEntity(): CatchDetailsEntity {
     val weatherData = weather_data?.let { jsonString ->
         try {
-            Json.decodeFromString<Map<String, String>>(jsonString)
+            Json.decodeFromString<Map<String, String?>>(jsonString)
+                .takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
+            Logger.error("CatchEntityMapper", "Failed to parse weather_data JSON for catch $id: ${e.message}", e)
+            Logger.debug("CatchEntityMapper", "Invalid weather_data JSON: $jsonString")
             null
         }
     }

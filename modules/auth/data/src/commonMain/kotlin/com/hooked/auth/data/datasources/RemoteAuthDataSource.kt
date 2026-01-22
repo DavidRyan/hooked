@@ -7,6 +7,7 @@ import com.hooked.auth.domain.entities.LoginCredentials
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 import com.hooked.core.domain.NetworkResult
+import com.hooked.core.logging.Logger
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -67,6 +68,7 @@ class RemoteAuthDataSource(
             tokenStorage.clearUser()
             Result.success(Unit)
         } catch (e: Exception) {
+            Logger.error("RemoteAuthDataSource", "Failed to logout: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -82,6 +84,7 @@ class RemoteAuthDataSource(
             }
         } catch (e: Exception) {
             // If we can't parse stored user, try to fetch from API
+            Logger.warning("RemoteAuthDataSource", "Failed to parse stored user JSON: ${e.message}", e)
             val token = tokenStorage.getToken()
             if (token != null) {
                 when (val result = authApiService.getCurrentUser(token)) {
@@ -112,6 +115,7 @@ class RemoteAuthDataSource(
             user.token?.let { tokenStorage.saveToken(it) }
             Result.success(Unit)
         } catch (e: Exception) {
+            Logger.error("RemoteAuthDataSource", "Failed to save user: ${e.message}", e)
             Result.failure(e)
         }
     }
@@ -122,6 +126,7 @@ class RemoteAuthDataSource(
             tokenStorage.clearUser()
             Result.success(Unit)
         } catch (e: Exception) {
+            Logger.error("RemoteAuthDataSource", "Failed to clear user: ${e.message}", e)
             Result.failure(e)
         }
     }

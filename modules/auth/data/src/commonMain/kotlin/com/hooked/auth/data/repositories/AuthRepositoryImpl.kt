@@ -6,6 +6,7 @@ import com.hooked.auth.domain.entities.LoginCredentials
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 import com.hooked.auth.domain.repositories.AuthRepository
+import com.hooked.core.logging.Logger
 
 class AuthRepositoryImpl(
     private val authDataSource: AuthDataSource
@@ -40,6 +41,7 @@ class AuthRepositoryImpl(
             val result = authDataSource.getCurrentUser()
             result.isSuccess && result.getOrNull() != null
         } catch (e: Exception) {
+            Logger.error("AuthRepositoryImpl", "Failed to check if user is logged in: ${e.message}", e)
             false
         }
     }

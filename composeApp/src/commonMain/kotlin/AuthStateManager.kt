@@ -2,6 +2,7 @@ package com.hooked
 
 import androidx.compose.runtime.*
 import com.hooked.auth.domain.usecases.CheckAuthStatusUseCase
+import com.hooked.core.logging.Logger
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -24,6 +25,7 @@ fun AuthStateManager(
                 }
             } catch (e: Exception) {
                 // If there's an error checking auth status, assume unauthenticated
+                Logger.error("AuthStateManager", "Failed to check auth status: ${e.message}", e)
                 onUnauthenticatedUser()
             } finally {
                 isLoading = false

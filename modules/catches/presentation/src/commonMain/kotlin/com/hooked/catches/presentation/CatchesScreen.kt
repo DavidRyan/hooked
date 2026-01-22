@@ -490,14 +490,22 @@ fun SharedTransitionScope.CatchDetailsContent(
                             }
 
                             // Weather Section
-                            details.weatherData?.let { weather ->
-                                val weatherText = weather.entries.joinToString(", ") { "${it.key}: ${it.value}" }
-                                AnimatedDetailCard(
-                                    label = "Weather",
-                                    value = weatherText,
-                                    translationY = 0f // Already animated by parent Row
-                                )
-                            }
+                            details.weatherData
+                                ?.takeIf { it.isNotEmpty() }
+                                ?.let { weather ->
+                                    val weatherText = weather
+                                        .filterValues { !it.isNullOrBlank() }
+                                        .entries
+                                        .joinToString(", ") { "${it.key}: ${it.value}" }
+                                    
+                                    if (weatherText.isNotEmpty()) {
+                                        AnimatedDetailCard(
+                                            label = "Weather",
+                                            value = weatherText,
+                                            translationY = 0f // Already animated by parent Row
+                                        )
+                                    }
+                                }
                         }
                         
                         // Right column - Map

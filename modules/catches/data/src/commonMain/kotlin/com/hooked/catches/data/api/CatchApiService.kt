@@ -138,7 +138,12 @@ class CatchApiService(
     private suspend fun formatHttpError(e: ClientRequestException): String {
         val statusCode = e.response.status.value
         val statusText = e.response.status.description
-        val body = try { e.response.bodyAsText() } catch (_: Exception) { "Unable to read response body" }
+        val body = try { 
+            e.response.bodyAsText() 
+        } catch (bodyException: Exception) { 
+            Logger.warning(TAG, "Failed to read HTTP error response body: ${bodyException.message}")
+            "Unable to read response body" 
+        }
         return "[$statusCode $statusText] $body"
     }
 }
