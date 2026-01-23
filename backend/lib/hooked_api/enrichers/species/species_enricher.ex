@@ -26,7 +26,8 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
               Logger.debug("SpeciesEnricher: Updating catch with identified species")
               Logger.debug("SpeciesEnricher: Species data: #{inspect(species_result)}")
 
-              enriched_catch = %{user_catch | species: species_result.species_name}
+              normalized_species = best_match(species_result.species_name)
+              enriched_catch = %{user_catch | species: normalized_species}
 
               Logger.info(
                 "SpeciesEnricher: Species enrichment completed successfully for catch #{user_catch.id}"
@@ -132,5 +133,86 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
   defp identify_species_from_image(image_url) do
     Logger.error("SpeciesEnricher: Invalid image URL provided: #{inspect(image_url)}")
     {:error, :invalid_image_url}
+  end
+
+    defp best_match(species_input) do
+    # species list is a text file species.txt in the root of the project
+    species_file_path = Path.join([Application.app_dir(:hooked_api), "..", "..", "species.txt"])
+    
+    species_list = 
+      case File.read(species_file_path) do
+        {:ok, content} ->
+          content
+          |> String.split("\n", trim: true)
+          |> Enum.reject(&(&1 == ""))
+        
+        {:error, _reason} ->
+          []
+      end
+    
+    if Enum.empty?(species_list) do
+      species_input
+    else
+      species_input_lower = String.downcase(species_input)
+      
+      species_list
+      |> Enum.map(fn species ->
+        species_lower = String.downcase(species)
+        distance = levenshtein_distance(species_input_lower, species_lower)
+        {species, distance}
+      end)
+      |> Enum.min_by(fn {_species, distance} -> distance end)
+      |> elem(0)
+    end
+  end
+
+defp read_species_list do
+  species_file = Path.join([File.cwd!(), "species.txt"])
+  
+  case File.read(species_file) do
+    {:ok, content} ->
+      content
+      |> String.split("\n", trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+    
+    {:error, _reason} ->
+      Logger.warning("SpeciesEnricher: Could not read species.txt file")
+      []
+  end
+end
+
+  defp levenshtein_distance(string1, string2) do
+    s1 = String.graphemes(string1)
+    s2 = String.graphemes(string2)
+    
+    costs = 
+      Enum.reduce(0..length(s1), %{}, fn i, acc ->
+        Map.put(acc, {i, 0}, i)
+      end)
+    
+    costs = 
+      Enum.reduce(0..length(s2), costs, fn j, acc ->
+        Map.put(acc, {0, j}, j)
+      end)
+    
+    costs =
+      Enum.reduce(1..length(s1), costs, fn i, acc_i ->
+        Enum.reduce(1..length(s2), acc_i, fn j, acc_j ->
+          cost = if Enum.at(s1, i - 1) == Enum.at(s2, j - 1), do: 0, else: 1
+          
+          distance = min(
+            Map.get(acc_j, {i - 1, j}) + 1,
+            min(
+              Map.get(acc_j, {i, j - 1}) + 1,
+              Map.get(acc_j, {i - 1, j - 1}) + cost
+            )
+          )
+          
+          Map.put(acc_j, {i, j}, distance)
+        end)
+      end)
+    
+    Map.get(costs, {length(s1), length(s2)})
   end
 end
