@@ -148,7 +148,7 @@ fun StatsScreen(
                                     text = state.aiInsights!!,
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight.times(1.5f)
+                                    lineHeight = MaterialTheme.typography.bodyLarge.lineHeight.times(1f)
                                 )
                             }
                             else -> {

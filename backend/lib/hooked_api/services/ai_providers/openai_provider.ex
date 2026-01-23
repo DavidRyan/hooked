@@ -18,7 +18,6 @@ defmodule HookedApi.Services.AiProviders.OpenaiProvider do
 
   @impl true
   def validate_configuration do
-
     case Application.get_env(:hooked_api, :openai_api_key) do
       nil ->
         Logger.error("OpenAI Provider: No API key configured")
@@ -36,13 +35,14 @@ defmodule HookedApi.Services.AiProviders.OpenaiProvider do
 
   @impl true
   def send_message(message) when is_binary(message) do
-
     payload = %{
       model: "gpt-3.5-turbo",
       messages: [%{role: "user", content: message}],
       max_tokens: 1000,
       temperature: 0.7
     }
+
+    Logger.info("OpenAI Provider: Sending payload to OpenAI: #{inspect(payload)}")
 
     case post("/chat/completions", payload) do
       {:ok,
@@ -62,7 +62,6 @@ defmodule HookedApi.Services.AiProviders.OpenaiProvider do
         )
 
         {:ok, trimmed_content}
-
 
       error ->
         Logger.info("OpenAI Provider Failed: Request details: #{inspect(error)}")

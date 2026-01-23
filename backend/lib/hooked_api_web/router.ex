@@ -15,6 +15,12 @@ defmodule HookedApiWeb.Router do
     plug HookedApiWeb.Plugs.AuthPlug
   end
 
+  # Public health check (no authentication)
+  scope "/api", HookedApiWeb do
+    pipe_through :api
+    get "/health", HealthController, :index
+  end
+
   # Public routes (no authentication required)
   scope "/api/auth", HookedApiWeb do
     pipe_through :rate_limited_auth

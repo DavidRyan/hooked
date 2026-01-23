@@ -25,6 +25,8 @@ defmodule HookedApi.Services.FishingInsightsService do
       |> Enum.uniq()
       |> length()
 
+
+
     """
     Analyze these #{total_catches} fishing catches and provide insights:
 
@@ -34,20 +36,45 @@ defmodule HookedApi.Services.FishingInsightsService do
     Recent catches:
     #{format_recent_catches(catches)}
 
-    Please provide:
-    1. Overall fishing patterns
-    2. Most successful species/locations
-    3. Any trends you notice
-    4. Fishing tips based on this data
+    Please provide Fishing tips based on this data
+
+    Focus on time and weather like pressure, wind, and sunrise/sunset
+    Be specific with suggested weather conditions
+    Make sure to keep the response under 1000 characters
+    No bullets or numbers, make it conversational. You are a fishing instructor
+    The person you are talking to does not know what the weather was when these catches were made, so please provide the best weather conditions with specifics
+    Do not add any additional fluff at the beginning or end.  Be very to the point
+    Do not preface your response with "Based on the data you provided, here are some fishing tips"
     """
   end
 
-  defp format_recent_catches(catches) do
-    catches
-    |> Enum.take(5)
-    |> Enum.map(fn user_catch ->
-      "#{user_catch.species || "Unknown"} at #{user_catch.location} on #{user_catch.caught_at}"
-    end)
-    |> Enum.join("\n")
+defp format_recent_catches(catches) do
+  catches
+  |> Enum.take(20)
+  |> Enum.map(&format_single_catch/1)  # ✅ Convert each struct to string first
+  |> Enum.join("\n")
+end
+
+defp format_single_catch(user_catch) do
+  weather_info = case user_catch.weather_data do
+    nil -> "Weather: No data available"
+    weather -> """
+    Weather Data:
+    - Temperature: #{weather["temperature"]}°F (feels like #{weather["feels_like"]}°F)
+    - Condition: #{weather["weather_description"]} (#{weather["weather_condition"]})
+    - Humidity: #{weather["humidity"]}%
+    - Pressure: #{weather["pressure"]} hPa
+    - Wind: #{weather["wind_speed"]} mph from #{weather["wind_direction"]}°
+    - Clouds: #{weather["clouds"]}%
+    - Sunrise: #{weather["sunrise"]}
+    - Sunset: #{weather["sunset"]}
+    - Data Source: #{weather["data_source"]} (#{weather["data_type"]})
+    """
   end
+  """
+  #{user_catch.species || "Unknown species"} at #{user_catch.location}
+  Date: #{user_catch.caught_at}
+  #{weather_info}
+  """
+end
 end

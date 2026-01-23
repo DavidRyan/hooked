@@ -156,7 +156,7 @@ internal fun PhotoSectionContent(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .heightIn(min = 200.dp)
                     .border(
                         width = 2.dp,
                         color = HookedTheme.primary.copy(alpha = 0.3f),
