@@ -88,6 +88,8 @@ defmodule HookedApi.Catches do
     attrs = Map.put(attrs, "longitude", exif_data[:gps_longitude] || attrs["longitude"])
     attrs = Map.put(attrs, "caught_at", exif_data[:datetime] || attrs["caught_at"])
 
+    Logger.info("Creating user catch with attrs: #{inspect(attrs)}")
+
     # Upload image and create catch
     with {:ok, image_data} <- ImageStorage.upload_image(image_upload),
          attrs_with_image <- Map.merge(attrs, Map.put(image_data, "user_id", user_id)),

@@ -45,6 +45,9 @@ defmodule HookedApi.Services.FishingInsightsService do
     The person you are talking to does not know what the weather was when these catches were made, so please provide the best weather conditions with specifics
     Do not add any additional fluff at the beginning or end.  Be very to the point
     Do not preface your response with "Based on the data you provided, here are some fishing tips"
+
+
+    Use the recent catch data provided to specigically make insights into patterns and trends
     """
   end
 

@@ -11,7 +11,7 @@ defmodule HookedApi.Services.AiProviders.OpenaiProvider do
     {"Authorization", "Bearer #{Application.get_env(:hooked_api, :openai_api_key)}"}
   ])
 
-  adapter(Tesla.Adapter.Hackney)
+  adapter(Tesla.Adapter.Hackney, timeout: 60_000, recv_timeout: 120_000)
 
   @impl true
   def provider_name, do: "openai"
@@ -36,9 +36,9 @@ defmodule HookedApi.Services.AiProviders.OpenaiProvider do
   @impl true
   def send_message(message) when is_binary(message) do
     payload = %{
-      model: "gpt-3.5-turbo",
+      model: "gpt-5.2",
       messages: [%{role: "user", content: message}],
-      max_tokens: 1000,
+      max_completion_tokens: 1000,
       temperature: 0.7
     }
 

@@ -1,0 +1,93 @@
+# flyctl launch added from .beads/.gitignore
+# SQLite databases
+.beads/**/*.db
+.beads/**/*.db?*
+.beads/**/*.db-journal
+.beads/**/*.db-wal
+.beads/**/*.db-shm
+
+# Daemon runtime files
+.beads/**/daemon.lock
+.beads/**/daemon.log
+.beads/**/daemon.pid
+.beads/**/bd.sock
+.beads/**/sync-state.json
+.beads/**/last-touched
+
+# Local version tracking (prevents upgrade notification spam after git ops)
+.beads/**/.local_version
+
+# Legacy database files
+.beads/**/db.sqlite
+.beads/**/bd.db
+
+# Worktree redirect file (contains relative path to main repo's .beads/)
+# Must not be committed as paths would be wrong in other clones
+.beads/**/redirect
+
+# Merge artifacts (temporary files from 3-way merge)
+.beads/**/beads.base.jsonl
+.beads/**/beads.base.meta.json
+.beads/**/beads.left.jsonl
+.beads/**/beads.left.meta.json
+.beads/**/beads.right.jsonl
+.beads/**/beads.right.meta.json
+
+# NOTE: Do NOT add negation patterns (e.g., !issues.jsonl) here.
+# They would override fork protection in .git/info/exclude, allowing
+# contributors to accidentally commit upstream issue databases.
+# The JSONL files (issues.jsonl, interactions.jsonl) and config files
+# are tracked by git by default since no pattern above ignores them.
+
+# flyctl launch added from .gitignore
+# Rust
+target
+**/Cargo.lock
+**/.env
+**/.DS_Store
+**/local.properties
+**/.idea
+gradle/wrapper
+**/.gradle
+**/**/build
+**/.idea
+**/*.iml
+**/*.log
+**/*.md
+**/.kotlin
+**/build
+**/gradlew
+
+
+# API Keys - DO NOT COMMIT
+**/**/MapConfig.kt
+**/**/generated/source/mapconfig
+
+# Elixir build artifacts
+**/backend/_build
+**/backend/deps
+**/backend/erl_crash.dump
+
+# Mix environment files
+**/backend/*.ez
+
+
+# The lock file for npm if using assets (optional)
+**/backendassets/package-lock.json
+
+# Elixir/Phoenix generated files
+**/backend/.elixir_ls
+**/backend/.coverage
+**/backend/priv/static/uploads/catches
+
+# flyctl launch added from .idea/.gitignore
+# Default ignored files
+.idea/shelf
+.idea/workspace.xml
+
+# flyctl launch added from backend/.elixir_ls/.gitignore
+backend/.elixir_ls/**/*
+
+# flyctl launch added from backend/.gitignore
+backend/**/.env
+fly.toml

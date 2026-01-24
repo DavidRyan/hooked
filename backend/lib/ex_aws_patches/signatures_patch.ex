@@ -1,78 +1,51 @@
 defmodule ExAwsPatches.SignaturesPatch do
   @moduledoc """
-  Patch for ExAws.Auth.Signatures to ensure the hmac key is never nil
+  Helper module to validate AWS credentials before making ExAws calls.
 
-  This module monkey-patches ExAws.Auth.Signatures to prevent the crypto error
-  when a nil secret key is passed to hmac_sha256.
+  Instead of monkey-patching ExAws.Auth.Signatures (which causes duplicate module
+  errors in releases), this module provides validation functions to check
+  credentials before making AWS API calls.
   """
 
-  import ExAws.Auth.Utils, only: [hmac_sha256: 2, date: 1, bytes_to_hex: 1]
   require Logger
 
-  # Apply the patch by using this function in the application startup
+  @doc """
+  Called at application startup. Validates that AWS credentials are configured.
+  """
   def apply_patch do
-    # No need to do anything - just having the module loaded is enough
+    # Log a warning if AWS credentials are not configured
+    validate_credentials()
     :ok
   end
 
-  # Override the original function to add nil checks
-  def signing_key(service, datetime, config) do
-    secret_key = config[:secret_access_key]
+  @doc """
+  Validates that AWS credentials are present in the configuration.
+  Returns {:ok, config} if valid, {:error, reason} if not.
+  """
+  def validate_credentials do
+    config = ExAws.Config.new(:s3)
 
-    if is_nil(secret_key) do
-      # Log the error and use a placeholder to prevent crypto errors
-      Logger.error(
-        "AWS Authentication Error: secret_access_key is nil - using placeholder to avoid crypto error"
-      )
+    cond do
+      is_nil(config[:access_key_id]) ->
+        Logger.warning("AWS credentials not configured: access_key_id is nil")
+        {:error, :missing_access_key}
 
-      # Use placeholder to avoid crypto error
-      "INVALID-SECRET-KEY-PLACEHOLDER"
-    else
-      secret_key
+      is_nil(config[:secret_access_key]) ->
+        Logger.warning("AWS credentials not configured: secret_access_key is nil")
+        {:error, :missing_secret_key}
+
+      true ->
+        {:ok, config}
     end
-
-    ["AWS4", secret_key]
-    |> hmac_sha256(date(datetime))
-    |> hmac_sha256(config[:region])
-    |> hmac_sha256(service)
-    |> hmac_sha256("aws4_request")
-  end
-end
-
-# Monkey patch the ExAws.Auth.Signatures module
-# This will replace the original signing_key function with our patched version
-defmodule ExAws.Auth.Signatures do
-  @moduledoc false
-  import ExAws.Auth.Utils, only: [hmac_sha256: 2, date: 1, bytes_to_hex: 1]
-  require Logger
-
-  def generate_signature_v4(service, config, datetime, string_to_sign) do
-    service
-    |> signing_key(datetime, config)
-    |> hmac_sha256(string_to_sign)
-    |> bytes_to_hex
   end
 
-  # Patched version with nil checks
-  defp signing_key(service, datetime, config) do
-    secret_key = config[:secret_access_key]
-
-    secret_key =
-      if is_nil(secret_key) do
-        # Log the error and use a placeholder to prevent crypto errors
-        Logger.error(
-          "AWS Authentication Error: secret_access_key is nil - using placeholder to avoid crypto error"
-        )
-
-        "INVALID-SECRET-KEY-PLACEHOLDER"
-      else
-        secret_key
-      end
-
-    ["AWS4", secret_key]
-    |> hmac_sha256(date(datetime))
-    |> hmac_sha256(config[:region])
-    |> hmac_sha256(service)
-    |> hmac_sha256("aws4_request")
+  @doc """
+  Checks if AWS credentials are configured and valid.
+  """
+  def credentials_configured? do
+    case validate_credentials() do
+      {:ok, _} -> true
+      {:error, _} -> false
+    end
   end
 end

@@ -6,7 +6,8 @@ package com.hooked.core.config
 actual object AppConfig {
     // These are set by the app module at startup
     internal var _mapboxAccessToken: String = ""
-    internal var _apiBaseUrl: String = "http://10.0.2.2:4000/api"
+
+    internal var _apiBaseUrl: String = "https://hooked-backend.fly.dev/api"
     
     actual val MAPBOX_ACCESS_TOKEN: String
         get() = _mapboxAccessToken

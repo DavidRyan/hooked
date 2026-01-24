@@ -126,11 +126,7 @@ fun StatsScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             Text(
-                                text = "🤖",
-                                style = MaterialTheme.typography.titleLarge
-                            )
-                            Text(
-                                text = "AI Insights",
+                                text = "Insights",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
