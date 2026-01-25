@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.hooked.core.animation.AnimationConstants
-import com.hooked.theme.HookedTheme
 
 @Composable
 fun AnimatedDetailCard(
@@ -34,11 +33,7 @@ fun AnimatedDetailCard(
                 .fillMaxWidth()
                 .padding(12.dp)
         ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                color = HookedTheme.primary
-            )
+            LabelChip(text = label)
             Text(
                 text = value,
                 style = MaterialTheme.typography.bodyLarge,

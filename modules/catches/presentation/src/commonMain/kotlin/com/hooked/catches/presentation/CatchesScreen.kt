@@ -70,8 +70,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Scaffold
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.graphicsLayer
@@ -84,6 +82,7 @@ import com.hooked.catches.presentation.model.CatchDetailsIntent
 import com.hooked.catches.presentation.model.CatchGridEffect
 import com.hooked.catches.presentation.model.CatchGridIntent
 import com.hooked.catches.presentation.model.CatchModel
+import com.hooked.catches.presentation.model.WeatherUi
 import com.hooked.core.components.AsyncImage
 import com.hooked.core.nav.Screens
 import com.hooked.theme.HookedTheme
@@ -92,7 +91,8 @@ import com.hooked.core.animation.AnimationConstants
 import com.hooked.core.animation.AnimationSpecs
 import com.hooked.catches.presentation.components.CatchGridItem
 import com.hooked.catches.presentation.components.AnimatedDetailCard
-import com.hooked.catches.presentation.components.StaticMapCard
+import com.hooked.catches.presentation.components.MapColumn
+import com.hooked.catches.presentation.components.WeatherSection
 import com.hooked.catches.presentation.state.rememberCatchesScreenState
 import com.hooked.core.presentation.toast.ToastManager
 import kotlinx.coroutines.flow.collectLatest
@@ -222,7 +222,6 @@ fun SharedTransitionScope.CatchGridContent(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Setup pull refresh state
             val pullRefreshState = rememberPullRefreshState(
                 refreshing = state.isRefreshing,
                 onRefresh = { viewModel.sendIntent(CatchGridIntent.LoadCatches) }
@@ -285,7 +284,6 @@ fun SharedTransitionScope.CatchGridContent(
                     }
                 }
                 
-                // Pull refresh indicator with enhanced styling
                 PullRefreshIndicator(
                     refreshing = state.isRefreshing,
                     state = pullRefreshState,
@@ -345,14 +343,12 @@ fun SharedTransitionScope.CatchDetailsContent(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
     
-    // Animation state for all cards
     val cardsTranslation by animateFloatAsState(
         targetValue = if (showDetails) 0f else AnimationConstants.CARD_TRANSLATION_OFFSET,
         animationSpec = AnimationSpecs.detailsSpringSpec,
         label = "cards_translation"
     )
 
-    // Handle back button press
     BackHandler {
         showDetails = false
         showAppBar = false
@@ -360,11 +356,10 @@ fun SharedTransitionScope.CatchDetailsContent(
     }
     
     LaunchedEffect(animationKey) {
-        // Reset animation state first
         showDetails = false
         showAppBar = false
         viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
-        delay(AnimationConstants.DETAILS_ANIMATION_DELAY_MS) // Small delay to let the image transition start
+        delay(AnimationConstants.DETAILS_ANIMATION_DELAY_MS)
         showDetails = true
         showAppBar = true
     }
@@ -374,7 +369,6 @@ fun SharedTransitionScope.CatchDetailsContent(
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        // Content goes first (behind the app bar)
         if (state.isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -408,13 +402,11 @@ fun SharedTransitionScope.CatchDetailsContent(
                         ),
                     verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                 ) {
-                    // Add Section with shared element
                     Card(
                         modifier = Modifier
-                            //.padding(top = AnimationConstants.DETAIL_CARD_TOP_PADDING_DP.dp)
                             .padding(top = topBarHeight)
                             .fillMaxWidth()
-                            .aspectRatio(1f), // Keep same aspect ratio as grid
+                            .aspectRatio(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
                         shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
                         colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
@@ -439,7 +431,6 @@ fun SharedTransitionScope.CatchDetailsContent(
                         )
                     }
                     
-                    // Metadata and Map Row
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -448,96 +439,59 @@ fun SharedTransitionScope.CatchDetailsContent(
                             },
                         horizontalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                     ) {
-                        // Left column - Metadata
                         Column(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                         ) {
-                            // Species Section
                             details.species?.let { species ->
                                 AnimatedDetailCard(
                                     label = "Species",
                                     value = species,
-                                    translationY = 0f // Already animated by parent Row
+                                    translationY = 0f
                                 )
                             }
 
-                            // Weight Section
                             details.weight?.takeIf { it > 0 }?.let { weight ->
                                 AnimatedDetailCard(
                                     label = "Weight",
-                                    value = "$weight kg",
-                                    translationY = 0f // Already animated by parent Row
+                                    value = "$weight lb",
+                                    translationY = 0f
                                 )
                             }
 
-                            // Length Section
                             details.length?.takeIf { it > 0 }?.let { length ->
                                 AnimatedDetailCard(
                                     label = "Length",
                                     value = "$length cm",
-                                    translationY = 0f // Already animated by parent Row
+                                    translationY = 0f
                                 )
                             }
 
-                            // Location Section
-                            details.location?.let { location ->
-                                AnimatedDetailCard(
-                                    label = "Location",
-                                    value = location,
-                                    translationY = 0f // Already animated by parent Row
-                                )
-                            }
-
-                            // Date Section
-                            details.timestamp
-                                ?.takeIf { it > 0 }
-                                ?.let { timestamp ->
-                                    val dateCaught = formatCatchDate(timestamp)
-                                    AnimatedDetailCard(
-                                        label = "Date",
-                                        value = dateCaught,
-                                        translationY = 0f // Already animated by parent Row
-                                    )
-                            }
-
-                            // Weather Section
                             details.weatherData
                                 ?.takeIf { it.isNotEmpty() }
                                 ?.let { weather ->
-                                    val weatherText = weather
-                                        .filterValues { !it.isNullOrBlank() }
-                                        .entries
-                                        .joinToString(", ") { "${it.key}: ${it.value}" }
-                                    
-                                    if (weatherText.isNotEmpty()) {
-                                        AnimatedDetailCard(
-                                            label = "Weather",
-                                            value = weatherText,
-                                            translationY = 0f // Already animated by parent Row
-                                        )
-                                    }
+                                    WeatherSection(
+                                        weather = WeatherUi.fromMap(weather),
+                                        translationY = 0f
+                                    )
                                 }
                         }
-                        
-                        // Right column - Map
-                        details.latitude?.let { latitude ->
-                            details.longitude?.let { longitude ->
-                                StaticMapCard(
-                                    latitude = latitude,
-                                    longitude = longitude,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .aspectRatio(1f)
-                                )
-                            }
-                        }
+
+                        MapColumn(
+                            latitude = details.latitude,
+                            longitude = details.longitude,
+                            location = details.location,
+                            dateCaught = details.timestamp
+                                ?.takeIf { it > 0 }
+                                ?.let { timestamp -> formatCatchDate(timestamp) },
+                            translationY = cardsTranslation,
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
         }
         
-        // App bar overlays the content
         AnimatedVisibility(
             visible = showAppBar,
             enter = AnimationSpecs.appBarSlideIn,
@@ -550,7 +504,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                 title = { Text("Catch Details") },
                 navigationIcon = {
                     IconButton(onClick = {
-                        showDetails = false // Reset animation state
+                        showDetails = false
                         showAppBar = false
                         onBackClick()
                     }) {
