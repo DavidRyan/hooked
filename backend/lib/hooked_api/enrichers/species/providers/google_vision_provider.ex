@@ -34,26 +34,28 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
   end
 
   @impl true
-  def identify_species(image_data, _filename) do
+  def identify_species(image_source, _filename) do
     Logger.info("GoogleVisionProvider: Starting species identification")
-    Logger.debug("GoogleVisionProvider: Processing image file (#{byte_size(image_data)} bytes)")
     token = System.get_env("GOOGLE_VISION_ACCESS_TOKEN")
 
     try do
-      with request_body <- build_vision_request(image_data),
-           _ <- Logger.info("GoogleVisionProvider: Sending image to Google Vision API"),
-           {:ok, %Tesla.Env{status: 200, body: body} = response} <-
-             post("/images:annotate?key=#{token}", request_body) do
-        Logger.info(
-          "GoogleVisionProvider: Received identification results from Google Vision API"
-        )
+      # Support both URL strings and raw binary data
+      request_body = build_vision_request(image_source)
 
-        Logger.debug(
-          "GoogleVisionProvider: Raw API response: #{inspect(body, pretty: true, limit: :infinity)}"
-        )
+      Logger.info("GoogleVisionProvider: Sending request to Google Vision API")
 
-        parse_response(body, response)
-      else
+      case post("/images:annotate?key=#{token}", request_body) do
+        {:ok, %Tesla.Env{status: 200, body: body} = response} ->
+          Logger.info(
+            "GoogleVisionProvider: Received identification results from Google Vision API"
+          )
+
+          Logger.debug(
+            "GoogleVisionProvider: Raw API response: #{inspect(body, pretty: true, limit: :infinity)}"
+          )
+
+          parse_response(body, response)
+
         {:ok, %Tesla.Env{status: status, body: body}} when status != 200 ->
           Logger.error("GoogleVisionProvider: Google Vision API returned error status: #{status}")
           Logger.error("GoogleVisionProvider: Error response body: #{inspect(body)}")
@@ -85,7 +87,68 @@ defmodule HookedApi.Enrichers.Species.Providers.GoogleVisionProvider do
     end
   end
 
-  defp build_vision_request(image_data) do
+  # Build request using image URL (memory efficient - no base64 encoding needed)
+  defp build_vision_request(image_url) when is_binary(image_url) and byte_size(image_url) < 2048 do
+    # Looks like a URL, use imageUri
+    if String.starts_with?(image_url, "http") do
+      Logger.debug("GoogleVisionProvider: Using image URL: #{image_url}")
+
+      %{
+        "requests" => [
+          %{
+            "image" => %{
+              "source" => %{
+                "imageUri" => image_url
+              }
+            },
+            "features" => [
+              %{
+                "type" => "LABEL_DETECTION",
+                "maxResults" => 10
+              },
+              %{
+                "type" => "WEB_DETECTION",
+                "maxResults" => 10
+              }
+            ]
+          }
+        ]
+      }
+    else
+      # Treat as file path, read and encode
+      build_vision_request_from_file(image_url)
+    end
+  end
+
+  # Build request from raw image data (fallback, uses more memory)
+  defp build_vision_request(image_data) when is_binary(image_data) do
+    Logger.debug("GoogleVisionProvider: Encoding image data (#{byte_size(image_data)} bytes)")
+    encoded_image = Base.encode64(image_data)
+
+    %{
+      "requests" => [
+        %{
+          "image" => %{
+            "content" => encoded_image
+          },
+          "features" => [
+            %{
+              "type" => "LABEL_DETECTION",
+              "maxResults" => 10
+            },
+            %{
+              "type" => "WEB_DETECTION",
+              "maxResults" => 10
+            }
+          ]
+        }
+      ]
+    }
+  end
+
+  defp build_vision_request_from_file(file_path) do
+    Logger.debug("GoogleVisionProvider: Reading and encoding file: #{file_path}")
+    image_data = File.read!(file_path)
     encoded_image = Base.encode64(image_data)
 
     %{

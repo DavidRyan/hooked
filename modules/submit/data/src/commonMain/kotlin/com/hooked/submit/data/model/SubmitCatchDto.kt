@@ -9,6 +9,6 @@ data class SubmitCatchDto(
     val length: Double,
     val latitude: Double?,
     val longitude: Double?,
-    val photoBase64: String?,
+    val photoBytes: ByteArray?,
     val timestamp: Long
 )

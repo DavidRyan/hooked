@@ -18,6 +18,7 @@ kotlin {
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:catches:domain"))
                 implementation(libs.kotlinx.coroutines.core)
+                implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
                 implementation(libs.ktor.client.core)
                 implementation(libs.koin.core)

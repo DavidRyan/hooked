@@ -4,7 +4,6 @@ import com.hooked.core.HookedViewModel
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.usecases.SubmitCatchUseCase
 import com.hooked.core.photo.ImageProcessor
-import com.hooked.core.photo.encodeBase64
 
 import com.hooked.core.domain.UseCaseResult
 import kotlinx.coroutines.delay
@@ -74,14 +73,12 @@ class SubmitCatchViewModel(
         
         viewModelScope.launch {
             try {
-                // Convert image to base64
-                val imageBase64 = currentState.photoUri?.let {
+                val imageBytes = currentState.photoUri?.let {
                     try {
-                        val imageBytes = imageProcessor.loadImageFromUri(it)
-                        imageBytes.encodeBase64()
+                        imageProcessor.loadImageFromUri(it)
                     } catch (e: Exception) {
-                        Logger.error(TAG, "Failed to convert image to base64: ${e.message}", e)
-                        null // Continue with submission even if base64 conversion fails
+                        Logger.error(TAG, "Failed to load image: ${e.message}", e)
+                        null
                     }
                 }
                 
@@ -92,7 +89,7 @@ class SubmitCatchViewModel(
                     longitude = currentState.longitude,
                     caughtAt = null, // Will be extracted from EXIF by backend
                     notes = null, // No notes field in current UI
-                    imageBase64 = imageBase64
+                    imageBytes = imageBytes
                 )
                 
                 when (val result = submitCatchUseCase(catchEntity)) {

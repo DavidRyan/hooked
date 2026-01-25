@@ -5,7 +5,6 @@ import com.hooked.submit.data.model.SubmitCatchDto
 import com.hooked.submit.domain.entities.SubmitCatchEntity
 import com.hooked.submit.domain.repositories.SubmitRepository
 import com.hooked.core.domain.NetworkResult
-import com.hooked.core.photo.encodeBase64
 
 class SubmitRepositoryImpl(
     private val submitApiService: SubmitApiService
@@ -18,7 +17,7 @@ class SubmitRepositoryImpl(
             length = 0.0, // TODO: Add length field to SubmitCatchEntity  
             latitude = catchEntity.latitude,
             longitude = catchEntity.longitude,
-            photoBase64 = catchEntity.imageBytes?.encodeBase64(),
+            photoBytes = catchEntity.photoBytes,
             timestamp = System.currentTimeMillis() // Use current timestamp
         )
         

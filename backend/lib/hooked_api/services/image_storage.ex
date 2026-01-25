@@ -7,9 +7,12 @@ defmodule HookedApi.Services.ImageStorage do
   @upload_dir "priv/static/uploads/catches"
 
   def upload_image(%Plug.Upload{} = upload) do
+    log_memory("upload:start", filename: upload.filename, file_path: upload.path)
+
     with :ok <- validate_file(upload),
          {:ok, storage_path} <- store_file(upload),
          {:ok, metadata} <- build_metadata(upload, storage_path) do
+      log_memory("upload:finished", filename: upload.filename, storage_path: storage_path)
       {:ok, metadata}
     end
   end
@@ -129,7 +132,13 @@ defmodule HookedApi.Services.ImageStorage do
 
           {:error, :missing_s3_configuration}
         else
-          Logger.info("S3 UPLOAD: Preparing to upload file to S3",
+          file_size =
+            case File.stat(temp_path) do
+              {:ok, %{size: size}} -> size
+              _ -> "unknown"
+            end
+
+          Logger.info("S3 UPLOAD: Preparing to stream file to S3",
             bucket: bucket,
             region: region,
             key: key,
@@ -137,32 +146,40 @@ defmodule HookedApi.Services.ImageStorage do
             content_type: content_type,
             temp_path: temp_path,
             file_exists: File.exists?(temp_path),
-            file_size:
-              case File.stat(temp_path) do
-                {:ok, %{size: size}} -> size
-                _ -> "unknown"
-              end
+            file_size: file_size
+          )
+
+          log_memory("upload:pre_stream",
+            filename: filename,
+            temp_path: temp_path,
+            file_size: file_size
           )
 
           try do
-            file_binary = File.read!(temp_path)
+            # Use streaming upload to avoid loading entire file into memory
+            result = stream_upload_to_s3(temp_path, bucket, key, content_type)
 
-            Logger.debug("S3 UPLOAD: File read successful",
-              binary_size: byte_size(file_binary),
-              original_filename: filename
+            log_memory("upload:post_stream",
+              filename: filename,
+              temp_path: temp_path,
+              file_size: file_size,
+              result: inspect(result)
             )
 
-            result = upload_to_s3(file_binary, bucket, key, content_type)
-
             case result do
-              {:ok, response} ->
+              {:ok, _response} ->
                 s3_url = "https://#{bucket}.s3.#{region}.amazonaws.com/#{key}"
 
-                Logger.info("S3 UPLOAD: Successfully uploaded file to S3")
+                Logger.info("S3 UPLOAD: Successfully streamed file to S3",
+                  bucket: bucket,
+                  key: key,
+                  file_size: file_size
+                )
+
                 {:ok, s3_url}
 
               {:error, reason} = error ->
-                Logger.error("S3 UPLOAD ERROR: Failed to upload to S3",
+                Logger.error("S3 UPLOAD ERROR: Failed to stream to S3",
                   bucket: bucket,
                   region: region,
                   key: key,
@@ -174,7 +191,7 @@ defmodule HookedApi.Services.ImageStorage do
             end
           rescue
             e ->
-              Logger.error("S3 UPLOAD EXCEPTION: Exception while reading or processing file",
+              Logger.error("S3 UPLOAD EXCEPTION: Exception while streaming file",
                 original_filename: filename,
                 temp_path: temp_path,
                 exception: Exception.message(e),
@@ -195,105 +212,53 @@ defmodule HookedApi.Services.ImageStorage do
     end
   end
 
-  defp upload_to_s3(file_binary, bucket, key, content_type) do
+  defp stream_upload_to_s3(file_path, bucket, key, content_type) do
     # Ensure AWS credentials are properly configured before uploading
     HookedApi.Services.AwsCredentials.ensure_credentials_configured()
 
-    # Double-check secret key - this is the critical part that causes the crypto error
     secret_key = Application.get_env(:ex_aws, :secret_access_key)
-
-    if is_nil(secret_key) do
-      # Fix the nil secret key to avoid the crypto error
-      Logger.error(
-        "S3 UPLOAD: secret_access_key is nil! Setting placeholder to avoid crypto error"
-      )
-
-      Application.put_env(:ex_aws, :secret_access_key, "INVALID-SECRET-KEY-PLACEHOLDER")
-      secret_key = "INVALID-SECRET-KEY-PLACEHOLDER"
-    end
-
-    # Debug: Log AWS configuration to check credentials
     access_key = Application.get_env(:ex_aws, :access_key_id)
-    has_secret = secret_key != nil && secret_key != ""
     region_value = Application.get_env(:ex_aws, :region)
 
-    # Direct string interpolation for easier debugging
-    Logger.warning(
-      "S3 UPLOAD DEBUG RAW: AWS Access Key: #{access_key || "NOT SET"}, Secret Key: #{if has_secret, do: "SET", else: "NOT SET"}, Secret Key Length: #{if(is_binary(secret_key), do: String.length(secret_key), else: 0)}, Region: #{region_value || "NOT SET"}, S3 Bucket: #{bucket || "NOT SET"}"
-    )
+    if is_nil(secret_key) do
+      Logger.error("S3 UPLOAD: secret_access_key is nil! Setting placeholder")
+      Application.put_env(:ex_aws, :secret_access_key, "INVALID-SECRET-KEY-PLACEHOLDER")
+    end
 
-    # Also keep the structured logging
-    Logger.warning("S3 UPLOAD DEBUG: Current AWS config",
+    secret_key = Application.get_env(:ex_aws, :secret_access_key)
+    has_secret = secret_key != nil && secret_key != ""
+
+    Logger.debug("S3 STREAM UPLOAD: AWS config check",
       access_key_id: access_key,
       secret_key_set: has_secret,
-      secret_key_length: if(is_binary(secret_key), do: String.length(secret_key), else: 0),
       region: region_value,
-      s3_bucket: bucket
+      bucket: bucket
     )
 
     try do
-      # Double-check that AWS secret key is not nil right before creating the operation
-      secret_key = Application.get_env(:ex_aws, :secret_access_key)
+      # Stream the file in chunks to avoid loading entire file into memory
+      # Using 5MB chunks (S3 multipart minimum is 5MB except for last part)
+      chunk_size = 5 * 1024 * 1024
 
-      # If secret key is nil, provide a placeholder to avoid crypto error
-      if is_nil(secret_key) do
-        Logger.warning("S3 UPLOAD: Secret key is nil, setting placeholder to avoid crypto error")
-        Application.put_env(:ex_aws, :secret_access_key, "INVALID-SECRET-KEY-PLACEHOLDER")
-      end
-
-      # Create the S3 operation
-      operation =
-        ExAws.S3.put_object(bucket, key, file_binary, [
-          {:content_type, content_type}
-          # ACL setting removed - modern buckets typically use bucket policies instead of ACLs
-        ])
-
-      Logger.debug("S3 UPLOAD: Executing S3 put_object operation",
-        bucket: bucket,
-        key: key,
-        operation: inspect(operation),
-        content_length: byte_size(file_binary)
+      file_path
+      |> ExAws.S3.Upload.stream_file(chunk_size: chunk_size)
+      |> ExAws.S3.upload(bucket, key, content_type: content_type)
+      |> ExAws.request(
+        secret_access_key: secret_key,
+        access_key_id: access_key,
+        region: region_value
       )
-
-      # One final check right before making the request
-      secret_key = Application.get_env(:ex_aws, :secret_access_key)
-
-      if is_nil(secret_key) do
-        Logger.error(
-          "S3 UPLOAD: Secret key is STILL nil right before ExAws.request! Setting placeholder."
-        )
-
-        Application.put_env(:ex_aws, :secret_access_key, "INVALID-SECRET-KEY-PLACEHOLDER")
-      end
-
-      # Get the secret key for passing directly to ExAws.request
-      secret_key = Application.get_env(:ex_aws, :secret_access_key)
-
-      if is_nil(secret_key) || secret_key == "" do
-        Logger.error(
-          "S3 UPLOAD: Secret key is still nil or empty! Using placeholder for direct config override."
-        )
-
-        secret_key = "INVALID-SECRET-KEY-PLACEHOLDER"
-      end
-
-      # Pass the secret key directly in the config overrides to bypass application env
-      case ExAws.request(operation,
-             secret_access_key: secret_key,
-             access_key_id: access_key,
-             region: region_value
-           ) do
+      |> case do
         {:ok, response} = result ->
-          Logger.debug("S3 UPLOAD: Raw S3 response",
+          Logger.debug("S3 STREAM UPLOAD: Success",
             bucket: bucket,
-            key: key,
-            raw_response: inspect(response, pretty: true, limit: :infinity)
+            key: key
           )
 
           result
 
         {:error, error} = result ->
-          Logger.error("S3 UPLOAD ERROR: ExAws.request failed",
+          Logger.error("S3 STREAM UPLOAD ERROR: Failed",
             error: error,
             bucket: bucket,
             key: key
@@ -303,18 +268,16 @@ defmodule HookedApi.Services.ImageStorage do
       end
     rescue
       e ->
-        Logger.error("S3 UPLOAD EXCEPTION: Unhandled exception during S3 upload",
-          exception: e,
+        Logger.error("S3 STREAM UPLOAD EXCEPTION: #{Exception.message(e)}",
           bucket: bucket,
-          key: key
+          key: key,
+          stacktrace: Exception.format_stacktrace(__STACKTRACE__)
         )
 
         {:error, {:s3_upload_exception, Exception.message(e)}}
     catch
       kind, reason ->
-        Logger.error("S3 UPLOAD CAUGHT: Unexpected error during S3 upload",
-          kind: kind,
-          reason: reason,
+        Logger.error("S3 STREAM UPLOAD CAUGHT: #{kind} - #{inspect(reason)}",
           bucket: bucket,
           key: key
         )
@@ -628,6 +591,33 @@ defmodule HookedApi.Services.ImageStorage do
 
   defp get_storage_backend do
     Application.get_env(:hooked_api, :image_storage_backend, :local)
+  end
+
+  defp log_memory(stage, metadata) do
+    memory = :erlang.memory()
+
+    data =
+      Keyword.merge(
+        [
+          stage: stage,
+          total_mb: bytes_to_mb(memory[:total]),
+          processes_mb: bytes_to_mb(memory[:processes_used]),
+          binary_mb: bytes_to_mb(memory[:binary]),
+          ets_mb: bytes_to_mb(memory[:ets])
+        ],
+        Enum.to_list(metadata)
+      )
+
+    Logger.info("MEMORY #{format_memory(data)}")
+  end
+
+  defp bytes_to_mb(nil), do: nil
+  defp bytes_to_mb(bytes), do: Float.round(bytes / 1_048_576, 2)
+
+  defp format_memory(data) do
+    data
+    |> Enum.map(fn {key, value} -> "#{key}=#{inspect(value)}" end)
+    |> Enum.join(" ")
   end
 
   defp get_s3_bucket do

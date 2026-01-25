@@ -1,0 +1,30 @@
+  defp best_match(species_input) do
+    # species list is a text file species.txt in the root of the project
+    species_file_path = Path.join([Application.app_dir(:hooked_api), "..", "..", "species.txt"])
+    
+    species_list = 
+      case File.read(species_file_path) do
+        {:ok, content} ->
+          content
+          |> String.split("\n", trim: true)
+          |> Enum.reject(&(&1 == ""))
+        
+        {:error, _reason} ->
+          []
+      end
+    
+    if Enum.empty?(species_list) do
+      species_input
+    else
+      species_input_lower = String.downcase(species_input)
+      
+      species_list
+      |> Enum.map(fn species ->
+        species_lower = String.downcase(species)
+        distance = levenshtein_distance(species_input_lower, species_lower)
+        {species, distance}
+      end)
+      |> Enum.min_by(fn {_species, distance} -> distance end)
+      |> elem(0)
+    end
+  end

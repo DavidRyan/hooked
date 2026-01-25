@@ -124,7 +124,7 @@ class CatchRepositoryImpl(
             longitude = catchEntity.longitude,
             caughtAt = catchEntity.caughtAt ?: "2024-01-01T00:00:00Z",
             notes = catchEntity.notes,
-            imageBase64 = catchEntity.imageBase64
+            imageBytes = catchEntity.imageBytes
         )
         
         return try {

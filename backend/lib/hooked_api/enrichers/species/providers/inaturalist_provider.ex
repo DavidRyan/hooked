@@ -17,51 +17,38 @@ defmodule HookedApi.Enrichers.Species.Providers.InaturalistProvider do
   plug(Tesla.Middleware.Logger)
   plug(Tesla.Middleware.BaseUrl, "https://api.inaturalist.org/v1")
 
-  plug(Tesla.Middleware.Headers, [
-    {"Authorization", "Bearer #{Application.get_env(:hooked_api, :inaturalist_access_token)}"}
-  ])
+  adapter(Tesla.Adapter.Hackney,
+    timeout: 60_000,
+    recv_timeout: 120_000,
+    ssl_options: [verify: :verify_peer, cacerts: :certifi.cacerts()]
+  )
 
   @impl true
   def validate_configuration do
-    token = Application.get_env(:hooked_api, :inaturalist_access_token)
-
-    case token do
-      nil ->
-        Logger.warning("InaturalistProvider: No iNaturalist API token configured")
-        {:error, :no_api_key}
-
-      "YOUR_INATURALIST_ACCESS_TOKEN_HERE" ->
-        Logger.error(
-          "InaturalistProvider: iNaturalist API token is still set to placeholder value"
-        )
-
-        {:error, :invalid_api_key}
-
+    case System.get_env("INATURALIST_ACCESS_TOKEN") do
       token when is_binary(token) and byte_size(token) > 10 ->
-        Logger.debug("InaturalistProvider: API token configured (#{byte_size(token)} characters)")
         :ok
 
-      invalid ->
-        Logger.error("InaturalistProvider: Invalid API token configuration: #{inspect(invalid)}")
-        {:error, :invalid_api_key}
+      _ ->
+        Logger.error("InaturalistProvider: Missing INATURALIST_ACCESS_TOKEN")
+        {:error, :missing_api_token}
     end
   end
 
   @impl true
   def identify_species(image_data, filename) do
     Logger.info("InaturalistProvider: Starting species identification")
-    Logger.debug("InaturalistProvider: Processing image file (#{byte_size(image_data)} bytes)")
+    Logger.debug("InaturalistProvider: Preparing image payload")
 
     try do
+      token = System.get_env("INATURALIST_ACCESS_TOKEN")
+      headers = build_headers(token)
+
       with multipart <- build_multipart_request(image_data, filename),
            _ <- Logger.info("InaturalistProvider: Sending image to iNaturalist API"),
            {:ok, %Tesla.Env{status: 200, body: body} = response} <-
-             post("/computervision/score_image", multipart) do
+             post("/computervision/score_image", multipart, headers: headers) do
         Logger.info("InaturalistProvider: Received identification results from iNaturalist API")
-
-        Logger.debug(
-          "InaturalistProvider: Raw API response: #{inspect(body, pretty: true, limit: :infinity)}"
-        )
 
         parse_response(body, response)
       else
@@ -96,10 +83,21 @@ defmodule HookedApi.Enrichers.Species.Providers.InaturalistProvider do
     end
   end
 
-  defp build_multipart_request(image_data, filename) do
-    Tesla.Multipart.new()
-    |> Tesla.Multipart.add_file_content(image_data, filename, name: "image")
+  defp build_multipart_request(image_source, filename) when is_binary(image_source) do
+    if File.exists?(image_source) do
+      Tesla.Multipart.new()
+      |> Tesla.Multipart.add_file(image_source, name: "image", filename: filename)
+    else
+      Tesla.Multipart.new()
+      |> Tesla.Multipart.add_file_content(image_source, filename, name: "image")
+    end
   end
+
+  defp build_headers(token) when is_binary(token) do
+    [{"Authorization", "Bearer #{token}"}]
+  end
+
+  defp build_headers(_token), do: []
 
   defp parse_response(%{"results" => results}, response) when is_list(results) do
     Logger.debug("InaturalistProvider: Number of results: #{length(results)}")

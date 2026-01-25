@@ -489,6 +489,18 @@ fun SharedTransitionScope.CatchDetailsContent(
                                 )
                             }
 
+                            // Date Section
+                            details.timestamp
+                                ?.takeIf { it > 0 }
+                                ?.let { timestamp ->
+                                    val dateCaught = formatCatchDate(timestamp)
+                                    AnimatedDetailCard(
+                                        label = "Date",
+                                        value = dateCaught,
+                                        translationY = 0f // Already animated by parent Row
+                                    )
+                            }
+
                             // Weather Section
                             details.weatherData
                                 ?.takeIf { it.isNotEmpty() }

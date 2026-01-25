@@ -6,7 +6,7 @@ defmodule HookedApi.Enrichers.WeatherEnricher do
   @historical_weather_base_url "https://api.openweathermap.org/data/3.0"
   @historical_weather_endpoint "/onecall/timemachine"
 
-  def enrich(user_catch) do
+  def enrich(user_catch, _context \\ %{}) do
     Logger.debug("WeatherEnricher: Processing catch #{user_catch.id}")
 
     with {:ok, api_key} <- get_api_key(),

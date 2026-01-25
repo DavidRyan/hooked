@@ -10,10 +10,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.post
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
+import io.ktor.http.Headers
+import io.ktor.http.HttpHeaders
 
 class SubmitApiService(
     private val httpClient: HttpClient,
@@ -28,12 +30,28 @@ class SubmitApiService(
         try {
             val response = httpClient
                 .post("${NetworkConfig.BASE_URL}$endpoint") {
-                    contentType(ContentType.Application.Json)
-                    setBody(submitCatchDto)
+                    setBody(MultiPartFormDataContent(
+                        formData {
+                            append("user_catch[species]", submitCatchDto.species)
+                            submitCatchDto.latitude?.let { append("user_catch[latitude]", it.toString()) }
+                            submitCatchDto.longitude?.let { append("user_catch[longitude]", it.toString()) }
+                            submitCatchDto.photoBytes?.let { imageBytes ->
+                                append(
+                                    "image",
+                                    imageBytes,
+                                    Headers.build {
+                                        append(HttpHeaders.ContentType, "image/jpeg")
+                                        append(HttpHeaders.ContentDisposition, "filename=catch.jpg")
+                                    }
+                                )
+                            }
+                        }
+                    ))
                 }
-                .body<Map<String, String>>()
+                .body<Map<String, Map<String, String>>>()
             
-            val catchId = response["id"] ?: throw Exception("No catch ID returned in response")
+            val userCatch = response["user_catch"] ?: throw Exception("No catch returned in response")
+            val catchId = userCatch["id"] ?: throw Exception("No catch ID returned in response")
             Logger.logResponse(TAG, 201, "Created - ID: $catchId")
             return NetworkResult.Success(catchId)
         } catch (e: ClientRequestException) {

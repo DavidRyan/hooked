@@ -24,7 +24,7 @@ class SubmitCatchUseCaseTest {
             length = 30.0,
             latitude = 40.7128,
             longitude = -74.0060,
-            photoBase64 = "base64data",
+            photoBytes = byteArrayOf(1, 2, 3),
             timestamp = 1640995200000L
         )
         
@@ -45,7 +45,7 @@ class SubmitCatchUseCaseTest {
             length = 30.0,
             latitude = null,
             longitude = null,
-            photoBase64 = null,
+            photoBytes = null,
             timestamp = 0L
         )
         
@@ -66,7 +66,7 @@ class SubmitCatchUseCaseTest {
             length = 20.0,
             latitude = null,
             longitude = null,
-            photoBase64 = null,
+            photoBytes = null,
             timestamp = 0L
         )
         
@@ -87,7 +87,7 @@ class SubmitCatchUseCaseTest {
             length = 30.0,
             latitude = 40.7128,
             longitude = -74.0060,
-            photoBase64 = "base64data",
+            photoBytes = byteArrayOf(4, 5, 6),
             timestamp = 1640995200000L
         )
         

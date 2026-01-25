@@ -75,8 +75,8 @@ class SubmitCatchViewModel(
                     length = currentState.length.toDouble(),
                     latitude = currentState.latitude,
                     longitude = currentState.longitude,
-                    photoBase64 = currentState.photoUri?.let { 
-                        when (val result = convertImageToBytesUseCase.convertToBase64(it)) {
+                    photoBytes = currentState.photoUri?.let {
+                        when (val result = convertImageToBytesUseCase(it)) {
                             is UseCaseResult.Success -> result.data
                             is UseCaseResult.Error -> {
                                 throw IllegalStateException(result.message)

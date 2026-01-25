@@ -1,0 +1,17 @@
+defp normalize_species_name(species_name) do
+    case species_name do
+      nil ->
+        nil
+
+      name when is_binary(name) ->
+        name
+        |> String.trim()
+        |> case do
+          "" -> nil
+          trimmed -> trimmed
+        end
+
+      _ ->
+        nil
+    end
+  end

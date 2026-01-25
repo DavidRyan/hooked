@@ -1,0 +1,31 @@
+defp best_match(species_input) do
+  # species list is a text file species.txt in the root of the project
+  species_input_lower = String.downcase(species_input)
+  
+  species_list = read_species_list()
+  
+  species_list
+  |> Enum.map(fn species ->
+    species_lower = String.downcase(species)
+    distance = levenshtein_distance(species_input_lower, species_lower)
+    {species, distance}
+  end)
+  |> Enum.min_by(fn {_species, distance} -> distance end)
+  |> elem(0)
+end
+
+defp read_species_list do
+  species_file = Path.join([File.cwd!(), "species.txt"])
+  
+  case File.read(species_file) do
+    {:ok, content} ->
+      content
+      |> String.split("\n", trim: true)
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+    
+    {:error, _reason} ->
+      Logger.warning("SpeciesEnricher: Could not read species.txt file")
+      []
+  end
+end

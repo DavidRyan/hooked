@@ -1,0 +1,48 @@
+defp best_match_evenshtein(species_input, species_list) do
+    species_input_lower = String.downcase(species_input)
+    
+    species_list
+    |> Enum.map(fn species ->
+      species_lower = String.downcase(species)
+      distance = levenshtein_distance(species_input_lower, species_lower)
+      {species, distance}
+    end)
+    |> Enum.min_by(fn {_species, distance} -> distance end)
+    |> elem(0)
+  end
+
+  defp levenshtein_distance(string1, string2) do
+    s1 = String.graphemes(string1)
+    s2 = String.graphemes(string2)
+    
+    # Initialize the distance matrix
+    costs = 
+      Enum.reduce(0..length(s1), %{}, fn i, acc ->
+        Map.put(acc, {i, 0}, i)
+      end)
+    
+    costs = 
+      Enum.reduce(0..length(s2), costs, fn j, acc ->
+        Map.put(acc, {0, j}, j)
+      end)
+    
+    # Calculate distances
+    costs =
+      Enum.reduce(1..length(s1), costs, fn i, acc_i ->
+        Enum.reduce(1..length(s2), acc_i, fn j, acc_j ->
+          cost = if Enum.at(s1, i - 1) == Enum.at(s2, j - 1), do: 0, else: 1
+          
+          distance = min(
+            Map.get(acc_j, {i - 1, j}) + 1,
+            min(
+              Map.get(acc_j, {i, j - 1}) + 1,
+              Map.get(acc_j, {i - 1, j - 1}) + cost
+            )
+          )
+          
+          Map.put(acc_j, {i, j}, distance)
+        end)
+      end)
+    
+    Map.get(costs, {length(s1), length(s2)})
+  end

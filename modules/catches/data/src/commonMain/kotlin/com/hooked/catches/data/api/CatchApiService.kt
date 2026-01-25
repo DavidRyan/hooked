@@ -17,10 +17,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
 import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
-import io.ktor.http.contentType
 
 class CatchApiService(
     private val httpClient: HttpClient,
@@ -82,8 +80,15 @@ class CatchApiService(
                         submitCatchDto.longitude?.let { append("user_catch[longitude]", it.toString()) }
                         submitCatchDto.notes?.let { append("user_catch[notes]", it) }
                         
-                        submitCatchDto.imageBase64?.let { base64 ->
-                            append("user_catch[image_base64]", base64)
+                        submitCatchDto.imageBytes?.let { imageBytes ->
+                            append(
+                                "image",
+                                imageBytes,
+                                Headers.build {
+                                    append(HttpHeaders.ContentType, "image/jpeg")
+                                    append(HttpHeaders.ContentDisposition, "filename=catch.jpg")
+                                }
+                            )
                         }
                     }
                 ))

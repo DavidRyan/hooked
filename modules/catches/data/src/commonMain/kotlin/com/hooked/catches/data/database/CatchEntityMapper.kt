@@ -3,6 +3,12 @@ package com.hooked.catches.data.database
 import com.hooked.catches.domain.entities.CatchEntity as DomainCatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
 import com.hooked.core.logging.Logger
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.Json
 
 fun CatchEntity.toDomainEntity(): DomainCatchEntity {
@@ -37,10 +43,30 @@ fun CatchEntity.toCatchDetailsEntity(): CatchDetailsEntity {
         length = 0.0, // Length not in current schema, using default
         latitude = latitude,
         longitude = longitude,
-        timestamp = null, // Convert datetime string to timestamp if needed
+        timestamp = parseCaughtAtToTimestamp(caught_at),
         photoUrl = image_url ?: "",
         location = location,
         dateCaught = caught_at?.take(10), // Extract date part from datetime string
         weatherData = weatherData
     )
+}
+
+private fun parseCaughtAtToTimestamp(caughtAt: String?): Long? {
+    if (caughtAt.isNullOrBlank()) {
+        return null
+    }
+
+    return runCatching {
+        Instant.parse(caughtAt).toEpochMilliseconds()
+    }.getOrElse { _: Throwable ->
+        runCatching {
+            LocalDateTime.parse(caughtAt)
+                .toInstant(TimeZone.UTC)
+                .toEpochMilliseconds()
+        }.getOrNull() ?: runCatching {
+            LocalDate.parse(caughtAt)
+                .atStartOfDayIn(TimeZone.UTC)
+                .toEpochMilliseconds()
+        }.getOrNull()
+    }
 }

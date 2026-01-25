@@ -6,6 +6,6 @@ data class SubmitCatchRequest(
     val length: Double,
     val latitude: Double?,
     val longitude: Double?,
-    val photoBase64: String? = null,
+    val photoBytes: ByteArray? = null,
     val timestamp: Long = 0L
 )

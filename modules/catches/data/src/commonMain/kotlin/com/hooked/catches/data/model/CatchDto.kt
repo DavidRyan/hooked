@@ -4,6 +4,12 @@ import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toInstant
 
 @Serializable
 data class CatchDto(
@@ -44,10 +50,30 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
         length = 0.0, // Length not in current schema, using default
         latitude = latitude,
         longitude = longitude,
-        timestamp = null, // Convert datetime string to timestamp if needed
+        timestamp = parseCaughtAtToTimestamp(caughtAt),
         photoUrl = imageUrl ?: "",
         location = location,
         dateCaught = caughtAt?.take(10), // Extract date part from datetime string
         weatherData = weatherData
     )
+}
+
+private fun parseCaughtAtToTimestamp(caughtAt: String?): Long? {
+    if (caughtAt.isNullOrBlank()) {
+        return null
+    }
+
+    return runCatching {
+        Instant.parse(caughtAt).toEpochMilliseconds()
+    }.getOrElse { _: Throwable ->
+        runCatching {
+            LocalDateTime.parse(caughtAt)
+                .toInstant(TimeZone.UTC)
+                .toEpochMilliseconds()
+        }.getOrNull() ?: runCatching {
+            LocalDate.parse(caughtAt)
+                .atStartOfDayIn(TimeZone.UTC)
+                .toEpochMilliseconds()
+        }.getOrNull()
+    }
 }

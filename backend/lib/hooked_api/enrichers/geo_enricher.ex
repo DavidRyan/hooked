@@ -2,7 +2,7 @@ defmodule HookedApi.Enrichers.GeoEnricher do
   @behaviour HookedApi.Enrichers.Enricher
   require Logger
 
-  def enrich(user_catch) do
+  def enrich(user_catch, _context \\ %{}) do
     Logger.info("GeoEnricher: Starting GPS enrichment for catch #{user_catch.id}")
 
     Logger.debug(

@@ -118,6 +118,14 @@ defmodule HookedApi.Utils.ExifExtractor do
     # Extract GPS data from the GPS struct if present
     gps_data = extract_gps_data(Map.get(exif_data, :gps))
 
+    # Extract datetime from nested :exif map (where cameras typically store it)
+    exif_submap = Map.get(exif_data, :exif, %{})
+
+    datetime = Map.get(exif_submap, :datetime_digitized)
+
+    # Parse the datetime string if present
+    parsed_datetime = parse_exif_datetime(datetime)
+
     normalized = %{
       # GPS coordinates
       gps_latitude: gps_data.latitude,
@@ -129,15 +137,16 @@ defmodule HookedApi.Utils.ExifExtractor do
       make: Map.get(exif_data, :make),
       model: Map.get(exif_data, :model),
 
-      # Image settings
-      datetime: Map.get(exif_data, :datetime),
+      # Image settings - use parsed datetime
+      datetime: parsed_datetime,
       orientation: Map.get(exif_data, :orientation),
 
-      # Technical details
-      iso_speed: Map.get(exif_data, :iso_speed_ratings),
-      focal_length: Map.get(exif_data, :focal_length),
-      aperture: Map.get(exif_data, :f_number),
-      exposure_time: Map.get(exif_data, :exposure_time),
+      # Technical details - check both top level and :exif submap
+      iso_speed:
+        Map.get(exif_submap, :iso_speed_ratings) || Map.get(exif_data, :iso_speed_ratings),
+      focal_length: Map.get(exif_submap, :focal_length) || Map.get(exif_data, :focal_length),
+      aperture: Map.get(exif_submap, :f_number) || Map.get(exif_data, :f_number),
+      exposure_time: Map.get(exif_submap, :exposure_time) || Map.get(exif_data, :exposure_time),
 
       # Keep raw data for future use but ensure GPS struct is safely converted
       _raw: sanitize_exif_data(exif_data)
@@ -159,6 +168,41 @@ defmodule HookedApi.Utils.ExifExtractor do
 
     normalized
   end
+
+  # Parse EXIF datetime string like "2025:06:10 19:09:58" into NaiveDateTime
+  defp parse_exif_datetime(nil), do: nil
+
+  defp parse_exif_datetime(datetime_str) when is_binary(datetime_str) do
+    # Remove surrounding quotes if present
+    cleaned = datetime_str |> String.trim("\"") |> String.trim()
+
+    # EXIF format is "YYYY:MM:DD HH:MM:SS"
+    case Regex.run(~r/(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})/, cleaned) do
+      [_, year, month, day, hour, minute, second] ->
+        case NaiveDateTime.new(
+               String.to_integer(year),
+               String.to_integer(month),
+               String.to_integer(day),
+               String.to_integer(hour),
+               String.to_integer(minute),
+               String.to_integer(second)
+             ) do
+          {:ok, datetime} ->
+            Logger.info("ExifExtractor: Parsed datetime: #{datetime}")
+            datetime
+
+          {:error, reason} ->
+            Logger.warning("ExifExtractor: Failed to create datetime: #{inspect(reason)}")
+            nil
+        end
+
+      _ ->
+        Logger.warning("ExifExtractor: Could not parse datetime string: #{inspect(datetime_str)}")
+        nil
+    end
+  end
+
+  defp parse_exif_datetime(_), do: nil
 
   # Extract GPS coordinates from Exexif.Data.Gps struct
   def extract_gps_data(%Exexif.Data.Gps{} = gps) do

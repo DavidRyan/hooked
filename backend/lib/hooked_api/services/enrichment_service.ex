@@ -2,7 +2,7 @@ defmodule HookedApi.Services.EnrichmentService do
   require Logger
   alias HookedApi.Workers.CatchEnrichmentWorker
 
-  def enqueue_enrichment(user_catch) do
+  def enqueue_enrichment(user_catch, local_image_path \\ nil) do
     Logger.info(
       "EnrichmentService: Starting enrichment enqueue process for catch #{user_catch.id}"
     )
@@ -17,11 +17,13 @@ defmodule HookedApi.Services.EnrichmentService do
       "EnrichmentService: GPS coordinates - lat: #{inspect(user_catch.latitude)}, lng: #{inspect(user_catch.longitude)}"
     )
 
+    Logger.debug("EnrichmentService: Local image path: #{inspect(local_image_path)}")
+
     try do
       Logger.debug("EnrichmentService: Creating Oban job for catch enrichment")
 
       result =
-        %{catch_id: user_catch.id, user_catch: user_catch}
+        %{catch_id: user_catch.id, user_catch: user_catch, local_image_path: local_image_path}
         |> CatchEnrichmentWorker.new()
         |> Oban.insert()
 
