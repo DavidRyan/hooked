@@ -92,6 +92,7 @@ import com.hooked.core.animation.AnimationSpecs
 import com.hooked.catches.presentation.components.CatchGridItem
 import com.hooked.catches.presentation.components.AnimatedDetailCard
 import com.hooked.catches.presentation.components.MapColumn
+import com.hooked.catches.presentation.components.SunSection
 import com.hooked.catches.presentation.components.WeatherSection
 import com.hooked.catches.presentation.state.rememberCatchesScreenState
 import com.hooked.core.presentation.toast.ToastManager
@@ -475,6 +476,12 @@ fun SharedTransitionScope.CatchDetailsContent(
                                         translationY = 0f
                                     )
                                 }
+
+                            SunSection(
+                                sunriseHour = 6.5f,
+                                sunsetHour = 19.5f,
+                                catchHour = 14f
+                            )
                         }
 
                         MapColumn(

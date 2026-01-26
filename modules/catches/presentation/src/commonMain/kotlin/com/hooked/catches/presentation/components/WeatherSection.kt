@@ -62,6 +62,7 @@ fun WeatherSection(
             )
         }
 
+/*
         if (weather.weatherText.isNotEmpty()) {
             AnimatedDetailCard(
                 label = "Weather",
@@ -69,5 +70,6 @@ fun WeatherSection(
                 translationY = translationY
             )
         }
+*/
     }
 }
