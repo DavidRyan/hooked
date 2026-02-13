@@ -1,0 +1,51 @@
+def enrich(user_catch, _context \\ %{}) do
+    Logger.debug("WeatherEnricher: Processing catch #{user_catch.id}")
+
+    with {:ok, api_key} <- get_api_key(),
+         {:ok, lat, lng} <- get_coordinates(user_catch),
+         {:ok, weather_data} <- fetch_historical_weather(lat, lng, user_catch.caught_at, api_key),
+         {:ok, weather_data_historical} <- fetch_historical_weather(lat, lng, user_catch.caught_at - 3600, api_key) do
+      Logger.info(
+        "WeatherEnricher: Successfully enriched catch #{user_catch.id} with historical weather data"
+      )
+      # add a new field for pressure rising or falling based on historical and weather_data
+      pressure_trend = calculate_pressure_trend(weather_data_historical.pressure, weather_data.pressure)
+      enriched_weather_data = Map.put(weather_data, :pressure_trend, pressure_trend)
+
+      {:ok, %{user_catch | weather_data: enriched_weather_data}}
+    else
+      {:error, :no_api_key} ->
+        Logger.warning(
+          "WeatherEnricher: OpenWeatherMap API key not configured for catch #{user_catch.id}"
+        )
+
+        {:ok, %{user_catch | enrichment_status: false}}
+
+      {:error, :no_coordinates} ->
+        Logger.debug(
+          "WeatherEnricher: No coordinates available for weather enrichment for catch #{user_catch.id}"
+        )
+
+        {:ok, %{user_catch | enrichment_status: false}}
+
+      {:error, reason} ->
+        Logger.error(
+          "WeatherEnricher: Weather enrichment failed for catch #{user_catch.id}: #{inspect(reason)}"
+        )
+
+        # Continue without weather data on failure
+        {:ok, %{user_catch | enrichment_status: false}}
+    end
+  end
+
+  defp calculate_pressure_trend(historical_pressure, current_pressure) when is_number(historical_pressure) and is_number(current_pressure) do
+    pressure_diff = current_pressure - historical_pressure
+    
+    cond do
+      pressure_diff > 1.0 -> "rising"
+      pressure_diff < -1.0 -> "falling"
+      true -> "steady"
+    end
+  end
+
+  defp calculate_pressure_trend(_historical_pressure, _current_pressure), do: nil

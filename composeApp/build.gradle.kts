@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    id("org.jetbrains.kotlin.native.cocoapods")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20"
 }
 
@@ -23,6 +24,19 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
+    cocoapods {
+        summary = "Hooked"
+        homepage = "https://hooked.app"
+        ios.deploymentTarget = "14.1"
+        version = "1.0.0"
+
+        framework {
+            baseName = "ComposeApp"
+        }
+
+        pod("MapboxMaps", "~> 10.16.0")
+    }
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -40,6 +54,9 @@ kotlin {
                 implementation(project(":modules:catches:presentation"))
                 implementation(project(":modules:catches:domain"))
                 implementation(project(":modules:catches:data"))
+                implementation(project(":modules:skunks:presentation"))
+                implementation(project(":modules:skunks:domain"))
+                implementation(project(":modules:skunks:data"))
                 implementation(project(":modules:auth:presentation"))
                 implementation(project(":modules:auth:domain"))
                 implementation(project(":modules:auth:data"))

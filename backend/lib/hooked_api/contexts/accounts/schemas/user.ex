@@ -40,6 +40,7 @@ defmodule HookedApi.Accounts.User do
     field(:locked_until, :utc_datetime)
     field(:last_failed_login, :utc_datetime)
     has_many(:catches, HookedApi.Catches.UserCatch)
+    has_many(:skunks, HookedApi.Skunks.UserSkunk)
 
     timestamps(type: :utc_datetime)
   end

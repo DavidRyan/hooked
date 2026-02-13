@@ -1,0 +1,52 @@
+def enrich(user_catch, _context \\ %{}) do
+    Logger.debug("WeatherEnricher: Processing catch #{user_catch.id}")
+
+    with {:ok, api_key} <- get_api_key(),
+         {:ok, lat, lng} <- get_coordinates(user_catch) do
+         # fix syntax errors
+         weather_data_task = Task.async(fn -> fetch_historical_weather(lat, lng, user_catch.caught_at - 18000000, api_key) end)
+         weather_data_historical_task = Task.async(fn -> fetch_historical_weather(lat, lng, user_catch.caught_at, api_key) end)
+      
+      weather_data_result = Task.await(weather_data_task)
+      weather_data_historical_result = Task.await(weather_data_historical_task)
+      
+      with {:ok, weather_data} <- weather_data_result,
+           {:ok, weather_data_historical} <- weather_data_historical_result do
+        Logger.info(
+          "WeatherEnricher: Successfully enriched catch #{user_catch.id} with historical weather data"
+        )
+        pressure_trend = calculate_pressure_trend(weather_data_historical.pressure, weather_data.pressure)
+        enriched_weather_data = Map.put(weather_data, :pressure_trend, pressure_trend)
+
+        {:ok, %{user_catch | weather_data: enriched_weather_data}}
+      else
+        _ ->
+          Logger.error(
+            "WeatherEnricher: Failed to fetch weather data for catch #{user_catch.id}"
+          )
+          {:ok, %{user_catch | enrichment_status: false}}
+      end
+    else
+      {:error, :no_api_key} ->
+        Logger.warning(
+          "WeatherEnricher: OpenWeatherMap API key not configured for catch #{user_catch.id}"
+        )
+
+        {:ok, %{user_catch | enrichment_status: false}}
+
+      {:error, :no_coordinates} ->
+        Logger.debug(
+          "WeatherEnricher: No coordinates available for weather enrichment for catch #{user_catch.id}"
+        )
+
+        {:ok, %{user_catch | enrichment_status: false}}
+
+      {:error, reason} ->
+        Logger.error(
+          "WeatherEnricher: Weather enrichment failed for catch #{user_catch.id}: #{inspect(reason)}"
+        )
+
+        # Continue without weather data on failure
+        {:ok, %{user_catch | enrichment_status: false}}
+    end
+  end

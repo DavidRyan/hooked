@@ -24,6 +24,8 @@ import com.hooked.core.presentation.toast.ToastHost
 import com.hooked.catches.presentation.SubmitCatchScreen
 import com.hooked.catches.presentation.SubmitCatchViewModel
 import com.hooked.catches.presentation.StatsScreen
+import com.hooked.skunks.presentation.SubmitSkunkScreen
+import com.hooked.skunks.presentation.SubmitSkunkViewModel
 import org.koin.compose.KoinContext
 import org.koin.compose.viewmodel.koinViewModel
 import com.hooked.theme.HookedTheme
@@ -156,7 +158,8 @@ fun HookedApp(
                     },
                     exitTransition = {
                         when (targetState.destination.route) {
-                            Screens.SubmitCatch::class.qualifiedName -> {
+                            Screens.SubmitCatch::class.qualifiedName,
+                            Screens.SubmitSkunk::class.qualifiedName -> {
                                 slideOutOfContainer(
                                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
                                     animationSpec = tween(300)
@@ -167,7 +170,8 @@ fun HookedApp(
                     },
                     popEnterTransition = {
                         when (initialState.destination.route) {
-                            Screens.SubmitCatch::class.qualifiedName -> {
+                            Screens.SubmitCatch::class.qualifiedName,
+                            Screens.SubmitSkunk::class.qualifiedName -> {
                                 slideIntoContainer(
                                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
                                     animationSpec = tween(300)
@@ -223,6 +227,42 @@ fun HookedApp(
                         animatedVisibilityScope = this
                      )
                      }
+                composable<Screens.SubmitSkunk>(
+                    enterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    }
+                ) {
+                    SubmitSkunkScreen(
+                        viewModel = koinViewModel<SubmitSkunkViewModel>(),
+                        navigate = { screen ->
+                            when (screen) {
+                                is Screens.CatchGrid -> navController.popBackStack()
+                                else -> navController.navigate(screen)
+                            }
+                        }
+                    )
+                }
                  composable<Screens.Stats> {
                      StatsScreen(
                          onNavigateBack = { navController.popBackStack() }

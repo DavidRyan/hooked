@@ -21,6 +21,11 @@ import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
 import com.hooked.auth.data.api.AuthInterceptor
 import com.hooked.core.presentation.toast.ToastManager
+import com.hooked.skunks.data.api.SkunkApiService
+import com.hooked.skunks.data.repo.SkunkRepositoryImpl
+import com.hooked.skunks.domain.repositories.SkunkRepository
+import com.hooked.skunks.domain.usecases.SubmitSkunkUseCase
+import com.hooked.skunks.presentation.SubmitSkunkViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.serialization.kotlinx.json.json
@@ -35,6 +40,7 @@ val presentationModule = module {
     viewModelOf(::CatchDetailsViewModel)
     viewModel { SubmitCatchViewModel(get(), get()) }
     viewModel { StatsViewModel(get(), get()) }
+    viewModel { SubmitSkunkViewModel(get(), get()) }
 } + authPresentationModule
 
 val dataModule = module {
@@ -57,6 +63,10 @@ val dataModule = module {
         CatchApiService(get())
     }
 
+    single<SkunkApiService> {
+        SkunkApiService(get())
+    }
+
     single { DatabaseModule(get()) }
     
     single<CatchLocalDataSource> {
@@ -65,6 +75,10 @@ val dataModule = module {
 
     single<CatchesRepositoryInterface> {
         CatchRepositoryImpl(get(), get())
+    }
+
+    single<SkunkRepository> {
+        SkunkRepositoryImpl(get())
     }
 } + authDataModule
 
@@ -75,4 +89,5 @@ val useCaseModule = module {
     single { DeleteCatchUseCase(get()) }
     single { GetCatchStatsUseCase(get()) }
     single { GetFishingInsightsUseCase(get()) }
+    single { SubmitSkunkUseCase(get()) }
 } + authUseCaseModule

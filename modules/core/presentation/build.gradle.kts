@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
+    id("org.jetbrains.kotlin.native.cocoapods")
     id("org.jetbrains.kotlin.plugin.serialization") version "2.1.20"
 }
 
@@ -12,6 +13,11 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+
+    cocoapods {
+        ios.deploymentTarget = "14.1"
+        pod("MapboxMaps", "~> 10.16.0")
+    }
 
     sourceSets {
         val commonMain by getting {
@@ -46,6 +52,12 @@ kotlin {
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
                 implementation("androidx.exifinterface:exifinterface:1.3.7")
+                
+                // Location services
+                implementation("com.google.android.gms:play-services-location:21.3.0")
+
+                // Mapbox Maps SDK (Android) — plugins are bundled in the core artifact
+                implementation("com.mapbox.maps:android:10.16.6")
                 
                 // Coil Android-specific dependencies
                 implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha05")

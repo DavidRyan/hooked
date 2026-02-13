@@ -43,6 +43,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Clear
+import com.hooked.catches.presentation.components.SpeedDialFab
+import com.hooked.catches.presentation.components.SpeedDialItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -50,7 +53,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -297,33 +300,27 @@ fun SharedTransitionScope.CatchGridContent(
                 )
             }
             
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(AnimationConstants.FAB_PADDING_DP.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                horizontalAlignment = Alignment.End
-            ) {
-                FloatingActionButton(
-                    onClick = { navigate(Screens.Stats) },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.List,
-                        contentDescription = "Statistics"
+            SpeedDialFab(
+                modifier = Modifier.fillMaxSize(),
+                items = listOf(
+                    SpeedDialItem(
+                        icon = Icons.Default.List,
+                        label = "Stats",
+                        onClick = { navigate(Screens.Stats) }
+                    ),
+                    SpeedDialItem(
+                        icon = Icons.Default.Clear,
+                        label = "Log Skunk",
+                        onClick = { navigate(Screens.SubmitSkunk) }
+                    ),
+                    SpeedDialItem(
+                        icon = Icons.Default.Add,
+                        label = "Log Catch",
+                        onClick = { navigate(Screens.SubmitCatch) },
+                        containerColor = MaterialTheme.colorScheme.primary
                     )
-                }
-
-                FloatingActionButton(
-                    onClick = { navigate(Screens.SubmitCatch) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add new catch"
-                    )
-                }
-            }
+                )
+            )
         }
     }
 }

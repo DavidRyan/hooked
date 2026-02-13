@@ -46,6 +46,8 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Hooked uses your location to record where you fish, enabling weather and location insights for your catches and fishing trips.</string>
 	<key>MAPBOX_ACCESS_TOKEN</key>
 	<string>$(MAPBOX_ACCESS_TOKEN)</string>
 	<key>API_BASE_URL</key>
