@@ -1,0 +1,232 @@
+.dashboard {
+  min-height: 100vh;
+  background-color: var(--color-base);
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-surface1);
+  border-bottom: 1px solid var(--color-overlay0);
+}
+
+.dashboard-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dashboard-logout {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: 1px solid var(--color-overlay1);
+  border-radius: 6px;
+  color: var(--color-subtext1);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.dashboard-logout:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+/* Catches */
+
+.catches-container {
+  padding: 1.5rem;
+}
+
+.catches-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.catches-heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.catches-refresh {
+  padding: 0.4rem 0.75rem;
+  background: none;
+  border: 1px solid var(--color-overlay1);
+  border-radius: 6px;
+  color: var(--color-subtext1);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.catches-refresh:hover:not(:disabled) {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.catches-refresh:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Grid */
+
+.catches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Card */
+
+.catch-card {
+  background-color: var(--color-surface1);
+  border: 1px solid var(--color-overlay0);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.catch-card:hover {
+  border-color: var(--color-primary);
+}
+
+.catch-image-wrap {
+  aspect-ratio: 1;
+  overflow: hidden;
+  background-color: var(--color-surface0);
+}
+
+.catch-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.catch-no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-disabled);
+  font-size: 0.85rem;
+}
+
+.catch-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.catch-species {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catch-location {
+  font-size: 0.8rem;
+  color: var(--color-subtext0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.catch-date {
+  font-size: 0.75rem;
+  color: var(--color-disabled);
+}
+
+/* Skeleton loading */
+
+.catch-skeleton {
+  pointer-events: none;
+}
+
+.catch-skeleton-image {
+  aspect-ratio: 1;
+  background: linear-gradient(
+    110deg,
+    var(--color-surface0) 30%,
+    var(--color-surface2) 50%,
+    var(--color-surface0) 70%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.catch-skeleton-text {
+  height: 0.75rem;
+  margin: 0.5rem 0.75rem 0;
+  border-radius: 4px;
+  background-color: var(--color-surface2);
+  width: 70%;
+}
+
+.catch-skeleton-text.short {
+  width: 45%;
+  margin-bottom: 0.6rem;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Empty state */
+
+.catches-empty {
+  text-align: center;
+  padding: 4rem 1rem;
+}
+
+.catches-empty-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-subtext1);
+  margin-bottom: 0.5rem;
+}
+
+.catches-empty-sub {
+  color: var(--color-disabled);
+  font-size: 0.9rem;
+}
+
+/* Error state */
+
+.catches-error {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--color-error);
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.catches-retry {
+  padding: 0.4rem 1rem;
+  background: none;
+  border: 1px solid var(--color-error);
+  border-radius: 6px;
+  color: var(--color-error);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.catches-retry:hover {
+  opacity: 0.8;
+}

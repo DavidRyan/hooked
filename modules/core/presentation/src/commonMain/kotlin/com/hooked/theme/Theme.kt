@@ -6,20 +6,20 @@ import androidx.compose.ui.graphics.Color
 
 val HookedTheme = darkColorScheme(
     // Primary colors
-    primary = Colors.mutedTeal,
-    onPrimary = Colors.white,
-    primaryContainer = Colors.warmBeige,
-    onPrimaryContainer = Colors.almostBlack,
-    
+    primary = Colors.mediumTeal,
+    onPrimary = Colors.darkNavy,
+    primaryContainer = Colors.lightMint,
+    onPrimaryContainer = Colors.darkNavy,
+
     // Secondary colors
-    secondary = Colors.warmBeige,
-    onSecondary = Colors.almostBlack,
-    secondaryContainer = Colors.warmBeige,
-    onSecondaryContainer = Colors.almostBlack,
-    
+    secondary = Colors.lightMint,
+    onSecondary = Colors.darkNavy,
+    secondaryContainer = Colors.lightMint,
+    onSecondaryContainer = Colors.darkNavy,
+
     // Tertiary colors
-    tertiary = Colors.darkerBeige,
-    onTertiary = Colors.almostBlack,
+    tertiary = Colors.mediumBlue,
+    onTertiary = Colors.darkNavy,
     tertiaryContainer = Colors.surface2,
     onTertiaryContainer = Colors.text,
     
@@ -38,12 +38,12 @@ val HookedTheme = darkColorScheme(
     onSurface = Colors.text,
     surfaceVariant = Colors.surface1,
     onSurfaceVariant = Colors.subtext1,
-    surfaceTint = Colors.mutedTeal,
-    
+    surfaceTint = Colors.mediumTeal,
+
     // Inverse colors (for snackbars, etc.)
-    inverseSurface = Colors.lightCream,
-    inverseOnSurface = Colors.almostBlack,
-    inversePrimary = Colors.mutedTeal,
+    inverseSurface = Colors.lightBlue,
+    inverseOnSurface = Colors.darkNavy,
+    inversePrimary = Colors.mediumTeal,
     
     // Outline colors (borders, dividers)
     outline = Colors.overlay1,
