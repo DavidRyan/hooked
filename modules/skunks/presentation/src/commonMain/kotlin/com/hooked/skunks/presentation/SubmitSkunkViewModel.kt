@@ -9,9 +9,6 @@ import com.hooked.skunks.presentation.model.SubmitSkunkEffect
 import com.hooked.skunks.presentation.model.SubmitSkunkIntent
 import com.hooked.skunks.presentation.model.SubmitSkunkState
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 class SubmitSkunkViewModel(
     private val submitSkunkUseCase: SubmitSkunkUseCase,
@@ -19,13 +16,17 @@ class SubmitSkunkViewModel(
 ) : HookedViewModel<SubmitSkunkIntent, SubmitSkunkState, SubmitSkunkEffect>() {
 
     override fun createInitialState(): SubmitSkunkState {
-        val now = Clock.System.now()
-            .toLocalDateTime(TimeZone.currentSystemDefault())
-            .toString()
+        // Note: Using empty string as placeholder for initial date
+        // The UI should set the actual date via UpdateFishedAt intent
+        val hasPermission = try {
+            locationService.hasLocationPermission()
+        } catch (e: Exception) {
+            false
+        }
 
         return SubmitSkunkState(
-            fishedAt = now,
-            hasLocationPermission = locationService.hasLocationPermission()
+            fishedAt = "", // Will be set by the UI
+            hasLocationPermission = hasPermission
         )
     }
 

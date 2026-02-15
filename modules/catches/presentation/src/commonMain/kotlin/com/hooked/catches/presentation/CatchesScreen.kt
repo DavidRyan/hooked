@@ -44,6 +44,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Person
 import com.hooked.catches.presentation.components.SpeedDialFab
 import com.hooked.catches.presentation.components.SpeedDialItem
 import androidx.compose.material3.AlertDialog
@@ -216,6 +217,15 @@ fun SharedTransitionScope.CatchGridContent(
         ) {
             TopAppBar(
                 title = { Text("My Catches") },
+                actions = {
+                    IconButton(onClick = { navigate(Screens.Profile) }) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profile",
+                            tint = HookedTheme.onPrimary
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = HookedTheme.primary,
                     titleContentColor = HookedTheme.onPrimary

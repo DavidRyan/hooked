@@ -1,0 +1,3 @@
+// Production environment
+// Points to Fly.io hosted backend
+API_BASE_URL=https:$(/)$(/)hooked-backend.fly.dev/api

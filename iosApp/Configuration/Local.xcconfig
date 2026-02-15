@@ -1,0 +1,3 @@
+// Local development environment
+// Points to locally running Phoenix backend
+API_BASE_URL=http:$(/)$(/)localhost:4000/api

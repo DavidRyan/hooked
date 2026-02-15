@@ -1,3 +1,5 @@
+@file:OptIn(kotlin.time.ExperimentalTime::class)
+
 package com.hooked.catches.data.model
 
 import com.hooked.catches.domain.entities.CatchEntity

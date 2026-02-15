@@ -3,6 +3,8 @@ package com.hooked.core.datetime
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,23 +29,38 @@ actual fun NativeDateTimePickerField(
 ) {
     val context = LocalContext.current
     val formatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss") }
+    val displayFormatter = remember { DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a") }
 
-    val initialDateTime = remember(value) {
-        runCatching { LocalDateTime.parse(value) }.getOrElse { LocalDateTime.now() }
+    val currentDateTime = remember(value) {
+        if (value.isBlank()) {
+            LocalDateTime.now()
+        } else {
+            runCatching { LocalDateTime.parse(value) }.getOrElse { LocalDateTime.now() }
+        }
     }
 
-    val calendar = remember {
+    val displayValue = remember(value) {
+        if (value.isBlank()) {
+            "Tap to select date/time"
+        } else {
+            runCatching {
+                LocalDateTime.parse(value).format(displayFormatter)
+            }.getOrElse { value }
+        }
+    }
+
+    val calendar = remember(currentDateTime) {
         Calendar.getInstance().apply {
-            set(Calendar.YEAR, initialDateTime.year)
-            set(Calendar.MONTH, initialDateTime.monthValue - 1)
-            set(Calendar.DAY_OF_MONTH, initialDateTime.dayOfMonth)
-            set(Calendar.HOUR_OF_DAY, initialDateTime.hour)
-            set(Calendar.MINUTE, initialDateTime.minute)
+            set(Calendar.YEAR, currentDateTime.year)
+            set(Calendar.MONTH, currentDateTime.monthValue - 1)
+            set(Calendar.DAY_OF_MONTH, currentDateTime.dayOfMonth)
+            set(Calendar.HOUR_OF_DAY, currentDateTime.hour)
+            set(Calendar.MINUTE, currentDateTime.minute)
             set(Calendar.SECOND, 0)
         }
     }
 
-    val onPickDateTime = {
+    val showDatePicker = {
         DatePickerDialog(
             context,
             { _, year, month, day ->
@@ -78,20 +95,23 @@ actual fun NativeDateTimePickerField(
     }
 
     Column(modifier = modifier) {
-        OutlinedTextField(
-            value = value,
-            onValueChange = {},
+        // Wrap in a Box with clickable to intercept taps
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onPickDateTime() },
-            label = { Text(label) },
-            readOnly = true
-        )
-        Text(
-            text = "Tap to choose",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 6.dp)
-        )
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) { showDatePicker() }
+        ) {
+            OutlinedTextField(
+                value = displayValue,
+                onValueChange = {},
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(label) },
+                readOnly = true,
+                enabled = false // Disable to prevent focus, Box handles clicks
+            )
+        }
     }
 }

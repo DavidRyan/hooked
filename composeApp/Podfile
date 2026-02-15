@@ -1,0 +1,18 @@
+platform :ios, '14.1'
+use_frameworks!
+
+target 'composeApp' do
+  pod 'MapboxMaps', '~> 11.18.0'
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # Ensure minimum iOS 12.0 for all pods (Xcode requirement)
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 12.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '12.0'
+      end
+      config.build_settings['SWIFT_VERSION'] = '5.9'
+    end
+  end
+end

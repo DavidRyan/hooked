@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hooked.core.datetime.NativeDateTimePickerField
+import com.hooked.core.location.LocationPermissionRequester
 import com.hooked.core.map.NativeMapPicker
 import com.hooked.core.nav.Screens
 import com.hooked.core.presentation.toast.ToastManager
@@ -32,6 +33,15 @@ fun SubmitSkunkScreen(
     val state by viewModel.state.collectAsState()
     var showMapPicker by remember { mutableStateOf(false) }
 
+    LocationPermissionRequester(
+        onPermissionResult = { granted ->
+            viewModel.onLocationPermissionResult(granted)
+            if (!granted) {
+                toastManager.showError("Location permission is required to get your position")
+            }
+        }
+    ) { requestPermission ->
+
     LaunchedEffect(Unit) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
@@ -43,8 +53,7 @@ fun SubmitSkunkScreen(
                     toastManager.showError(effect.message)
                 }
                 is SubmitSkunkEffect.RequestLocationPermission -> {
-                    viewModel.requestLocationPermission()
-                    toastManager.showError("Grant location permission and tap Get Location again")
+                    requestPermission()
                 }
             }
         }
@@ -157,6 +166,7 @@ fun SubmitSkunkScreen(
             }
         }
     }
+    } // LocationPermissionRequester
 }
 
 @Composable

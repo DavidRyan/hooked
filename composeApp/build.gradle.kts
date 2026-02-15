@@ -16,6 +16,9 @@ val envProperties = Properties().apply {
         envFile.inputStream().use { load(it) }
     }
 }
+// .env files commonly use shell-style quotes ("value") which Properties.load() preserves literally
+fun Properties.env(key: String, default: String = ""): String =
+    (getProperty(key) ?: default).trim().removeSurrounding("\"")
 
 kotlin {
     jvmToolchain(17)
@@ -29,12 +32,14 @@ kotlin {
         homepage = "https://hooked.app"
         ios.deploymentTarget = "14.1"
         version = "1.0.0"
+        podfile = project.file("../iosApp/Podfile")
 
         framework {
             baseName = "ComposeApp"
+            isStatic = true
         }
-
-        pod("MapboxMaps", "~> 10.16.0")
+        // Note: Mapbox is now added via Swift Package Manager in Xcode
+        // No Mapbox pod needed here - the Swift code provides the map view
     }
 
     sourceSets {
@@ -47,7 +52,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)
-                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
+                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
                 implementation(libs.kotlinx.serialization.json)
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:core:presentation"))
@@ -145,10 +150,22 @@ android {
         }
         
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN",
-            envProperties.getProperty("MAPBOX_ACCESS_TOKEN", "")
+            "\"${envProperties.env("MAPBOX_ACCESS_TOKEN")}\""
         )
+    }
 
-        buildConfigField("String", "API_BASE_URL", "\"${envProperties.getProperty("API_BASE_URL", "https://hooked-backend.fly.dev/api")}\"")
+    flavorDimensions += "environment"
+    productFlavors {
+        create("local") {
+            dimension = "environment"
+            applicationIdSuffix = ".local"
+            // 10.0.2.2 is the Android emulator's alias for the host machine's localhost
+            buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:4000/api\"")
+        }
+        create("prod") {
+            dimension = "environment"
+            buildConfigField("String", "API_BASE_URL", "\"https://hooked-backend.fly.dev/api\"")
+        }
     }
     
     buildFeatures {
@@ -176,5 +193,3 @@ android {
     }
 }
 
-android {
-}

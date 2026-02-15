@@ -18,6 +18,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
+import com.hooked.auth.presentation.ProfileScreen
 import com.hooked.catches.presentation.AnimationTestScreen
 import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.core.presentation.toast.ToastHost
@@ -159,7 +160,8 @@ fun HookedApp(
                     exitTransition = {
                         when (targetState.destination.route) {
                             Screens.SubmitCatch::class.qualifiedName,
-                            Screens.SubmitSkunk::class.qualifiedName -> {
+                            Screens.SubmitSkunk::class.qualifiedName,
+                            Screens.Profile::class.qualifiedName -> {
                                 slideOutOfContainer(
                                     towards = AnimatedContentTransitionScope.SlideDirection.Left,
                                     animationSpec = tween(300)
@@ -171,7 +173,8 @@ fun HookedApp(
                     popEnterTransition = {
                         when (initialState.destination.route) {
                             Screens.SubmitCatch::class.qualifiedName,
-                            Screens.SubmitSkunk::class.qualifiedName -> {
+                            Screens.SubmitSkunk::class.qualifiedName,
+                            Screens.Profile::class.qualifiedName -> {
                                 slideIntoContainer(
                                     towards = AnimatedContentTransitionScope.SlideDirection.Right,
                                     animationSpec = tween(300)
@@ -268,6 +271,35 @@ fun HookedApp(
                          onNavigateBack = { navController.popBackStack() }
                      )
                  }
+                composable<Screens.Profile>(
+                    enterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                            animationSpec = tween(300)
+                        )
+                    }
+                ) {
+                    ProfileScreen(
+                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateToLogin = {
+                            navController.navigate(Screens.Login) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
                      }
 
                          // Toast overlay

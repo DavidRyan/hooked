@@ -18,5 +18,7 @@ sealed class Screens() {
     @Serializable
     object Stats : Screens()
     @Serializable
+    object Profile : Screens()
+    @Serializable
     object AnimationTest : Screens()
 }

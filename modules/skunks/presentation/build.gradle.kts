@@ -24,11 +24,12 @@ kotlin {
                 implementation(compose.foundation)
                 implementation(compose.material3)
                 implementation(compose.material)
+                implementation(compose.materialIconsExtended)
                 implementation(compose.ui)
                 implementation(compose.components.resources)
                 implementation(compose.components.uiToolingPreview)
 
-                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0-beta01")
+                implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.1")
 
                 implementation(libs.koin.compose)
                 implementation(libs.koin.compose.viewmodel)

@@ -6,12 +6,14 @@ pluginManagement {
         google()
         gradlePluginPortal()
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     }
 }
 dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
         maven {
             val envFile = rootDir.resolve(".env")
             val envProperties = Properties().apply {
@@ -19,10 +21,10 @@ dependencyResolutionManagement {
                     envFile.inputStream().use { load(it) }
                 }
             }
-            val token = providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull
+            val token = (providers.gradleProperty("MAPBOX_DOWNLOADS_TOKEN").orNull
                 ?: System.getenv("MAPBOX_DOWNLOADS_TOKEN")
                 ?: envProperties.getProperty("MAPBOX_DOWNLOADS_TOKEN")
-                ?: ""
+                ?: "").trim().removeSurrounding("\"")
             url = uri("https://api.mapbox.com/downloads/v2/releases/maven")
             credentials {
                 username = "mapbox"
