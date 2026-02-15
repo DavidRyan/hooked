@@ -1,20 +1,11 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import Login from './pages/Login'
+import { useAuth } from './features/auth/useAuth'
 import Dashboard from './pages/Dashboard'
+import Login from './pages/Login'
+import NotFound from './pages/NotFound'
 
 function App() {
-  const [token, setToken] = useState<string | null>(() =>
-    localStorage.getItem('token')
-  )
-
-  useEffect(() => {
-    if (token) {
-      localStorage.setItem('token', token)
-    } else {
-      localStorage.removeItem('token')
-    }
-  }, [token])
+  const { token, isAuthenticated, login, logout } = useAuth()
 
   return (
     <BrowserRouter>
@@ -22,19 +13,20 @@ function App() {
         <Route
           path="/login"
           element={
-            token ? <Navigate to="/" /> : <Login onLogin={setToken} />
+            isAuthenticated ? <Navigate to="/" /> : <Login onLogin={login} />
           }
         />
         <Route
           path="/"
           element={
             token ? (
-              <Dashboard token={token} onLogout={() => setToken(null)} />
+              <Dashboard token={token} onLogout={logout} />
             ) : (
               <Navigate to="/login" />
             )
           }
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )

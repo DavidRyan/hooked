@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { ApiError } from '../services/api'
+import { login } from '../services/auth'
 import './Login.css'
 
 interface LoginProps {
@@ -17,21 +19,13 @@ export default function Login({ onLogin }: LoginProps) {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        setError(data.message || 'Login failed')
+      const token = await login(email, password)
+      onLogin(token)
+    } catch (err) {
+      if (err instanceof ApiError) {
+        setError(err.message || 'Login failed')
         return
       }
-
-      onLogin(data.data.token)
-    } catch {
       setError('Unable to connect to server')
     } finally {
       setLoading(false)

@@ -1,18 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useCatches } from '../features/catches/useCatches'
 import './Dashboard.css'
-
-interface Catch {
-  id: string
-  species: string | null
-  location: string
-  latitude: number
-  longitude: number
-  caught_at: string | null
-  notes: string | null
-  image_url: string | null
-  weather_data: Record<string, unknown> | null
-  inserted_at: string
-}
 
 interface DashboardProps {
   token: string
@@ -20,34 +7,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ token, onLogout }: DashboardProps) {
-  const [catches, setCatches] = useState<Catch[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-
-  const fetchCatches = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
-      const res = await fetch('/api/user_catches', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.status === 401) {
-        onLogout()
-        return
-      }
-      if (!res.ok) throw new Error('Failed to load catches')
-      const data = await res.json()
-      setCatches(data.user_catches ?? [])
-    } catch {
-      setError('Could not load catches')
-    } finally {
-      setLoading(false)
-    }
-  }, [token, onLogout])
-
-  useEffect(() => {
-    fetchCatches()
-  }, [fetchCatches])
+  const { catches, loading, error, refresh } = useCatches(token, onLogout)
 
   function formatDate(dateStr: string | null): string {
     if (!dateStr) return ''
@@ -71,7 +31,7 @@ export default function Dashboard({ token, onLogout }: DashboardProps) {
       <main className="catches-container">
         <div className="catches-toolbar">
           <h2 className="catches-heading">My Catches</h2>
-          <button onClick={fetchCatches} className="catches-refresh" disabled={loading}>
+          <button onClick={refresh} className="catches-refresh" disabled={loading}>
             Refresh
           </button>
         </div>
@@ -91,7 +51,7 @@ export default function Dashboard({ token, onLogout }: DashboardProps) {
         {error && (
           <div className="catches-error">
             {error}
-            <button onClick={fetchCatches} className="catches-retry">
+            <button onClick={refresh} className="catches-retry">
               Retry
             </button>
           </div>
