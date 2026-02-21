@@ -16,6 +16,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
@@ -286,15 +288,21 @@ fun TypewriterText(
     style: TextStyle = MaterialTheme.typography.bodyLarge,
     color: Color = MaterialTheme.colorScheme.onSurface,
     lineHeight: TextUnit = style.lineHeight,
-    delayMillis: Long = 15
+    delayMillis: Long = 15,
+    enableHaptics: Boolean = true,
+    hapticIntervalChars: Int = 3
 ) {
     var displayedText by remember(text) { mutableStateOf("") }
+    val haptic = LocalHapticFeedback.current
     
-    LaunchedEffect(text) {
+    LaunchedEffect(text, enableHaptics, hapticIntervalChars) {
         displayedText = ""
         text.forEachIndexed { index, _ ->
             delay(delayMillis)
             displayedText = text.substring(0, index + 1)
+            if (enableHaptics && hapticIntervalChars > 0 && (index + 1) % hapticIntervalChars == 0) {
+                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            }
         }
     }
     

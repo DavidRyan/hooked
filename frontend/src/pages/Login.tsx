@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from '../services/api'
 import { login } from '../services/auth'
 import './Login.css'
+import { setStoredToken } from '../features/auth/storage'
 
 interface LoginProps {
   onLogin: (token: string) => void
@@ -15,6 +16,7 @@ export default function Login({ onLogin }: LoginProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    setEmail("asdf")
     setError('')
     setLoading(true)
 

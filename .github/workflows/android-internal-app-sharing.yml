@@ -1,0 +1,56 @@
+name: Android Internal App Sharing
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  internal_app_sharing:
+    runs-on: ubuntu-latest
+
+    env:
+      ANDROID_PACKAGE_NAME: "com.yourcompany.app"
+      ANDROID_VERSION_CODE: ${{ github.run_number }}
+      ANDROID_VERSION_NAME: "1.0.${{ github.run_number }}"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+          working-directory: composeApp
+
+      - name: Set up Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode keystore
+        run: |
+          echo "${ANDROID_KEYSTORE_BASE64}" | base64 --decode > "${RUNNER_TEMP}/upload.keystore"
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+      - name: Write Play service account JSON
+        run: |
+          echo "${GOOGLE_PLAY_JSON}" > "${RUNNER_TEMP}/play.json"
+        env:
+          GOOGLE_PLAY_JSON: ${{ secrets.GOOGLE_PLAY_JSON }}
+
+      - name: Upload to Internal App Sharing
+        working-directory: composeApp
+        env:
+          ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/upload.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_ALIAS_PASSWORD: ${{ secrets.ANDROID_KEY_ALIAS_PASSWORD }}
+          GOOGLE_PLAY_JSON_PATH: ${{ runner.temp }}/play.json
+        run: bundle exec fastlane android internal_app_sharing

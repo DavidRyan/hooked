@@ -1,0 +1,24 @@
+default_platform(:android)
+
+platform :android do
+  desc "Build and upload to Internal App Sharing"
+  lane :internal_app_sharing do
+    gradle(
+      task: "bundleProdRelease",
+      project_dir: "."
+    )
+
+    aab_path = ENV.fetch(
+      "ANDROID_AAB_PATH",
+      File.join("build", "outputs", "bundle", "prodRelease", "composeApp-prod-release.aab")
+    )
+
+    ias_url = upload_to_play_store_internal_app_sharing(
+      package_name: ENV.fetch("ANDROID_PACKAGE_NAME", "com.hooked"),
+      json_key: ENV.fetch("GOOGLE_PLAY_JSON_PATH", "path/to/google-play.json"),
+      aab: aab_path
+    )
+
+    UI.message("Internal App Sharing URL: #{ias_url}")
+  end
+end

@@ -128,6 +128,18 @@ kotlin {
 }
 
 android {
+    val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+    val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+    val keyAliasValue = System.getenv("ANDROID_KEY_ALIAS")
+    val keyPassword = System.getenv("ANDROID_KEY_ALIAS_PASSWORD")
+    val versionCodeOverride = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull()
+    val versionNameOverride = System.getenv("ANDROID_VERSION_NAME")
+    val hasSigningConfig = listOf(
+        keystorePath,
+        keystorePassword,
+        keyAliasValue,
+        keyPassword,
+    ).all { !it.isNullOrBlank() }
 
     namespace = "com.hooked.ui"
     compileSdk = 36
@@ -142,8 +154,8 @@ android {
         applicationId = "com.hooked"
         minSdk = 24
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = versionCodeOverride ?: 1
+        versionName = versionNameOverride ?: "1.0"
         
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
@@ -152,6 +164,17 @@ android {
         buildConfigField("String", "MAPBOX_ACCESS_TOKEN",
             "\"${envProperties.env("MAPBOX_ACCESS_TOKEN")}\""
         )
+    }
+
+    signingConfigs {
+        create("release") {
+            if (hasSigningConfig) {
+                storeFile = file(keystorePath!!)
+                storePassword = keystorePassword
+                keyAlias = keyAliasValue
+                keyPassword = keyPassword
+            }
+        }
     }
 
     flavorDimensions += "environment"
@@ -179,6 +202,9 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = false
+            if (hasSigningConfig) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
     compileOptions {
@@ -192,4 +218,3 @@ android {
         debugImplementation(compose.uiTooling)
     }
 }
-
