@@ -11,6 +11,7 @@ CREATE TABLE CatchEntity (
     image_filename TEXT,
     image_content_type TEXT,
     image_file_size INTEGER,
+    enrichment_status INTEGER AS Boolean,
     inserted_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
@@ -30,9 +31,9 @@ insert:
 INSERT OR REPLACE INTO CatchEntity(
     id, species, location, latitude, longitude, caught_at, notes, 
     weather_data, image_url, image_filename,
-    image_content_type, image_file_size, inserted_at, updated_at
+    image_content_type, image_file_size, enrichment_status, inserted_at, updated_at
 )
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,  ?, ?, ?, ?, ?, ?);
 
 deleteById:
 DELETE FROM CatchEntity WHERE id = ?;

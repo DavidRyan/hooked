@@ -17,6 +17,7 @@ kotlin {
             dependencies {
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:catches:domain"))
+                implementation(project(":modules:auth:data"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.kotlinx.serialization.json)
@@ -24,6 +25,7 @@ kotlin {
                 implementation(libs.koin.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
                 implementation(libs.sqldelight.runtime)
                 implementation(libs.sqldelight.coroutines.extensions)
             }

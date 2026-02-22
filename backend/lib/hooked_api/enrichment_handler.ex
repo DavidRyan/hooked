@@ -5,6 +5,7 @@ defmodule HookedApi.EnrichmentHandler do
   alias HookedApi.Catches
   alias HookedApi.Skunks
   alias HookedApi.PubSubTopics
+  alias HookedApi.Endpoint
 
   def start_link(_opts) do
     GenServer.start_link(__MODULE__, [], name: __MODULE__)
@@ -27,17 +28,32 @@ defmodule HookedApi.EnrichmentHandler do
       {:ok, updated_catch} ->
         Logger.info("Successfully saved enriched catch #{updated_catch.id} to database")
 
+        broadcast_catch_event(updated_catch.user_id, "enrichment_completed", %{
+          catch: updated_catch
+        })
+
       {:error, changeset} ->
         Logger.error(
           "Failed to save enriched catch #{catch_id} to database: #{inspect(changeset.errors)}"
         )
+
+        broadcast_catch_event(enriched_user_catch.user_id, "enrichment_failed", %{
+          catch_id: catch_id,
+          error: "failed_to_save_enriched_catch"
+        })
     end
 
     {:noreply, state}
   end
 
-  def handle_info({:enrichment_failed, catch_id, error}, state) do
+  def handle_info({:enrichment_failed, catch_id, user_id, error}, state) do
     Logger.error("Received enrichment failure event for catch #{catch_id}: #{inspect(error)}")
+
+    broadcast_catch_event(user_id, "enrichment_failed", %{
+      catch_id: catch_id,
+      error: format_error(error)
+    })
+
     {:noreply, state}
   end
 
@@ -67,4 +83,19 @@ defmodule HookedApi.EnrichmentHandler do
     Logger.debug("EnrichmentHandler received unexpected message: #{inspect(msg)}")
     {:noreply, state}
   end
+
+  defp broadcast_catch_event(nil, _event, _payload), do: :ok
+
+  defp broadcast_catch_event(user_id, event, payload) do
+    topic = catch_topic(user_id)
+    Logger.debug("Broadcasting #{event} to #{topic}")
+    Endpoint.broadcast(topic, event, payload)
+  end
+
+  defp catch_topic(user_id), do: "catch_enrichment:#{user_id}"
+
+  defp format_error(%{reason: reason}), do: inspect(reason)
+  defp format_error(%{message: message}), do: message
+  defp format_error(reason) when is_binary(reason), do: reason
+  defp format_error(reason), do: inspect(reason)
 end

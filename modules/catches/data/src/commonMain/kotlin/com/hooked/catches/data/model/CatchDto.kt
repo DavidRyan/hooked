@@ -1,17 +1,11 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.hooked.catches.data.model
 
+import com.hooked.catches.data.parseCaughtAtToTimestamp
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.EnrichmentStatus
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toInstant
 
 @Serializable
 data class CatchDto(
@@ -27,6 +21,7 @@ data class CatchDto(
     @SerialName("image_filename") val imageFilename: String? = null,
     @SerialName("image_content_type") val imageContentType: String? = null,
     @SerialName("image_file_size") val imageFileSize: Long? = null,
+    @SerialName("enrichment_status") val enrichmentStatus: Boolean? = null,
     @SerialName("inserted_at") val insertedAt: String,
     @SerialName("updated_at") val updatedAt: String
 )
@@ -40,7 +35,8 @@ fun CatchDto.toEntity(): CatchEntity {
         location = location,
         imageUrl = imageUrl ?: "",
         weight = 0.0, // Weight not in current schema, using default
-        length = 0.0  // Length not in current schema, using default
+        length = 0.0, // Length not in current schema, using default
+        enrichmentStatus = EnrichmentStatus.fromBoolean(enrichmentStatus)
     )
 }
 
@@ -60,22 +56,3 @@ fun CatchDto.toCatchDetailsEntity(): CatchDetailsEntity {
     )
 }
 
-private fun parseCaughtAtToTimestamp(caughtAt: String?): Long? {
-    if (caughtAt.isNullOrBlank()) {
-        return null
-    }
-
-    return runCatching {
-        Instant.parse(caughtAt).toEpochMilliseconds()
-    }.getOrElse { _: Throwable ->
-        runCatching {
-            LocalDateTime.parse(caughtAt)
-                .toInstant(TimeZone.UTC)
-                .toEpochMilliseconds()
-        }.getOrNull() ?: runCatching {
-            LocalDate.parse(caughtAt)
-                .atStartOfDayIn(TimeZone.UTC)
-                .toEpochMilliseconds()
-        }.getOrNull()
-    }
-}

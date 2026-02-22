@@ -1,9 +1,13 @@
 package com.hooked.catches.presentation
 
+import com.hooked.catches.domain.entities.CatchEnrichmentUpdate
+import com.hooked.catches.domain.entities.EnrichmentStatus
+import com.hooked.catches.domain.usecases.ObserveCatchEnrichmentUpdatesUseCase
 import com.hooked.core.HookedViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
 import com.hooked.catches.domain.usecases.DeleteCatchUseCase
 import com.hooked.core.domain.UseCaseResult
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import com.hooked.catches.presentation.model.CatchGridEffect
 import com.hooked.catches.presentation.model.CatchGridIntent
@@ -14,11 +18,16 @@ import com.hooked.core.logging.Logger
 
 class CatchGridViewModel(
     private val getCatchesUseCase: GetCatchesUseCase,
-    private val deleteCatchUseCase: DeleteCatchUseCase
+    private val deleteCatchUseCase: DeleteCatchUseCase,
+    private val observeCatchEnrichmentUpdates: ObserveCatchEnrichmentUpdatesUseCase
 ) : HookedViewModel<CatchGridIntent, CatchGridState, CatchGridEffect>() {
 
     companion object {
         private const val TAG = "CatchGridViewModel"
+    }
+
+    init {
+        observeEnrichmentUpdates()
     }
 
     override fun handleIntent(intent: CatchGridIntent) {
@@ -120,6 +129,39 @@ class CatchGridViewModel(
                 Logger.error(TAG, "Failed to delete catch: ${e.message}", e)
                 sendEffect { CatchGridEffect.ShowError("Failed to delete catch: ${e.message}") }
             }
+        }
+    }
+
+    private fun observeEnrichmentUpdates() {
+        viewModelScope.launch {
+            observeCatchEnrichmentUpdates().collect { event ->
+                when (event) {
+                    is CatchEnrichmentUpdate.Completed -> {
+                        updateCatchStatus(event.catchId, EnrichmentStatus.Completed)
+                    }
+
+                    is CatchEnrichmentUpdate.Failed -> {
+                        updateCatchStatus(event.catchId, EnrichmentStatus.Failed)
+                        val message = event.errorMessage ?: "Catch enrichment failed"
+                        sendEffect { CatchGridEffect.ShowError(message) }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun updateCatchStatus(catchId: String, status: EnrichmentStatus) {
+        val hasMatch = state.value.catches.any { it.id == catchId }
+        if (!hasMatch) return
+
+        setState {
+            copy(catches = catches.map { catch ->
+                if (catch.id == catchId) {
+                    catch.copy(enrichmentStatus = status)
+                } else {
+                    catch
+                }
+            })
         }
     }
 

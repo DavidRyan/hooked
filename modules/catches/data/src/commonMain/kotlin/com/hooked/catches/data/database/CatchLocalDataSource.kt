@@ -43,6 +43,7 @@ class CatchLocalDataSource(
                     image_filename = catch.imageFilename,
                     image_content_type = catch.imageContentType,
                     image_file_size = catch.imageFileSize,
+                    enrichment_status = catch.enrichmentStatus,
                     inserted_at = catch.insertedAt,
                     updated_at = catch.updatedAt
                 )

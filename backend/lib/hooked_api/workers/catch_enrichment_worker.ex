@@ -18,10 +18,10 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
     local_image_path = args["local_image_path"]
     Logger.debug("CatchEnrichmentWorker: Local image path: #{inspect(local_image_path)}")
 
-    try do
-      # Convert map back to struct since Oban serializes structs as maps
-      user_catch = struct(UserCatch, atomize_keys(user_catch_map))
+    # Convert map back to struct since Oban serializes structs as maps
+    user_catch = struct(UserCatch, atomize_keys(user_catch_map))
 
+    try do
       local_image_path = ensure_local_image_path(local_image_path)
 
       # Create enrichment context with local file path
@@ -46,7 +46,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
               "Enrichment failed for catch #{catch_id} after #{duration}ms: #{inspect(error)}"
             )
 
-            broadcast_failure(catch_id, error)
+            broadcast_failure(catch_id, user_catch.user_id, error)
             {:error, error}
         end
 
@@ -59,7 +59,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
       error ->
         Logger.error("ENRICHMENT JOB CRASHED for catch #{catch_id}: #{inspect(error)}")
         Logger.error("Stacktrace: #{Exception.format_stacktrace(__STACKTRACE__)}")
-        broadcast_failure(catch_id, error)
+        broadcast_failure(catch_id, user_catch.user_id, error)
         {:error, error}
     after
       # Clean up temp file regardless of success/failure
@@ -351,7 +351,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
     end
   end
 
-  defp broadcast_failure(catch_id, error) do
+  defp broadcast_failure(catch_id, user_id, error) do
     Logger.error(
       "CatchEnrichmentWorker: Broadcasting enrichment failure for catch #{catch_id}: #{inspect(error)}"
     )
@@ -365,7 +365,7 @@ defmodule HookedApi.Workers.CatchEnrichmentWorker do
         Phoenix.PubSub.broadcast(
           HookedApi.PubSub,
           PubSubTopics.catch_enrichment(),
-          {:enrichment_failed, catch_id, error}
+          {:enrichment_failed, catch_id, user_id, error}
         )
 
       case result do

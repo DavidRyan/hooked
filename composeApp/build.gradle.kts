@@ -68,6 +68,7 @@ kotlin {
                 implementation(libs.ktor.client.core)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
 
             }
         }
@@ -131,14 +132,14 @@ android {
     val keystorePath = System.getenv("ANDROID_KEYSTORE_PATH")
     val keystorePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
     val keyAliasValue = System.getenv("ANDROID_KEY_ALIAS")
-    val keyPassword = System.getenv("ANDROID_KEY_ALIAS_PASSWORD")
+    val keyAliasPassword = System.getenv("ANDROID_KEY_ALIAS_PASSWORD")
     val versionCodeOverride = System.getenv("ANDROID_VERSION_CODE")?.toIntOrNull()
     val versionNameOverride = System.getenv("ANDROID_VERSION_NAME")
     val hasSigningConfig = listOf(
         keystorePath,
         keystorePassword,
         keyAliasValue,
-        keyPassword,
+        keyAliasPassword,
     ).all { !it.isNullOrBlank() }
 
     namespace = "com.hooked.ui"
@@ -172,7 +173,7 @@ android {
                 storeFile = file(keystorePath!!)
                 storePassword = keystorePassword
                 keyAlias = keyAliasValue
-                keyPassword = keyPassword
+                keyPassword = keyAliasPassword
             }
         }
     }

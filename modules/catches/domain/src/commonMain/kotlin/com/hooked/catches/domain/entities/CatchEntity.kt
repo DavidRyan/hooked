@@ -8,5 +8,6 @@ data class CatchEntity(
     val location: String?,
     val imageUrl: String? = null,
     val weight: Double? = null,
-    val length: Double? = null
+    val length: Double? = null,
+    val enrichmentStatus: EnrichmentStatus = EnrichmentStatus.Pending
 )

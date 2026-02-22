@@ -1,16 +1,10 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
-
 package com.hooked.catches.data.database
 
+import com.hooked.catches.data.parseCaughtAtToTimestamp
 import com.hooked.catches.domain.entities.CatchEntity as DomainCatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
+import com.hooked.catches.domain.entities.EnrichmentStatus
 import com.hooked.core.logging.Logger
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toInstant
 import kotlinx.serialization.json.Json
 
 fun CatchEntity.toDomainEntity(): DomainCatchEntity {
@@ -22,7 +16,8 @@ fun CatchEntity.toDomainEntity(): DomainCatchEntity {
         location = location,
         imageUrl = image_url,
         weight = 0.0, // Weight not in current schema, using default
-        length = 0.0  // Length not in current schema, using default
+        length = 0.0, // Length not in current schema, using default
+        enrichmentStatus = EnrichmentStatus.fromBoolean(enrichment_status)
     )
 }
 
@@ -53,22 +48,3 @@ fun CatchEntity.toCatchDetailsEntity(): CatchDetailsEntity {
     )
 }
 
-private fun parseCaughtAtToTimestamp(caughtAt: String?): Long? {
-    if (caughtAt.isNullOrBlank()) {
-        return null
-    }
-
-    return runCatching {
-        Instant.parse(caughtAt).toEpochMilliseconds()
-    }.getOrElse { _: Throwable ->
-        runCatching {
-            LocalDateTime.parse(caughtAt)
-                .toInstant(TimeZone.UTC)
-                .toEpochMilliseconds()
-        }.getOrNull() ?: runCatching {
-            LocalDate.parse(caughtAt)
-                .atStartOfDayIn(TimeZone.UTC)
-                .toEpochMilliseconds()
-        }.getOrNull()
-    }
-}

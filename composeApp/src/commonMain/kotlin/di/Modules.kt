@@ -13,9 +13,13 @@ import com.hooked.catches.domain.usecases.SubmitCatchUseCase
 import com.hooked.catches.domain.usecases.DeleteCatchUseCase
 import com.hooked.catches.domain.usecases.GetCatchStatsUseCase
 import com.hooked.catches.domain.usecases.GetFishingInsightsUseCase
+import com.hooked.catches.domain.usecases.ObserveCatchEnrichmentUpdatesUseCase
 import com.hooked.catches.domain.repositories.CatchRepository as CatchesRepositoryInterface
+import com.hooked.catches.domain.repositories.CatchUpdatesRepository
 import com.hooked.catches.data.repo.CatchRepositoryImpl
+import com.hooked.catches.data.repo.CatchUpdatesRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
+import com.hooked.catches.data.live.CatchEnrichmentUpdatesService
 import com.hooked.catches.data.database.DatabaseDriverFactory
 import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
@@ -28,6 +32,7 @@ import com.hooked.skunks.domain.usecases.SubmitSkunkUseCase
 import com.hooked.skunks.presentation.SubmitSkunkViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import org.koin.compose.viewmodel.dsl.viewModelOf
@@ -44,18 +49,23 @@ val presentationModule = module {
 } + authPresentationModule
 
 val dataModule = module {
+    single<Json> {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+        }
+    }
+
     single {
         HttpClient {
             expectSuccess = true
             install(ContentNegotiation) {
-                json(Json {
-                    ignoreUnknownKeys = true
-                    isLenient = true
-                })
+                json(get())
             }
             install(AuthInterceptor) {
                 tokenStorage = get()
             }
+            install(WebSockets)
         }
     }
 
@@ -77,6 +87,12 @@ val dataModule = module {
         CatchRepositoryImpl(get(), get())
     }
 
+    single { CatchEnrichmentUpdatesService(get(), get(), get()) }
+
+    single<CatchUpdatesRepository> {
+        CatchUpdatesRepositoryImpl(get())
+    }
+
     single<SkunkRepository> {
         SkunkRepositoryImpl(get())
     }
@@ -89,5 +105,6 @@ val useCaseModule = module {
     single { DeleteCatchUseCase(get()) }
     single { GetCatchStatsUseCase(get()) }
     single { GetFishingInsightsUseCase(get()) }
+    single { ObserveCatchEnrichmentUpdatesUseCase(get()) }
     single { SubmitSkunkUseCase(get()) }
 } + authUseCaseModule

@@ -1,43 +1,51 @@
 defmodule HookedApi.Endpoint do
   use Phoenix.Endpoint, otp_app: :hooked_api
 
+  socket("/socket", HookedApiWeb.UserSocket,
+    websocket: [connect_info: [:peer_data]],
+    longpoll: false
+  )
+
   # Simplified for API-only - no LiveView needed for mobile app
   @session_options [
     store: :cookie,
-    key: "_hooked_api_key", 
+    key: "_hooked_api_key",
     signing_salt: System.get_env("SIGNING_SALT") || "fallback-salt-for-dev",
     same_site: "Lax"
   ]
 
-  plug Plug.Static,
+  plug(Plug.Static,
     at: "/",
     from: :hooked_api,
     gzip: false,
     only: HookedApiWeb.static_paths()
+  )
 
   # Serve uploaded images - will be easy to remove when switching to S3
-  plug Plug.Static,
+  plug(Plug.Static,
     at: "/uploads",
     from: Path.expand("priv/static/uploads"),
     gzip: false
+  )
 
   if code_reloading? do
-    plug Phoenix.CodeReloader
-    plug Phoenix.Ecto.CheckRepoStatus, otp_app: :hooked_api
+    plug(Phoenix.CodeReloader)
+    plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :hooked_api)
   end
 
   # Removed LiveDashboard.RequestLogger for API-only app
 
-  plug Plug.RequestId
-  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+  plug(Plug.RequestId)
+  plug(Plug.Telemetry, event_prefix: [:phoenix, :endpoint])
 
-  plug Plug.Parsers,
+  plug(Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],
     pass: ["*/*"],
     json_decoder: Phoenix.json_library()
+  )
 
-  plug Plug.MethodOverride
-  plug Plug.Head
-  plug Plug.Session, @session_options
-  plug HookedApiWeb.Router
+  plug(Plug.MethodOverride)
+  plug(Plug.Head)
+  plug(Plug.Session, @session_options)
+  plug(HookedApiWeb.Router)
 end
