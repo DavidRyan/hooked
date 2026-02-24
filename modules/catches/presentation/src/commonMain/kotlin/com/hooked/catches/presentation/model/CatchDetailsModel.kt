@@ -1,5 +1,6 @@
 package com.hooked.catches.presentation.model
 
+import com.hooked.catches.domain.entities.EnrichmentStatus
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -13,5 +14,6 @@ data class CatchDetailsModel(
     val timestamp: Long?,
     val photoUrl: String?,
     val location: String?,
-    val weatherData: Map<String, String?>?
+    val weatherData: Map<String, String?>?,
+    val enrichmentStatus: EnrichmentStatus = EnrichmentStatus.Pending
 )

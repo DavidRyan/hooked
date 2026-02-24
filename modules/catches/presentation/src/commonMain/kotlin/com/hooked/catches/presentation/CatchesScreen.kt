@@ -11,12 +11,17 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -33,18 +38,29 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Person
+import com.hooked.catches.domain.entities.EnrichmentStatus
 import com.hooked.catches.presentation.components.SpeedDialFab
 import com.hooked.catches.presentation.components.SpeedDialItem
 import androidx.compose.material3.AlertDialog
@@ -278,10 +294,10 @@ fun SharedTransitionScope.CatchGridContent(
                                 verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
                                 horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
                             ) {
-                                items(
+                                itemsIndexed(
                                     items = state.catches,
-                                    key = { catch -> catch.id }
-                                ) { catch ->
+                                    key = { _, catch -> catch.id }
+                                ) { index, catch ->
                                     CatchGridItem(
                                         catch = catch,
                                         onClick = {
@@ -290,7 +306,8 @@ fun SharedTransitionScope.CatchGridContent(
                                         onLongClick = {
                                             viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
                                         },
-                                        animatedVisibilityScope = animatedVisibilityScope
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        index = index
                                     )
                                 }
                             }
@@ -410,9 +427,24 @@ fun SharedTransitionScope.CatchDetailsContent(
                         ),
                     verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                 ) {
+                    AnimatedVisibility(
+                        visible = showDetails,
+                        enter = slideInVertically(
+                            initialOffsetY = { -it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + fadeIn()
+                    ) {
+                        EnrichmentBanner(
+                            status = details.enrichmentStatus,
+                            modifier = Modifier.padding(top = topBarHeight)
+                        )
+                    }
+
                     Card(
                         modifier = Modifier
-                            .padding(top = topBarHeight)
                             .fillMaxWidth()
                             .aspectRatio(1f),
                         elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
@@ -440,11 +472,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                     }
                     
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .graphicsLayer {
-                                translationY = cardsTranslation
-                            },
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
                     ) {
                         Column(
@@ -455,7 +483,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                                 AnimatedDetailCard(
                                     label = "Species",
                                     value = species,
-                                    translationY = 0f
+                                    index = 0
                                 )
                             }
 
@@ -463,7 +491,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                                 AnimatedDetailCard(
                                     label = "Weight",
                                     value = "$weight lb",
-                                    translationY = 0f
+                                    index = 1
                                 )
                             }
 
@@ -471,7 +499,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                                 AnimatedDetailCard(
                                     label = "Length",
                                     value = "$length cm",
-                                    translationY = 0f
+                                    index = 2
                                 )
                             }
 
@@ -498,7 +526,6 @@ fun SharedTransitionScope.CatchDetailsContent(
                             dateCaught = details.timestamp
                                 ?.takeIf { it > 0 }
                                 ?.let { timestamp -> formatCatchDate(timestamp) },
-                            translationY = cardsTranslation,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -533,6 +560,150 @@ fun SharedTransitionScope.CatchDetailsContent(
                     titleContentColor = HookedTheme.onPrimary,
                     navigationIconContentColor = HookedTheme.onPrimary
                 )
+            )
+        }
+    }
+}
+
+@Composable
+private fun EnrichmentBanner(
+    status: EnrichmentStatus,
+    modifier: Modifier = Modifier
+) {
+    // Infinite pulse for Pending border/spinner
+    val infiniteTransition = rememberInfiniteTransition(label = "enrichment_banner")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.3f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(900),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulse"
+    )
+
+    // One-shot shimmer sweep on Completed
+    val shimmerProgress = remember { Animatable(0f) }
+    LaunchedEffect(status) {
+        if (status == EnrichmentStatus.Completed) {
+            shimmerProgress.snapTo(0f)
+            shimmerProgress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = 900, easing = LinearEasing)
+            )
+        }
+    }
+    val shimmerValue = shimmerProgress.value
+
+    // Spring-punch scale for icon on Completed/Failed
+    val iconScale = remember { Animatable(0f) }
+    LaunchedEffect(status) {
+        if (status != EnrichmentStatus.Pending) {
+            iconScale.snapTo(0f)
+            iconScale.animateTo(
+                targetValue = 1f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessMedium
+                )
+            )
+        }
+    }
+
+    val statusColor = when (status) {
+        EnrichmentStatus.Completed -> HookedTheme.primary
+        EnrichmentStatus.Failed    -> MaterialTheme.colorScheme.error
+        EnrichmentStatus.Pending   -> HookedTheme.primary
+    }
+
+    val borderAlpha = if (status == EnrichmentStatus.Pending) pulseAlpha * 0.6f else 0.75f
+    val glowAlpha   = if (status == EnrichmentStatus.Pending) pulseAlpha else 1f
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            modifier = Modifier
+                // Glow layers drawn in unclipped space (before clip)
+                .drawBehind {
+                    val r = size.height / 2f
+                    listOf(10f to 0.06f, 5f to 0.12f, 2f to 0.22f).forEach { (expand, alpha) ->
+                        drawRoundRect(
+                            color = statusColor,
+                            topLeft = Offset(-expand, -expand),
+                            size = Size(size.width + expand * 2, size.height + expand * 2),
+                            cornerRadius = CornerRadius((r + expand)),
+                            alpha = alpha * glowAlpha
+                        )
+                    }
+                }
+                .clip(RoundedCornerShape(50))
+                .background(statusColor.copy(alpha = 0.13f))
+                // Border + shimmer drawn inside the clipped pill
+                .drawBehind {
+                    val r = CornerRadius(size.height / 2f)
+                    // Crisp border
+                    drawRoundRect(
+                        color = statusColor,
+                        cornerRadius = r,
+                        style = Stroke(width = 1.2.dp.toPx()),
+                        alpha = borderAlpha
+                    )
+                    // Shimmer sweep
+                    if (shimmerValue > 0f) {
+                        val sweepWidth = size.width * 0.5f
+                        val centerX = shimmerValue * (size.width + sweepWidth) - sweepWidth / 2f
+                        drawRoundRect(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.White.copy(alpha = 0.28f),
+                                    Color.Transparent
+                                ),
+                                startX = centerX - sweepWidth / 2f,
+                                endX   = centerX + sweepWidth / 2f
+                            ),
+                            cornerRadius = r
+                        )
+                    }
+                }
+                .padding(horizontal = 22.dp, vertical = 11.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            when (status) {
+                EnrichmentStatus.Pending -> CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.dp,
+                    color = statusColor.copy(alpha = pulseAlpha)
+                )
+                EnrichmentStatus.Completed -> Icon(
+                    imageVector = Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .graphicsLayer { scaleX = iconScale.value; scaleY = iconScale.value }
+                )
+                EnrichmentStatus.Failed -> Icon(
+                    imageVector = Icons.Filled.Close,
+                    contentDescription = null,
+                    tint = statusColor,
+                    modifier = Modifier
+                        .size(18.dp)
+                        .graphicsLayer { scaleX = iconScale.value; scaleY = iconScale.value }
+                )
+            }
+            Text(
+                text = when (status) {
+                    EnrichmentStatus.Completed -> "AI Enriched"
+                    EnrichmentStatus.Failed    -> "Enrichment Failed"
+                    EnrichmentStatus.Pending   -> "Enriching…"
+                },
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = statusColor
             )
         }
     }

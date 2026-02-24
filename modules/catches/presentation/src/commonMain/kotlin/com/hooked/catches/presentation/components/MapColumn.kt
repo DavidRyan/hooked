@@ -14,7 +14,6 @@ fun MapColumn(
     longitude: Double?,
     location: String?,
     dateCaught: String?,
-    translationY: Float,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -33,7 +32,7 @@ fun MapColumn(
             AnimatedDetailCard(
                 label = "Location",
                 value = location,
-                translationY = translationY
+                index = 0
             )
         }
 
@@ -41,7 +40,7 @@ fun MapColumn(
             AnimatedDetailCard(
                 label = "Date",
                 value = dateCaught,
-                translationY = translationY
+                index = 1
             )
         }
     }

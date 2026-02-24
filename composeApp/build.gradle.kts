@@ -81,7 +81,7 @@ kotlin {
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
                 implementation("androidx.exifinterface:exifinterface:1.3.7")
-                implementation(libs.ktor.client.android)
+                implementation(libs.ktor.client.okhttp)
                 // Coil Android-specific dependencies
                 implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-alpha05")
 

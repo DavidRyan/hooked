@@ -169,12 +169,12 @@ fun StatsScreen(
                 ) {
                     StatCard(
                         title = "Total Catches",
-                        value = state.totalCatches.toString(),
+                        targetValue = state.totalCatches,
                         modifier = Modifier.weight(1f)
                     )
                     StatCard(
                         title = "Species",
-                        value = state.uniqueSpecies.toString(),
+                        targetValue = state.uniqueSpecies,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -249,9 +249,15 @@ fun StatsScreen(
 @Composable
 fun StatCard(
     title: String,
-    value: String,
+    targetValue: Int,
     modifier: Modifier = Modifier
 ) {
+    val animatedValue by animateIntAsState(
+        targetValue = targetValue,
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing),
+        label = "stat_counter"
+    )
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(12.dp),
@@ -266,7 +272,7 @@ fun StatCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = value,
+                text = animatedValue.toString(),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onPrimaryContainer

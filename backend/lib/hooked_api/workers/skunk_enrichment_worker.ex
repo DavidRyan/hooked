@@ -14,9 +14,16 @@ defmodule HookedApi.Workers.SkunkEnrichmentWorker do
   @impl Oban.Worker
   def perform(%Oban.Job{args: %{"skunk_id" => skunk_id, "user_skunk" => user_skunk_map}} = job) do
     Logger.info("Starting enrichment job #{job.id} for skunk #{skunk_id}")
+    Logger.debug("SkunkEnrichmentWorker: Raw job args keys=#{inspect(Map.keys(user_skunk_map))}")
 
     try do
       user_skunk = struct(UserSkunk, atomize_keys(user_skunk_map))
+
+      Logger.debug(
+        "SkunkEnrichmentWorker: Initial skunk state lat=#{inspect(user_skunk.latitude)}, " <>
+          "lng=#{inspect(user_skunk.longitude)}, weather_present=#{not is_nil(user_skunk.weather_data)}"
+      )
+
       context = %{}
 
       start_time = System.monotonic_time(:millisecond)
@@ -60,12 +67,40 @@ defmodule HookedApi.Workers.SkunkEnrichmentWorker do
       "SkunkEnrichmentWorker: Applying #{length(enrichers)} enrichers to skunk #{user_skunk.id}"
     )
 
+    Logger.debug("SkunkEnrichmentWorker: Enricher sequence: #{inspect(enrichers)}")
+
+    start_time = System.monotonic_time(:millisecond)
+
     try do
-      enrichers
-      |> Enum.reduce_while({:ok, user_skunk, context}, &apply_enricher/2)
-      |> case do
-        {:ok, enriched_skunk, _context} -> {:ok, enriched_skunk}
-        {:error, _reason} = error -> error
+      result =
+        enrichers
+        |> Enum.reduce_while({:ok, user_skunk, context}, &apply_enricher/2)
+        |> case do
+          {:ok, enriched_skunk, _context} -> {:ok, enriched_skunk}
+          {:error, _reason} = error -> error
+        end
+
+      duration = System.monotonic_time(:millisecond) - start_time
+
+      case result do
+        {:ok, enriched_skunk} ->
+          Logger.info(
+            "SkunkEnrichmentWorker: Successfully applied all enrichers to skunk #{enriched_skunk.id} in #{duration}ms"
+          )
+
+          Logger.debug(
+            "SkunkEnrichmentWorker: Final skunk state lat=#{inspect(enriched_skunk.latitude)}, " <>
+              "lng=#{inspect(enriched_skunk.longitude)}, weather_present=#{not is_nil(enriched_skunk.weather_data)}"
+          )
+
+          result
+
+        {:error, reason} ->
+          Logger.error(
+            "SkunkEnrichmentWorker: Failed to apply enrichers to skunk #{user_skunk.id} after #{duration}ms: #{inspect(reason)}"
+          )
+
+          result
       end
     rescue
       error ->
@@ -82,6 +117,11 @@ defmodule HookedApi.Workers.SkunkEnrichmentWorker do
       "SkunkEnrichmentWorker: Applying enricher #{inspect(enricher)} to skunk #{user_skunk.id}"
     )
 
+    Logger.debug(
+      "SkunkEnrichmentWorker: Pre-enrichment state lat=#{inspect(user_skunk.latitude)}, " <>
+        "lng=#{inspect(user_skunk.longitude)}, weather_present=#{not is_nil(user_skunk.weather_data)}"
+    )
+
     start_time = System.monotonic_time(:millisecond)
 
     try do
@@ -91,6 +131,11 @@ defmodule HookedApi.Workers.SkunkEnrichmentWorker do
 
           Logger.info(
             "SkunkEnrichmentWorker: Enricher #{inspect(enricher)} succeeded for skunk #{user_skunk.id} in #{duration}ms"
+          )
+
+          Logger.debug(
+            "SkunkEnrichmentWorker: #{inspect(enricher)} updated lat=#{inspect(enriched_skunk.latitude)}, " <>
+              "lng=#{inspect(enriched_skunk.longitude)}, weather_present=#{not is_nil(enriched_skunk.weather_data)}"
           )
 
           {:cont, {:ok, enriched_skunk, context}}

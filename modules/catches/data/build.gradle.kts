@@ -17,6 +17,7 @@ kotlin {
             dependencies {
                 implementation(project(":modules:core:domain"))
                 implementation(project(":modules:catches:domain"))
+                implementation(project(":modules:auth:domain"))
                 implementation(project(":modules:auth:data"))
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.kotlinx.datetime)

@@ -11,5 +11,6 @@ data class CatchDetailsEntity(
     val photoUrl: String,
     val location: String? = "Unknown location",
     val dateCaught: String? = "Unknown date",
-    val weatherData: Map<String, String?>? = null
+    val weatherData: Map<String, String?>? = null,
+    val enrichmentStatus: EnrichmentStatus = EnrichmentStatus.Pending
 )

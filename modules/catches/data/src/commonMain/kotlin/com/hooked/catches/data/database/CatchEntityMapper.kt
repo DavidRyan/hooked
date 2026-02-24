@@ -44,7 +44,8 @@ fun CatchEntity.toCatchDetailsEntity(): CatchDetailsEntity {
         photoUrl = image_url ?: "",
         location = location,
         dateCaught = caught_at?.take(10), // Extract date part from datetime string
-        weatherData = weatherData
+        weatherData = weatherData,
+        enrichmentStatus = EnrichmentStatus.fromBoolean(enrichment_status)
     )
 }
 

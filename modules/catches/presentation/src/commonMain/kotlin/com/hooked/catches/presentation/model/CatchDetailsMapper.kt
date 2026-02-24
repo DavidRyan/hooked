@@ -14,6 +14,7 @@ fun CatchDetailsEntity.toCatchDetailsModel(): CatchDetailsModel {
         timestamp = timestamp ?: 0L,
         photoUrl = photoUrl,
         location = location,
-        weatherData = weatherData
+        weatherData = weatherData,
+        enrichmentStatus = enrichmentStatus
     )
 }

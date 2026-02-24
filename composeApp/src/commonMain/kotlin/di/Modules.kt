@@ -19,7 +19,14 @@ import com.hooked.catches.domain.repositories.CatchUpdatesRepository
 import com.hooked.catches.data.repo.CatchRepositoryImpl
 import com.hooked.catches.data.repo.CatchUpdatesRepositoryImpl
 import com.hooked.catches.data.api.CatchApiService
+import com.hooked.catches.data.live.AuthProvider
+import com.hooked.catches.data.live.BaseUrlProvider
 import com.hooked.catches.data.live.CatchEnrichmentUpdatesService
+import com.hooked.catches.data.live.DefaultEnrichmentEventDecoder
+import com.hooked.catches.data.live.EnrichmentEventDecoder
+import com.hooked.catches.data.live.NetworkBaseUrlProvider
+import com.hooked.catches.data.live.PhoenixSocketClient
+import com.hooked.catches.data.live.TokenStorageAuthProvider
 import com.hooked.catches.data.database.DatabaseDriverFactory
 import com.hooked.catches.data.database.DatabaseModule
 import com.hooked.catches.data.database.CatchLocalDataSource
@@ -87,7 +94,11 @@ val dataModule = module {
         CatchRepositoryImpl(get(), get())
     }
 
-    single { CatchEnrichmentUpdatesService(get(), get(), get()) }
+    single<BaseUrlProvider> { NetworkBaseUrlProvider() }
+    single<AuthProvider> { TokenStorageAuthProvider(get(), get()) }
+    single { PhoenixSocketClient(get(), get(), get()) }
+    single<EnrichmentEventDecoder> { DefaultEnrichmentEventDecoder() }
+    single { CatchEnrichmentUpdatesService(get<PhoenixSocketClient>(), get<AuthProvider>(), get<EnrichmentEventDecoder>()) }
 
     single<CatchUpdatesRepository> {
         CatchUpdatesRepositoryImpl(get())

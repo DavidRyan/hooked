@@ -3,11 +3,11 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
 
   require Logger
 
-  alias HookedApi.Enrichers.Species.Providers.InaturalistProvider
+  alias HookedApi.Enrichers.Species.Providers.FishialProvider
   alias HookedApi.Services.ImageStorage
 
   # Configure which provider to use - you can swap this out easily
-  @species_provider InaturalistProvider
+  @species_provider FishialProvider
 
   def enrich(user_catch, context \\ %{}) do
     Logger.info("SpeciesEnricher: Starting species identification for catch #{user_catch.id}")
@@ -30,13 +30,13 @@ defmodule HookedApi.Enrichers.Species.SpeciesEnricher do
               Logger.debug("SpeciesEnricher: Updating catch with identified species")
               Logger.debug("SpeciesEnricher: Species data: #{inspect(species_result)}")
 
-              #normalized_species = best_match(species_result.species_name)
+              # normalized_species = best_match(species_result.species_name)
 
               Logger.info(
                 "SpeciesEnricher: oiginal species: #{inspect(species_result.species_name)}"
               )
 
-              #Logger.info("SpeciesEnricher: normalized species: #{inspect(normalized_species)}")
+              # Logger.info("SpeciesEnricher: normalized species: #{inspect(normalized_species)}")
               enriched_catch = %{user_catch | species: species_result.species_name}
 
               Logger.info(

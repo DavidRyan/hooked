@@ -1,7 +1,11 @@
 package com.hooked.catches.presentation.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import com.hooked.catches.domain.entities.SpeciesData
 import com.hooked.theme.Colors
+import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -31,7 +36,7 @@ fun SpeciesPieChart(
     var startAnimation by remember { mutableStateOf(false) }
     val animatedProgress by animateFloatAsState(
         targetValue = if (startAnimation) 1f else 0f,
-        animationSpec = tween(durationMillis = 1000)
+        animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
     )
 
     LaunchedEffect(Unit) {
@@ -99,6 +104,7 @@ fun SpeciesPieChart(
                 count = data.count,
                 percentage = data.percentage,
                 color = colors[index % colors.size],
+                index = index,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
         }
@@ -111,44 +117,57 @@ fun SpeciesLegendItem(
     count: Int,
     percentage: Float,
     color: Color,
+    index: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+    var legendVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        delay(1000L + index * 80L)
+        legendVisible = true
+    }
+
+    AnimatedVisibility(
+        visible = legendVisible,
+        enter = slideInHorizontally { -it / 2 } + fadeIn(),
+        modifier = modifier
     ) {
         Row(
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(16.dp)
-                    .background(color, CircleShape)
-            )
-            Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = species,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-        }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(color, CircleShape)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = species,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "$count",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = "(${(percentage * 100).toInt()}%)",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$count",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "(${(percentage * 100).toInt()}%)",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
         }
     }
 }
