@@ -45,6 +45,7 @@ kotlin {
                 implementation("androidx.compose.material3:material3:1.3.2")
                 implementation(libs.koin.android)
                 implementation(libs.koin.androidx.compose)
+                implementation("com.github.DavidRyan:kmphoto:0.0.2")
             }
         }
 
