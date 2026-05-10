@@ -28,7 +28,7 @@ config :logger, :console,
 
 # Enable Oban logging
 config :logger,
-  level: :info
+  level: :debug
 
 # Log Oban job failures
 config :oban, :log, false

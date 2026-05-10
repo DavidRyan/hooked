@@ -88,7 +88,7 @@ defmodule HookedApi.EnrichmentHandler do
 
   defp broadcast_catch_event(user_id, event, payload) do
     topic = catch_topic(user_id)
-    Logger.debug("Broadcasting #{event} to #{topic}")
+    Logger.info("Broadcasting #{event} to #{topic}")
     Endpoint.broadcast(topic, event, payload)
   end
 
