@@ -33,6 +33,8 @@ fun CatchDto.toEntity(): CatchEntity {
         description = notes ?: "Caught a $species at $location",
         dateCaught = caughtAt?.take(10), // Extract date part from datetime string
         location = location,
+        latitude = latitude,
+        longitude = longitude,
         imageUrl = imageUrl ?: "",
         weight = 0.0, // Weight not in current schema, using default
         length = 0.0, // Length not in current schema, using default

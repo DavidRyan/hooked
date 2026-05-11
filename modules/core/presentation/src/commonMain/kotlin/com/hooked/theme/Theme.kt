@@ -1,56 +1,49 @@
 package com.hooked.theme
 
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val HookedTheme = darkColorScheme(
-    // Primary colors
-    primary = Colors.mediumTeal,
-    onPrimary = Colors.darkNavy,
-    primaryContainer = Colors.lightMint,
-    onPrimaryContainer = Colors.darkNavy,
+    primary = Colors.primary,
+    onPrimary = Colors.onPrimary,
+    primaryContainer = Colors.surface2,
+    onPrimaryContainer = Colors.text,
 
-    // Secondary colors
-    secondary = Colors.lightMint,
-    onSecondary = Colors.darkNavy,
-    secondaryContainer = Colors.lightMint,
-    onSecondaryContainer = Colors.darkNavy,
+    secondary = Colors.secondary,
+    onSecondary = Colors.onSecondary,
+    secondaryContainer = Colors.surface2,
+    onSecondaryContainer = Colors.text,
 
-    // Tertiary colors
-    tertiary = Colors.mediumBlue,
-    onTertiary = Colors.darkNavy,
+    tertiary = Colors.tertiary,
+    onTertiary = Colors.onTertiary,
     tertiaryContainer = Colors.surface2,
     onTertiaryContainer = Colors.text,
-    
-    // Error colors
+
     error = Colors.error,
-    onError = Colors.white,
-    errorContainer = Colors.red,
-    onErrorContainer = Colors.white,
-    
-    // Background colors
+    onError = Colors.text,
+    errorContainer = Colors.error,
+    onErrorContainer = Colors.text,
+
     background = Colors.base,
     onBackground = Colors.text,
-    
-    // Surface colors
-    surface = Colors.surface0,
-    onSurface = Colors.text,
-    surfaceVariant = Colors.surface1,
-    onSurfaceVariant = Colors.subtext1,
-    surfaceTint = Colors.mediumTeal,
 
-    // Inverse colors (for snackbars, etc.)
-    inverseSurface = Colors.lightBlue,
-    inverseOnSurface = Colors.darkNavy,
-    inversePrimary = Colors.mediumTeal,
-    
-    // Outline colors (borders, dividers)
+    surface = Colors.surface1,
+    onSurface = Colors.text,
+    surfaceVariant = Colors.surface2,
+    onSurfaceVariant = Colors.subtext1,
+    // Disable M3's auto-tint-on-elevation; we control surface gradations ourselves.
+    surfaceTint = Color.Transparent,
+
+    inverseSurface = Colors.text,
+    inverseOnSurface = Colors.base,
+    inversePrimary = Colors.primary,
+
     outline = Colors.overlay1,
     outlineVariant = Colors.overlay0,
-    
-    // Scrim (overlay backgrounds for modals/dialogs)
-    scrim = Color.Black.copy(alpha = 0.5f)
+
+    scrim = Color.Black.copy(alpha = 0.6f)
 )
 
 @Composable
@@ -59,7 +52,7 @@ fun HookedTheme(
 ) {
     MaterialTheme(
         colorScheme = HookedTheme,
-        typography = Typography(),
+        typography = HookedTypography(),
         content = content
     )
 }

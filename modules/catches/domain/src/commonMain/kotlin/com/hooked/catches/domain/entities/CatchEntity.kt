@@ -6,6 +6,8 @@ data class CatchEntity(
     val description: String?,
     val dateCaught: String?,
     val location: String?,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val imageUrl: String? = null,
     val weight: Double? = null,
     val length: Double? = null,

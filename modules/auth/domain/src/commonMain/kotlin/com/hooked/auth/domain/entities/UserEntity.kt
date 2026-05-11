@@ -7,5 +7,6 @@ data class UserEntity(
     val id: String,
     val email: String,
     val username: String,
-    val token: String? = null
+    val token: String? = null,
+    val onboardingCompleted: Boolean = false
 )

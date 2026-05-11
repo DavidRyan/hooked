@@ -1,6 +1,7 @@
 package com.hooked.auth.data.datasources
 
 import com.hooked.auth.domain.entities.LoginCredentials
+import com.hooked.auth.domain.entities.OnboardingPreferences
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 import kotlinx.coroutines.delay
@@ -56,5 +57,14 @@ class StubAuthDataSource : AuthDataSource {
     override suspend fun clearUser(): Result<Unit> {
         currentUser = null
         return Result.success(Unit)
+    }
+
+    override suspend fun updatePreferences(prefs: OnboardingPreferences): Result<UserEntity> {
+        val user = currentUser ?: return Result.failure(Exception("Not authenticated"))
+        val updated = user.copy(
+            onboardingCompleted = prefs.onboardingCompleted ?: user.onboardingCompleted
+        )
+        currentUser = updated
+        return Result.success(updated)
     }
 }

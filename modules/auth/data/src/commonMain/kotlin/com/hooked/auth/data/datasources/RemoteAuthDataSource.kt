@@ -1,9 +1,11 @@
 package com.hooked.auth.data.datasources
 
 import com.hooked.auth.data.api.AuthApiService
+import com.hooked.auth.data.model.UpdatePreferencesRequestDto
 import com.hooked.auth.data.model.toUserEntity
 import com.hooked.auth.data.storage.TokenStorage
 import com.hooked.auth.domain.entities.LoginCredentials
+import com.hooked.auth.domain.entities.OnboardingPreferences
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 import com.hooked.core.domain.NetworkResult
@@ -131,6 +133,31 @@ class RemoteAuthDataSource(
         }
     }
     
+    override suspend fun updatePreferences(prefs: OnboardingPreferences): Result<UserEntity> {
+        val token = tokenStorage.getToken()
+            ?: return Result.failure(Exception("Not authenticated"))
+
+        val request = UpdatePreferencesRequestDto(
+            homeLat = prefs.homeLat,
+            homeLng = prefs.homeLng,
+            targetSpecies = prefs.targetSpecies,
+            onboardingCompleted = prefs.onboardingCompleted
+        )
+
+        return when (val result = authApiService.updatePreferences(token, request)) {
+            is NetworkResult.Success -> {
+                val userEntity = result.data.toUserEntity().copy(token = token)
+                tokenStorage.saveUser(json.encodeToString(userEntity))
+                Result.success(userEntity)
+            }
+            is NetworkResult.Error -> {
+                Logger.error("RemoteAuthDataSource", "updatePreferences failed: ${result.error.message}")
+                Result.failure(result.error)
+            }
+            is NetworkResult.Loading -> Result.failure(Exception("Unexpected loading state"))
+        }
+    }
+
     suspend fun refreshToken(): Result<UserEntity> {
         val currentToken = tokenStorage.getToken()
             ?: return Result.failure(Exception("No token available"))

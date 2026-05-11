@@ -1,6 +1,7 @@
 package com.hooked.catches.data.api
 
 import com.hooked.catches.data.model.CatchDto
+import com.hooked.catches.data.model.RibbonInsightDto
 import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
@@ -120,6 +121,23 @@ class CatchApiService(
         }
     }
     
+    suspend fun getRibbonInsight(): NetworkResult<RibbonInsightDto> {
+        val endpoint = "/insights/ribbon"
+        Logger.logRequest(TAG, "GET", endpoint)
+        return try {
+            val response = httpClient
+                .get("$baseUrl$endpoint")
+                .body<RibbonInsightDto>()
+
+            Logger.logResponse(TAG, 200, "OK")
+            NetworkResult.Success(response)
+        } catch (e: ClientRequestException) {
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
+        } catch (e: Exception) {
+            NetworkResult.Error(Exception("Failed to fetch ribbon insight: ${e.message}", e), TAG)
+        }
+    }
+
     suspend fun getAiInsights(): NetworkResult<String> {
         val endpoint = "/ai/insights"
         Logger.logRequest(TAG, "GET", endpoint)

@@ -3,6 +3,7 @@ package com.hooked.auth.data.api
 import com.hooked.auth.data.model.AuthResponseDto
 import com.hooked.auth.data.model.LoginRequestDto
 import com.hooked.auth.data.model.RegisterRequestDto
+import com.hooked.auth.data.model.UpdatePreferencesRequestDto
 import com.hooked.auth.data.model.UserResponseDto
 import com.hooked.core.config.NetworkConfig
 import com.hooked.core.domain.NetworkResult
@@ -14,6 +15,7 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -92,6 +94,28 @@ class AuthApiService(
         }
     }
     
+    suspend fun updatePreferences(
+        token: String,
+        request: UpdatePreferencesRequestDto
+    ): NetworkResult<UserResponseDto> {
+        val endpoint = "/auth/preferences"
+        Logger.logRequest(TAG, "PATCH", endpoint)
+        return try {
+            val response = httpClient.patch("$baseUrl$endpoint") {
+                contentType(ContentType.Application.Json)
+                header(HttpHeaders.Authorization, "Bearer $token")
+                setBody(request)
+            }.body<UserResponseDto>()
+
+            Logger.logResponse(TAG, 200, "OK - Preferences updated")
+            NetworkResult.Success(response)
+        } catch (e: ClientRequestException) {
+            NetworkResult.Error(Exception(formatHttpError(e)), TAG)
+        } catch (e: Exception) {
+            NetworkResult.Error(Exception("Failed to update preferences: ${e.message}", e), TAG)
+        }
+    }
+
     suspend fun refreshToken(token: String): NetworkResult<AuthResponseDto> {
         val endpoint = "/auth/refresh"
         Logger.logRequest(TAG, "POST", endpoint)

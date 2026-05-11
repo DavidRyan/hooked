@@ -7,6 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
+import com.hooked.auth.presentation.OnboardingScreen
 import com.hooked.auth.presentation.ProfileScreen
 import com.hooked.catches.presentation.AnimationTestScreen
 import com.hooked.catches.presentation.CatchesScreen
@@ -43,10 +45,13 @@ fun HookedApp(
             
             // Check auth status and set initial destination
             AuthStateManager(
-                onAuthenticatedUser = { 
+                onAuthenticatedAndOnboarded = {
                     startDestination = Screens.CatchGrid
                 },
-                onUnauthenticatedUser = { 
+                onAuthenticatedNeedsOnboarding = {
+                    startDestination = Screens.Onboarding
+                },
+                onUnauthenticatedUser = {
                     startDestination = Screens.Login
                 }
             )
@@ -54,12 +59,18 @@ fun HookedApp(
             // Only show NavHost once we know the start destination
             startDestination?.let { destination ->
                 SharedTransitionLayout {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        NavHost(
-                        navController = navController,
-                        startDestination = destination,
-                        modifier = Modifier.background(HookedTheme.background)
-                    ) {
+                    androidx.compose.material3.Scaffold(
+                        containerColor = HookedTheme.background,
+                        bottomBar = { HookedBottomBar(navController) }
+                    ) { scaffoldPadding ->
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            NavHost(
+                            navController = navController,
+                            startDestination = destination,
+                            modifier = Modifier
+                                .background(HookedTheme.background)
+                                .padding(scaffoldPadding)
+                        ) {
                 composable<Screens.AnimationTest> {
                     AnimationTestScreen()
                 }
@@ -96,6 +107,11 @@ fun HookedApp(
                     LoginScreen(
                         onNavigateToHome = {
                             navController.navigate(Screens.CatchGrid) {
+                                popUpTo(Screens.Login) { inclusive = true }
+                            }
+                        },
+                        onNavigateToOnboarding = {
+                            navController.navigate(Screens.Onboarding) {
                                 popUpTo(Screens.Login) { inclusive = true }
                             }
                         },
@@ -136,12 +152,21 @@ fun HookedApp(
                 ) {
                     CreateAccountScreen(
                         onNavigateToHome = {
-                            navController.navigate(Screens.CatchGrid) {
+                            navController.navigate(Screens.Onboarding) {
                                 popUpTo(Screens.Login) { inclusive = true }
                             }
                         },
                         onNavigateToLogin = {
                             navController.popBackStack()
+                        }
+                    )
+                }
+                composable<Screens.Onboarding> {
+                    OnboardingScreen(
+                        onComplete = {
+                            navController.navigate(Screens.CatchGrid) {
+                                popUpTo(Screens.Onboarding) { inclusive = true }
+                            }
                         }
                     )
                 }
@@ -266,10 +291,13 @@ fun HookedApp(
                         }
                     )
                 }
-                 composable<Screens.Stats> {
+                 composable<Screens.Insights> {
                      StatsScreen(
                          onNavigateBack = { navController.popBackStack() }
                      )
+                 }
+                 composable<Screens.Map> {
+                     com.hooked.catches.presentation.MapScreen()
                  }
                 composable<Screens.Profile>(
                     enterTransition = {
@@ -304,6 +332,7 @@ fun HookedApp(
 
                          // Toast overlay
                          ToastHost()
+                         }
                      }
                  }
              }

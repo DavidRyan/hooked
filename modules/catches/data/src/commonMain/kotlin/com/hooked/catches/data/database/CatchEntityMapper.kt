@@ -14,6 +14,8 @@ fun CatchEntity.toDomainEntity(): DomainCatchEntity {
         description = notes ?: "Caught a $species at $location",
         dateCaught = caught_at?.take(10), // Extract date part from datetime string
         location = location,
+        latitude = latitude,
+        longitude = longitude,
         imageUrl = image_url,
         weight = 0.0, // Weight not in current schema, using default
         length = 0.0, // Length not in current schema, using default

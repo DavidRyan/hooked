@@ -110,7 +110,16 @@ import com.hooked.core.util.BackHandler
 import com.hooked.core.animation.AnimationConstants
 import com.hooked.core.animation.AnimationSpecs
 import com.hooked.catches.presentation.components.CatchGridItem
+import com.hooked.catches.presentation.components.TimelineSection
+import com.hooked.catches.presentation.components.CatchHero
+import com.hooked.catches.presentation.components.StatStrip
+import com.hooked.catches.presentation.components.MapCard
+import com.hooked.catches.presentation.components.ConditionsNarrative
+import com.hooked.catches.presentation.components.IntelligenceRibbon
 import com.hooked.catches.presentation.components.AnimatedDetailCard
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import com.hooked.catches.presentation.components.MapColumn
 import com.hooked.catches.presentation.components.SunSection
 import com.hooked.catches.presentation.components.WeatherSection
@@ -232,23 +241,23 @@ fun SharedTransitionScope.CatchGridContent(
             exit = AnimationSpecs.slideOutToTop
         ) {
             TopAppBar(
-                title = { Text("My Catches") },
-                actions = {
-                    IconButton(onClick = { navigate(Screens.Profile) }) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = HookedTheme.onPrimary
-                        )
-                    }
+                title = {
+                    Text(
+                        "Log",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = HookedTheme.primary,
-                    titleContentColor = HookedTheme.onPrimary
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    titleContentColor = HookedTheme.onSurface
                 )
             )
         }
-        
+
+        IntelligenceRibbon(
+            onTap = { navigate(Screens.Insights) }
+        )
+
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -286,31 +295,16 @@ fun SharedTransitionScope.CatchGridContent(
                             )
                         }
                         "content" -> {
-                            LazyVerticalGrid(
-                                columns = GridCells.Fixed(2),
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(AnimationConstants.GRID_SPACING_DP.dp),
-                                verticalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp),
-                                horizontalArrangement = Arrangement.spacedBy(AnimationConstants.GRID_SPACING_DP.dp)
-                            ) {
-                                itemsIndexed(
-                                    items = state.catches,
-                                    key = { _, catch -> catch.id }
-                                ) { index, catch ->
-                                    CatchGridItem(
-                                        catch = catch,
-                                        onClick = {
-                                            viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(catch.id))
-                                        },
-                                        onLongClick = {
-                                            viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(catch.id))
-                                        },
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        index = index
-                                    )
-                                }
-                            }
+                            TimelineSection(
+                                catches = state.catches,
+                                onCatchClick = { id ->
+                                    viewModel.sendIntent(CatchGridIntent.NavigateToCatchDetails(id))
+                                },
+                                onCatchLongClick = { id ->
+                                    viewModel.sendIntent(CatchGridIntent.ShowDeleteDialog(id))
+                                },
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
                         }
                     }
                 }
@@ -330,11 +324,6 @@ fun SharedTransitionScope.CatchGridContent(
             SpeedDialFab(
                 modifier = Modifier.fillMaxSize(),
                 items = listOf(
-                    SpeedDialItem(
-                        icon = Icons.Default.List,
-                        label = "Stats",
-                        onClick = { navigate(Screens.Stats) }
-                    ),
                     SpeedDialItem(
                         icon = Icons.Default.Clear,
                         label = "Log Skunk",
@@ -421,12 +410,23 @@ fun SharedTransitionScope.CatchDetailsContent(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(AnimationConstants.CONTENT_PADDING_DP.dp)
                         .animateContentSize(
                             animationSpec = AnimationSpecs.contentSizeSpring
                         ),
-                    verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
+                    CatchHero(
+                        catchId = catchId,
+                        photoUrl = details.photoUrl,
+                        species = details.species,
+                        location = details.location,
+                        weatherDescription = details.weatherData?.get("description"),
+                        tempFahrenheit = details.weatherData
+                            ?.get("temp")
+                            ?.toFloatOrNull(),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    )
+
                     AnimatedVisibility(
                         visible = showDetails,
                         enter = slideInVertically(
@@ -437,98 +437,38 @@ fun SharedTransitionScope.CatchDetailsContent(
                             )
                         ) + fadeIn()
                     ) {
-                        EnrichmentBanner(
-                            status = details.enrichmentStatus,
-                            modifier = Modifier.padding(top = topBarHeight)
-                        )
+                        EnrichmentBanner(status = details.enrichmentStatus)
                     }
 
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(1f),
-                        elevation = CardDefaults.cardElevation(defaultElevation = AnimationConstants.CARD_ELEVATION_DP.dp),
-                        shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp),
-                        colors = CardDefaults.cardColors(containerColor = HookedTheme.surface)
-                    ) {
-                        AsyncImage(
-                            imageUrl = details.photoUrl,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .sharedBounds(
-                                    rememberSharedContentState(key = "catch-image-${catchId}"),
-                                    animatedVisibilityScope = animatedVisibilityScope,
-                                    boundsTransform = { _, _ ->
-                                        AnimationSpecs.boundsTransformSpring
-                                    }
-                                )
-                                .border(
-                                    width = AnimationConstants.IMAGE_BORDER_WIDTH_DP.dp,
-                                    color = HookedTheme.tertiary,
-                                    shape = RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp)
-                                )
-                                .clip(RoundedCornerShape(AnimationConstants.CORNER_RADIUS_DP.dp))
-                        )
-                    }
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
-                    ) {
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(AnimationConstants.CONTENT_PADDING_DP.dp)
-                        ) {
-                            details.species?.let { species ->
-                                AnimatedDetailCard(
-                                    label = "Species",
-                                    value = species,
-                                    index = 0
-                                )
-                            }
-
-                            details.weight?.takeIf { it > 0 }?.let { weight ->
-                                AnimatedDetailCard(
-                                    label = "Weight",
-                                    value = "$weight lb",
-                                    index = 1
-                                )
-                            }
-
-                            details.length?.takeIf { it > 0 }?.let { length ->
-                                AnimatedDetailCard(
-                                    label = "Length",
-                                    value = "$length cm",
-                                    index = 2
-                                )
-                            }
-
-                            details.weatherData
-                                ?.takeIf { it.isNotEmpty() }
-                                ?.let { weather ->
-                                    WeatherSection(
-                                        weather = WeatherUi.fromMap(weather),
-                                        translationY = 0f
-                                    )
-                                }
-
-                            SunSection(
-                                sunriseHour = 6.5f,
-                                sunsetHour = 19.5f,
-                                catchHour = 14f
+                    details.timestamp
+                        ?.takeIf { it > 0 }
+                        ?.let { ts ->
+                            Text(
+                                text = formatCatchDate(ts),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = HookedTheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 20.dp)
                             )
                         }
 
-                        MapColumn(
-                            latitude = details.latitude,
-                            longitude = details.longitude,
-                            location = details.location,
-                            dateCaught = details.timestamp
-                                ?.takeIf { it > 0 }
-                                ?.let { timestamp -> formatCatchDate(timestamp) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
+                    StatStrip(weatherData = details.weatherData)
+
+                    MapCard(
+                        latitude = details.latitude,
+                        longitude = details.longitude,
+                        location = details.location
+                    )
+
+                    ConditionsNarrative(weatherData = details.weatherData)
+
+                    SunSection(
+                        sunriseHour = 6.5f,
+                        sunsetHour = 19.5f,
+                        catchHour = catchHourFrom(details.timestamp),
+                        modifier = Modifier.padding(horizontal = 20.dp)
+                    )
+
+                    Spacer(Modifier.size(24.dp))
                 }
             }
         }
@@ -542,7 +482,7 @@ fun SharedTransitionScope.CatchDetailsContent(
                 modifier = Modifier.onGloballyPositioned { coordinates ->
                     topBarHeight = with(density) { coordinates.size.height.toDp() }
                 },
-                title = { Text("Catch Details") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = {
                         showDetails = false
@@ -556,9 +496,9 @@ fun SharedTransitionScope.CatchDetailsContent(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = HookedTheme.primary,
-                    titleContentColor = HookedTheme.onPrimary,
-                    navigationIconContentColor = HookedTheme.onPrimary
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
                 )
             )
         }
@@ -900,4 +840,12 @@ fun EmptyStateView(
             }
         }
     }
+}
+
+@OptIn(kotlin.time.ExperimentalTime::class)
+private fun catchHourFrom(timestamp: Long?): Float {
+    if (timestamp == null || timestamp <= 0) return 12f
+    val ldt = Instant.fromEpochMilliseconds(timestamp)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+    return ldt.hour + ldt.minute / 60f
 }

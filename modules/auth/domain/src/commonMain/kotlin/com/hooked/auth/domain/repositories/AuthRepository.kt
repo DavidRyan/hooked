@@ -1,6 +1,7 @@
 package com.hooked.auth.domain.repositories
 
 import com.hooked.auth.domain.entities.LoginCredentials
+import com.hooked.auth.domain.entities.OnboardingPreferences
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 
@@ -11,4 +12,5 @@ interface AuthRepository {
     suspend fun getCurrentUser(): Result<UserEntity?>
     suspend fun refreshToken(): Result<UserEntity>
     suspend fun isLoggedIn(): Boolean
+    suspend fun updatePreferences(prefs: OnboardingPreferences): Result<UserEntity>
 }

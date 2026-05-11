@@ -48,6 +48,7 @@ kotlin {
                 // Coil for KMP
                 implementation("io.coil-kt.coil3:coil-compose:3.0.0-alpha05")
                 implementation("io.coil-kt.coil3:coil-network-ktor:3.0.0-alpha05")
+                implementation(compose.materialIconsExtended)
                 implementation(libs.runtime)
                 implementation(libs.kotlinx.coroutines.core)
                 implementation(libs.koin.compose)

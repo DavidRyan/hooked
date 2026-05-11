@@ -70,12 +70,7 @@ defmodule HookedApiWeb.AuthController do
             |> put_status(:created)
             |> json(%{
               data: %{
-                user: %{
-                  id: user.id,
-                  email: user.email,
-                  first_name: user.first_name,
-                  last_name: user.last_name
-                },
+                user: user_payload(user),
                 token: token
               }
             })
@@ -104,12 +99,7 @@ defmodule HookedApiWeb.AuthController do
         conn
         |> json(%{
           data: %{
-            user: %{
-              id: user.id,
-              email: user.email,
-              first_name: user.first_name,
-              last_name: user.last_name
-            },
+            user: user_payload(user),
             token: token
           }
         })
@@ -127,14 +117,7 @@ defmodule HookedApiWeb.AuthController do
     user = conn.assigns[:current_user]
 
     conn
-    |> json(%{
-      data: %{
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name
-      }
-    })
+    |> json(%{data: user_payload(user)})
   end
 
   def refresh(conn, _params) do
@@ -145,12 +128,7 @@ defmodule HookedApiWeb.AuthController do
         conn
         |> json(%{
           data: %{
-            user: %{
-              id: user.id,
-              email: user.email,
-              first_name: user.first_name,
-              last_name: user.last_name
-            },
+            user: user_payload(user),
             token: token
           }
         })
@@ -160,5 +138,46 @@ defmodule HookedApiWeb.AuthController do
         |> put_status(:unprocessable_entity)
         |> json(%{error: "Token generation failed"})
     end
+  end
+
+  @doc """
+  Updates onboarding preferences (home location, target species) and optionally
+  marks onboarding as complete. Used by the mobile onboarding pager.
+  """
+  def update_preferences(conn, params) do
+    user = conn.assigns[:current_user]
+
+    attrs =
+      %{}
+      |> maybe_put(:home_lat, params["home_lat"])
+      |> maybe_put(:home_lng, params["home_lng"])
+      |> maybe_put(:target_species, params["target_species"])
+      |> maybe_put(:onboarding_completed, params["onboarding_completed"])
+
+    case Accounts.update_user(user, attrs) do
+      {:ok, updated_user} ->
+        json(conn, %{data: user_payload(updated_user)})
+
+      {:error, %Ecto.Changeset{} = changeset} ->
+        conn
+        |> put_status(:unprocessable_entity)
+        |> json(validation_error_response(changeset))
+    end
+  end
+
+  defp maybe_put(map, _key, nil), do: map
+  defp maybe_put(map, key, value), do: Map.put(map, key, value)
+
+  defp user_payload(%User{} = user) do
+    %{
+      id: user.id,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      home_lat: user.home_lat,
+      home_lng: user.home_lng,
+      target_species: user.target_species || [],
+      onboarding_completed: user.onboarding_completed || false
+    }
   end
 end

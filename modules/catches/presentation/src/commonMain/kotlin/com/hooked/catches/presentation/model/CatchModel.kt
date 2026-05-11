@@ -7,7 +7,9 @@ data class CatchModel(
     val id: String,
     val name: String?,
     val imageUrl: String,
-    val enrichmentStatus: EnrichmentStatus
+    val enrichmentStatus: EnrichmentStatus,
+    val dateCaught: String?,
+    val location: String?
 )
 
 fun fromEntity(entity: CatchEntity): CatchModel {
@@ -15,6 +17,8 @@ fun fromEntity(entity: CatchEntity): CatchModel {
         id = entity.id,
         name = entity.name,
         imageUrl = entity.imageUrl ?: "",
-        enrichmentStatus = entity.enrichmentStatus
+        enrichmentStatus = entity.enrichmentStatus,
+        dateCaught = entity.dateCaught,
+        location = entity.location
     )
 }

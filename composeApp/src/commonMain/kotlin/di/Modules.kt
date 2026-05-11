@@ -13,6 +13,7 @@ import com.hooked.catches.domain.usecases.SubmitCatchUseCase
 import com.hooked.catches.domain.usecases.DeleteCatchUseCase
 import com.hooked.catches.domain.usecases.GetCatchStatsUseCase
 import com.hooked.catches.domain.usecases.GetFishingInsightsUseCase
+import com.hooked.catches.domain.usecases.GetRibbonInsightUseCase
 import com.hooked.catches.domain.usecases.ObserveCatchEnrichmentUpdatesUseCase
 import com.hooked.catches.domain.repositories.CatchRepository as CatchesRepositoryInterface
 import com.hooked.catches.domain.repositories.CatchUpdatesRepository
@@ -116,6 +117,7 @@ val useCaseModule = module {
     single { DeleteCatchUseCase(get()) }
     single { GetCatchStatsUseCase(get()) }
     single { GetFishingInsightsUseCase(get()) }
+    single { GetRibbonInsightUseCase(get()) }
     single { ObserveCatchEnrichmentUpdatesUseCase(get()) }
     single { SubmitSkunkUseCase(get()) }
 } + authUseCaseModule

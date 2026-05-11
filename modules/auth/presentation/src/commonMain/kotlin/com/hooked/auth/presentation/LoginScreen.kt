@@ -54,17 +54,21 @@ import org.koin.compose.viewmodel.koinViewModel
 fun LoginScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToCreateAccount: () -> Unit,
+    onNavigateToOnboarding: () -> Unit = onNavigateToHome,
     viewModel: LoginViewModel = koinViewModel(),
     toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
     val focusManager = LocalFocusManager.current
-    
+
     LaunchedEffect(viewModel.effect) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is LoginEffect.NavigateToHome -> {
                     onNavigateToHome()
+                }
+                is LoginEffect.NavigateToOnboarding -> {
+                    onNavigateToOnboarding()
                 }
                 is LoginEffect.ShowError -> {
                     toastManager.showError(effect.message)

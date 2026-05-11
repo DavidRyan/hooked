@@ -85,9 +85,9 @@ fun SubmitCatchScreen(
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = HookedTheme.primary,
-                titleContentColor = HookedTheme.onPrimary,
-                navigationIconContentColor = HookedTheme.onPrimary
+                containerColor = MaterialTheme.colorScheme.surface,
+                titleContentColor = MaterialTheme.colorScheme.onSurface,
+                navigationIconContentColor = MaterialTheme.colorScheme.onSurface
             )
         )
 
@@ -207,7 +207,7 @@ fun ProgressIndicator(
             )
             
             val backgroundColor by animateColorAsState(
-                targetValue = if (animationComplete) Color(0xFFFFD700) else Colors.mutedTeal,
+                targetValue = if (animationComplete) Color(0xFFFFD700) else Colors.tertiary,
                 animationSpec = tween(
                     durationMillis = 400,
                     easing = LinearEasing

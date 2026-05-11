@@ -12,6 +12,7 @@ local.properties
 *.iml
 *.log
 *.md
+!/README.md
 .kotlin/
 build/
 gradlew

@@ -9,6 +9,10 @@ defmodule HookedApi.Accounts.User do
              :first_name,
              :last_name,
              :is_active,
+             :home_lat,
+             :home_lng,
+             :target_species,
+             :onboarding_completed,
              :inserted_at,
              :updated_at
            ]}
@@ -25,6 +29,10 @@ defmodule HookedApi.Accounts.User do
           failed_login_attempts: integer(),
           locked_until: DateTime.t() | nil,
           last_failed_login: DateTime.t() | nil,
+          home_lat: float() | nil,
+          home_lng: float() | nil,
+          target_species: list(String.t()),
+          onboarding_completed: boolean(),
           inserted_at: DateTime.t(),
           updated_at: DateTime.t()
         }
@@ -39,6 +47,10 @@ defmodule HookedApi.Accounts.User do
     field(:failed_login_attempts, :integer, default: 0)
     field(:locked_until, :utc_datetime)
     field(:last_failed_login, :utc_datetime)
+    field(:home_lat, :float)
+    field(:home_lng, :float)
+    field(:target_species, {:array, :string}, default: [])
+    field(:onboarding_completed, :boolean, default: false)
     has_many(:catches, HookedApi.Catches.UserCatch)
     has_many(:skunks, HookedApi.Skunks.UserSkunk)
 
@@ -69,11 +81,17 @@ defmodule HookedApi.Accounts.User do
       :is_active,
       :failed_login_attempts,
       :locked_until,
-      :last_failed_login
+      :last_failed_login,
+      :home_lat,
+      :home_lng,
+      :target_species,
+      :onboarding_completed
     ])
     |> validate_length(:first_name, min: 1, max: 50)
     |> validate_length(:last_name, min: 1, max: 50)
     |> validate_number(:failed_login_attempts, greater_than_or_equal_to: 0)
+    |> validate_number(:home_lat, greater_than_or_equal_to: -90, less_than_or_equal_to: 90)
+    |> validate_number(:home_lng, greater_than_or_equal_to: -180, less_than_or_equal_to: 180)
   end
 
   defp validate_email(changeset) do

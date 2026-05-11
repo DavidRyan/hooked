@@ -41,6 +41,7 @@ defmodule HookedApiWeb.Router do
     # Auth routes that require authentication
     get("/auth/me", AuthController, :me)
     post("/auth/refresh", AuthController, :refresh)
+    patch("/auth/preferences", AuthController, :update_preferences)
 
     # User catches routes
     resources("/user_catches", UserCatchController, except: [:new, :edit])
@@ -51,5 +52,8 @@ defmodule HookedApiWeb.Router do
 
     # AI routes
     get("/ai/insights", AiController, :get_insights)
+
+    # Lightweight ribbon insight (short, deterministic, for the timeline header)
+    get("/insights/ribbon", InsightsController, :ribbon)
   end
 end

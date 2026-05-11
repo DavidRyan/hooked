@@ -22,6 +22,10 @@ data class UserDto(
     @SerialName("first_name") val firstName: String? = null,
     @SerialName("last_name") val lastName: String? = null,
     @SerialName("is_active") val isActive: Boolean = true,
+    @SerialName("home_lat") val homeLat: Double? = null,
+    @SerialName("home_lng") val homeLng: Double? = null,
+    @SerialName("target_species") val targetSpecies: List<String> = emptyList(),
+    @SerialName("onboarding_completed") val onboardingCompleted: Boolean = false,
     @SerialName("inserted_at") val insertedAt: String? = null,
     @SerialName("updated_at") val updatedAt: String? = null
 )
@@ -39,12 +43,21 @@ data class AuthErrorDto(
     val code: String? = null
 )
 
+@Serializable
+data class UpdatePreferencesRequestDto(
+    @SerialName("home_lat") val homeLat: Double? = null,
+    @SerialName("home_lng") val homeLng: Double? = null,
+    @SerialName("target_species") val targetSpecies: List<String>? = null,
+    @SerialName("onboarding_completed") val onboardingCompleted: Boolean? = null
+)
+
 fun AuthResponseDto.toUserEntity(): UserEntity {
     return UserEntity(
         id = data.user.id,
         email = data.user.email,
         username = "${data.user.firstName ?: ""} ${data.user.lastName ?: ""}".trim().ifEmpty { data.user.email },
-        token = data.token
+        token = data.token,
+        onboardingCompleted = data.user.onboardingCompleted
     )
 }
 
@@ -53,6 +66,7 @@ fun UserResponseDto.toUserEntity(): UserEntity {
         id = data.id,
         email = data.email,
         username = "${data.firstName ?: ""} ${data.lastName ?: ""}".trim().ifEmpty { data.email },
-        token = null
+        token = null,
+        onboardingCompleted = data.onboardingCompleted
     )
 }

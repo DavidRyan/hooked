@@ -10,6 +10,7 @@ import com.hooked.catches.data.model.SubmitCatchDto
 import com.hooked.catches.domain.entities.CatchEntity
 import com.hooked.catches.domain.entities.CatchDetailsEntity
 import com.hooked.catches.domain.entities.FishingInsightsEntity
+import com.hooked.catches.domain.entities.RibbonInsightEntity
 import com.hooked.catches.domain.entities.StatsEntity
 import com.hooked.catches.domain.entities.SubmitCatchEntity
 import com.hooked.catches.domain.repositories.CatchRepository as CatchRepositoryInterface
@@ -208,6 +209,31 @@ class CatchRepositoryImpl(
             }
         } catch (e: Exception) {
             Logger.error(TAG, "Error fetching fishing insights: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getRibbonInsight(): Result<RibbonInsightEntity> {
+        return try {
+            when (val result = catchApiService.getRibbonInsight()) {
+                is NetworkResult.Success -> {
+                    Result.success(
+                        RibbonInsightEntity(
+                            headline = result.data.headline,
+                            body = result.data.body
+                        )
+                    )
+                }
+                is NetworkResult.Error -> {
+                    Logger.error(TAG, "Failed to fetch ribbon insight: ${result.error.message}")
+                    Result.failure(result.error)
+                }
+                else -> {
+                    Result.failure(Exception("Unexpected state"))
+                }
+            }
+        } catch (e: Exception) {
+            Logger.error(TAG, "Error fetching ribbon insight: ${e.message}", e)
             Result.failure(e)
         }
     }

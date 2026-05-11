@@ -76,7 +76,10 @@ class LoginViewModel(
             when (val result = loginUseCase(credentials)) {
                 is UseCaseResult.Success -> {
                     setState { copy(isLoading = false) }
-                    sendEffect { LoginEffect.NavigateToHome }
+                    sendEffect {
+                        if (result.data.onboardingCompleted) LoginEffect.NavigateToHome
+                        else LoginEffect.NavigateToOnboarding
+                    }
                 }
                 is UseCaseResult.Error -> {
                     Logger.error(TAG, "Login failed: ${result.message}")

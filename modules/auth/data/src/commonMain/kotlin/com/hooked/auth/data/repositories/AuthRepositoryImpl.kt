@@ -3,6 +3,7 @@ package com.hooked.auth.data.repositories
 import com.hooked.auth.data.datasources.AuthDataSource
 import com.hooked.auth.data.datasources.RemoteAuthDataSource
 import com.hooked.auth.domain.entities.LoginCredentials
+import com.hooked.auth.domain.entities.OnboardingPreferences
 import com.hooked.auth.domain.entities.RegisterCredentials
 import com.hooked.auth.domain.entities.UserEntity
 import com.hooked.auth.domain.repositories.AuthRepository
@@ -44,5 +45,9 @@ class AuthRepositoryImpl(
             Logger.error("AuthRepositoryImpl", "Failed to check if user is logged in: ${e.message}", e)
             false
         }
+    }
+
+    override suspend fun updatePreferences(prefs: OnboardingPreferences): Result<UserEntity> {
+        return authDataSource.updatePreferences(prefs)
     }
 }
