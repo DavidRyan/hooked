@@ -37,4 +37,11 @@ backendassets/package-lock.json
 # Elixir/Phoenix generated files
 backend/.elixir_ls/
 backend/.coverage/
-backend/priv/static/uploads/catches/
+backend/priv/static/uploads/
+backend/tmp/
+
+# Stray editor backups — never want these tracked
+*.backup
+*.bak
+*.orig
+*.swp
