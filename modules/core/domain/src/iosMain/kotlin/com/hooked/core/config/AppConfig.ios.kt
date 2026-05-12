@@ -8,7 +8,10 @@ import platform.Foundation.NSBundle
 actual object AppConfig {
     actual val MAPBOX_ACCESS_TOKEN: String
         get() = NSBundle.mainBundle.objectForInfoDictionaryKey("MAPBOX_ACCESS_TOKEN") as? String ?: ""
-    
+
     actual val API_BASE_URL: String
         get() = NSBundle.mainBundle.objectForInfoDictionaryKey("API_BASE_URL") as? String ?: "http://localhost:4000/api"
+
+    actual val CHAT_BASE_URL: String
+        get() = NSBundle.mainBundle.objectForInfoDictionaryKey("CHAT_BASE_URL") as? String ?: "ws://localhost:8080"
 }

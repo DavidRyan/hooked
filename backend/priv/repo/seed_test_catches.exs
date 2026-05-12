@@ -1,18 +1,25 @@
-# Seeds fake catches for an existing user, for local UI testing.
+# Seeds richly varied fake catches for an existing user, for local UI testing.
 #
 # Usage:
-#   mix run priv/repo/seed_test_catches.exs <email> [count]
+#   mix run priv/repo/seed_test_catches.exs <email> [count] [--wipe]
 #
-# Defaults to dryan31@gmail.com and 40 catches if args omitted.
+# Defaults to dryan31@gmail.com and 50 catches if args omitted.
+# `--wipe` deletes the user's existing catches before seeding.
 
 alias HookedApi.{Repo, Accounts.User, Catches.UserCatch}
+import Ecto.Query, warn: false
 require Logger
 
-{email, count} =
-  case System.argv() do
-    [e, c] -> {e, String.to_integer(c)}
-    [e] -> {e, 40}
-    [] -> {"dryan31@gmail.com", 40}
+args = System.argv()
+
+{email, count, wipe?} =
+  case args do
+    [] -> {"dryan31@gmail.com", 50, false}
+    [e] -> {e, 50, false}
+    [e, c] -> {e, String.to_integer(c), false}
+    [e, c, "--wipe"] -> {e, String.to_integer(c), true}
+    [e, "--wipe"] -> {e, 50, true}
+    [e, "--wipe", c] -> {e, String.to_integer(c), true}
   end
 
 user =
@@ -25,9 +32,14 @@ user =
       user
   end
 
+if wipe? do
+  {n, _} = Repo.delete_all(from c in UserCatch, where: c.user_id == ^user.id)
+  IO.puts("Wiped #{n} existing catches for #{user.email}")
+end
+
 IO.puts("Seeding #{count} catches for #{user.email} (#{user.id})")
 
-# Real-ish Midwest fishing spots. Coordinates are approximate.
+# Real-ish Midwest fishing spots.
 spots = [
   {"Lake Mendota", 43.1056, -89.4156},
   {"Lake Wingra", 43.0533, -89.4317},
@@ -45,53 +57,142 @@ spots = [
   {"Lake Puckaway", 43.7700, -89.1300}
 ]
 
-# Species with realistic relative frequency weights.
-species_pool =
-  [
-    {"Largemouth Bass", 8},
-    {"Smallmouth Bass", 5},
-    {"Bluegill", 6},
-    {"Crappie", 4},
-    {"Yellow Perch", 3},
-    {"Walleye", 5},
-    {"Northern Pike", 3},
-    {"Muskellunge", 1},
-    {"Rainbow Trout", 2},
-    {"Brown Trout", 2},
-    {"Channel Catfish", 2}
-  ]
-  |> Enum.flat_map(fn {name, w} -> List.duplicate(name, w) end)
-
-notes_pool = [
-  nil,
-  nil,
-  nil,
-  "Caught on a chatterbait near weed edge.",
-  "Topwater bite right at dawn.",
-  "Slow afternoon, finally got one drop-shotting.",
-  "Big school under the dock.",
-  "Fish were stacked on the breakline.",
-  "Slip bobber with a leech.",
-  "Crankbait in stained water."
+# Species profiles: relative frequency, preferred hour ranges, preferred month
+# ranges, preferred pressure trend, preferred temp range. Used to make catches
+# look like the user has real patterns rather than pure noise.
+species_profiles = [
+  %{
+    name: "Largemouth Bass",
+    weight: 8,
+    hours: [{6, 9}, {18, 21}],
+    months: [5, 6, 7, 8, 9, 10],
+    pressure_bias: :falling,
+    temp_bias: :warm
+  },
+  %{
+    name: "Smallmouth Bass",
+    weight: 5,
+    hours: [{6, 10}, {17, 20}],
+    months: [5, 6, 7, 8, 9, 10],
+    pressure_bias: :stable,
+    temp_bias: :warm
+  },
+  %{
+    name: "Walleye",
+    weight: 6,
+    hours: [{4, 7}, {19, 22}, {0, 2}],
+    months: [4, 5, 6, 9, 10, 11],
+    pressure_bias: :rising,
+    temp_bias: :cool
+  },
+  %{
+    name: "Northern Pike",
+    weight: 4,
+    hours: [{8, 12}, {15, 18}],
+    months: [4, 5, 6, 9, 10, 11],
+    pressure_bias: :falling,
+    temp_bias: :cool
+  },
+  %{
+    name: "Muskellunge",
+    weight: 1,
+    hours: [{8, 11}, {17, 20}],
+    months: [6, 7, 8, 9, 10],
+    pressure_bias: :falling,
+    temp_bias: :moderate
+  },
+  %{
+    name: "Bluegill",
+    weight: 7,
+    hours: [{10, 16}],
+    months: [5, 6, 7, 8, 9],
+    pressure_bias: :stable,
+    temp_bias: :warm
+  },
+  %{
+    name: "Crappie",
+    weight: 3,
+    hours: [{5, 8}, {18, 21}],
+    months: [4, 5, 6, 9, 10],
+    pressure_bias: :stable,
+    temp_bias: :moderate
+  },
+  %{
+    name: "Yellow Perch",
+    weight: 3,
+    hours: [{7, 11}],
+    months: [4, 5, 10, 11, 12, 1, 2],
+    pressure_bias: :rising,
+    temp_bias: :cool
+  },
+  %{
+    name: "Rainbow Trout",
+    weight: 2,
+    hours: [{5, 9}, {18, 20}],
+    months: [3, 4, 5, 9, 10, 11],
+    pressure_bias: :stable,
+    temp_bias: :cool
+  },
+  %{
+    name: "Brown Trout",
+    weight: 2,
+    hours: [{4, 7}, {19, 22}],
+    months: [3, 4, 10, 11],
+    pressure_bias: :falling,
+    temp_bias: :cool
+  },
+  %{
+    name: "Channel Catfish",
+    weight: 2,
+    hours: [{20, 23}, {0, 3}],
+    months: [6, 7, 8],
+    pressure_bias: :falling,
+    temp_bias: :warm
+  }
 ]
 
-descriptions_by_month = %{
-  # Rough: snowy/icy early year, transitioning warm and humid in summer, cooling in fall.
-  1 => ["overcast", "snow", "light snow", "freezing fog"],
-  2 => ["overcast", "snow showers", "clear"],
-  3 => ["overcast", "light rain", "partly cloudy", "windy"],
-  4 => ["partly cloudy", "light rain", "clear"],
-  5 => ["clear", "partly cloudy", "scattered thunderstorms"],
-  6 => ["clear", "humid", "thunderstorms", "partly cloudy"],
-  7 => ["clear", "hot and humid", "thunderstorms"],
-  8 => ["clear", "humid", "thunderstorms", "partly cloudy"],
-  9 => ["partly cloudy", "clear", "cool morning"],
-  10 => ["overcast", "windy", "light rain", "partly cloudy"],
-  11 => ["overcast", "light rain", "windy", "snow showers"],
-  12 => ["overcast", "snow", "clear and cold"]
+species_bag =
+  Enum.flat_map(species_profiles, fn p -> List.duplicate(p, p.weight) end)
+
+# Conditions menu — wider than before. Includes pre/post-frontal flavors that
+# correlate with pressure trend.
+conditions = %{
+  rising: [
+    {"clear", 0.4},
+    {"sunny", 0.2},
+    {"high pressure, cool morning", 0.15},
+    {"crisp and clear", 0.15},
+    {"breezy and clear", 0.1}
+  ],
+  falling: [
+    {"overcast with falling pressure", 0.25},
+    {"thunderstorms building", 0.2},
+    {"warm front approaching", 0.15},
+    {"humid and still", 0.15},
+    {"scattered thunderstorms", 0.15},
+    {"drizzle and gusty wind", 0.1}
+  ],
+  stable: [
+    {"partly cloudy", 0.3},
+    {"calm and warm", 0.2},
+    {"light winds", 0.15},
+    {"clear", 0.15},
+    {"hazy and humid", 0.1},
+    {"overcast", 0.1}
+  ]
 }
 
-# Approximate seasonal temps (°F) and water temps.
+# Winter overrides the above; less variety but realistic.
+winter_conditions = [
+  "overcast and cold",
+  "light snow",
+  "snow showers",
+  "ice fog",
+  "clear and cold",
+  "windy and cold"
+]
+
+# Approximate seasonal air temps (°F).
 air_temp_range = fn
   m when m in [12, 1, 2] -> {15, 35}
   m when m in [3, 11] -> {30, 55}
@@ -108,64 +209,207 @@ water_temp_range = fn
   m when m in [6, 7, 8] -> {68, 82}
 end
 
-rand_in = fn {lo, hi} -> lo + :rand.uniform() * (hi - lo) end
+# Pressure ranges per trend.
+pressure_for = fn
+  :rising -> {1018, 1030}
+  :stable -> {1010, 1020}
+  :falling -> {995, 1012}
+end
 
+# Pick adjustments based on temp_bias inside the month's seasonal range.
+adjust_temp = fn {lo, hi}, bias ->
+  case bias do
+    :cool -> {lo, lo + (hi - lo) * 0.6}
+    :moderate -> {lo + (hi - lo) * 0.2, lo + (hi - lo) * 0.8}
+    :warm -> {lo + (hi - lo) * 0.4, hi}
+  end
+end
+
+rand_in = fn {lo, hi} -> lo + :rand.uniform() * (hi - lo) end
 pick = fn list -> Enum.at(list, :rand.uniform(length(list)) - 1) end
 
-now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-# Bias caught_at over the past year, weighted toward May-Oct.
-random_naive_in_past_year = fn ->
-  # Weighted month picker for plausibility
-  month_weights = [
-    {1, 1}, {2, 1}, {3, 2}, {4, 4}, {5, 8}, {6, 10},
-    {7, 12}, {8, 11}, {9, 9}, {10, 6}, {11, 2}, {12, 1}
-  ]
-
-  bag = Enum.flat_map(month_weights, fn {m, w} -> List.duplicate(m, w) end)
-  target_month = pick.(bag)
-
-  today = Date.utc_today()
-  target_year = if target_month > today.month, do: today.year - 1, else: today.year
-  day = :rand.uniform(28)
-  hour = 5 + :rand.uniform(15)
-  minute = :rand.uniform(59)
-
-  NaiveDateTime.new!(target_year, target_month, day, hour, minute, 0)
+# Map our description strings to (rough) OpenWeather codes/main groups so the
+# mcp-server tools that read weather.weather[0].main can categorize them.
+weather_code_for = fn desc ->
+  cond do
+    String.contains?(desc, "thunder") or String.contains?(desc, "storm") -> 200
+    String.contains?(desc, "drizzle") -> 300
+    String.contains?(desc, "rain") or String.contains?(desc, "shower") -> 500
+    String.contains?(desc, "snow") -> 600
+    String.contains?(desc, "fog") or String.contains?(desc, "mist") or String.contains?(desc, "haze") -> 701
+    String.contains?(desc, "clear") or String.contains?(desc, "sunny") or String.contains?(desc, "crisp") -> 800
+    String.contains?(desc, "partly cloudy") -> 802
+    String.contains?(desc, "overcast") -> 804
+    true -> 801
+  end
 end
+
+main_for = fn desc ->
+  cond do
+    String.contains?(desc, "thunder") or String.contains?(desc, "storm") -> "Thunderstorm"
+    String.contains?(desc, "drizzle") -> "Drizzle"
+    String.contains?(desc, "rain") or String.contains?(desc, "shower") -> "Rain"
+    String.contains?(desc, "snow") -> "Snow"
+    String.contains?(desc, "fog") or String.contains?(desc, "mist") or String.contains?(desc, "haze") -> "Atmosphere"
+    String.contains?(desc, "clear") or String.contains?(desc, "sunny") or String.contains?(desc, "crisp") -> "Clear"
+    true -> "Clouds"
+  end
+end
+
+cloud_pct_for = fn desc ->
+  cond do
+    String.contains?(desc, "clear") or String.contains?(desc, "sunny") or String.contains?(desc, "crisp") -> 5
+    String.contains?(desc, "partly cloudy") or String.contains?(desc, "breezy and clear") -> 35
+    String.contains?(desc, "overcast") -> 95
+    String.contains?(desc, "hazy") -> 60
+    String.contains?(desc, "thunder") or String.contains?(desc, "storm") or String.contains?(desc, "rain") -> 85
+    String.contains?(desc, "snow") -> 90
+    true -> 50
+  end
+end
+
+weighted_pick = fn pairs ->
+  total = Enum.reduce(pairs, 0.0, fn {_, w}, acc -> acc + w end)
+  r = :rand.uniform() * total
+
+  Enum.reduce_while(pairs, 0.0, fn {value, w}, acc ->
+    next = acc + w
+    if r <= next, do: {:halt, value}, else: {:cont, next}
+  end)
+end
+
+# Time-of-day picker: choose one of the species' preferred hour windows,
+# but with 15% chance of a random outlier so it doesn't look too patterned.
+pick_hour = fn windows ->
+  if :rand.uniform() < 0.15 do
+    :rand.uniform(24) - 1
+  else
+    {lo, hi} = pick.(windows)
+    lo + :rand.uniform(max(hi - lo, 1)) - 1
+  end
+end
+
+pick_month_for_species = fn species ->
+  # 80% chance to pick one of the species' preferred months, else random.
+  if :rand.uniform() < 0.8 do
+    pick.(species.months)
+  else
+    :rand.uniform(12)
+  end
+end
+
+# Build a plausible random datetime — biased by species preferences but
+# spread across days, hours, and minutes.
+random_naive = fn species ->
+  today = Date.utc_today()
+  month = pick_month_for_species.(species)
+  # Pick year: if month is in the future this calendar year, fall back to last year.
+  year = if month > today.month, do: today.year - 1, else: today.year
+  day = :rand.uniform(28)
+  hour = pick_hour.(species.hours) |> rem(24)
+  minute = :rand.uniform(60) - 1
+  NaiveDateTime.new!(year, month, day, hour, minute, 0)
+end
+
+notes_pool = [
+  nil, nil, nil, nil,
+  "Caught on a chatterbait near weed edge.",
+  "Topwater bite right at dawn.",
+  "Slow afternoon, finally got one drop-shotting.",
+  "Big school under the dock.",
+  "Fish were stacked on the breakline.",
+  "Slip bobber with a leech.",
+  "Crankbait in stained water.",
+  "Cast and retrieve in 8 ft of water.",
+  "Stormy and they were hammering.",
+  "Slow troll along the weed line.",
+  "Light bite — barely felt it.",
+  "Pre-frontal feeding window."
+]
 
 placeholder_image = "https://images.unsplash.com/photo-1499242611767-cf8b9be02854?w=600"
 
 inserted =
   for i <- 1..count do
+    species_profile = pick.(species_bag)
+    species_name = species_profile.name
     {spot, lat, lng} = pick.(spots)
-    species = pick.(species_pool)
-    caught_at = random_naive_in_past_year.()
+    caught_at = random_naive.(species_profile)
     month = caught_at.month
 
-    description = pick.(descriptions_by_month[month])
-    air_temp = rand_in.(air_temp_range.(month)) |> Float.round(1)
-    water_temp = rand_in.(water_temp_range.(month)) |> Float.round(1)
-    wind_speed = rand_in.({2, 18}) |> Float.round(1)
-    wind_direction = :rand.uniform(360)
-    humidity = rand_in.({40, 90}) |> Float.round(0)
-    pressure = rand_in.({1000, 1028}) |> Float.round(0)
+    # Choose trend with species bias, but 25% chance of off-bias for noise.
+    trend =
+      if :rand.uniform() < 0.75 do
+        species_profile.pressure_bias
+      else
+        pick.([:rising, :stable, :falling])
+      end
 
+    description =
+      cond do
+        month in [12, 1, 2] -> pick.(winter_conditions)
+        true -> weighted_pick.(conditions[trend])
+      end
+
+    {p_lo, p_hi} = pressure_for.(trend)
+    pressure = rand_in.({p_lo, p_hi}) |> Float.round(0)
+
+    air_temp = rand_in.(adjust_temp.(air_temp_range.(month), species_profile.temp_bias)) |> Float.round(1)
+    water_temp = rand_in.(adjust_temp.(water_temp_range.(month), species_profile.temp_bias)) |> Float.round(1)
+
+    # Wind: gusty during falling pressure, light otherwise.
+    wind_speed =
+      case trend do
+        :falling -> rand_in.({8, 22}) |> Float.round(1)
+        :stable -> rand_in.({2, 10}) |> Float.round(1)
+        :rising -> rand_in.({4, 14}) |> Float.round(1)
+      end
+
+    wind_direction = :rand.uniform(360)
+    humidity = rand_in.({30, 95}) |> Float.round(0)
+
+    # Mirror the OpenWeather "Current Weather" JSON shape so the mcp-server
+    # analytical tools (which read weather.main.temp, weather.weather[0].description,
+    # weather.wind.speed) can actually find data. Also keep a flat top-level mirror
+    # for legacy callers / the mobile detail screen.
     weather = %{
+      "weather" => [%{
+        "id" => weather_code_for.(description),
+        "main" => main_for.(description),
+        "description" => description,
+        "icon" => "01d"
+      }],
+      "main" => %{
+        "temp" => air_temp,
+        "feels_like" => air_temp - 2.0,
+        "temp_min" => air_temp - 5.0,
+        "temp_max" => air_temp + 5.0,
+        "pressure" => trunc(pressure),
+        "humidity" => trunc(humidity)
+      },
+      "wind" => %{
+        "speed" => wind_speed,
+        "deg" => wind_direction
+      },
+      "clouds" => %{"all" => cloud_pct_for.(description)},
+      "visibility" => 10000,
+      "dt" => NaiveDateTime.to_erl(caught_at) |> :calendar.datetime_to_gregorian_seconds() |> Kernel.-(62167219200),
+      # Flat fields for legacy mobile readers + the stats screen.
       "description" => description,
       "temp" => Float.to_string(air_temp),
       "water_temp" => Float.to_string(water_temp),
       "wind_speed" => Float.to_string(wind_speed),
       "wind_direction" => Integer.to_string(wind_direction),
       "humidity" => :erlang.float_to_binary(humidity, decimals: 0),
-      "pressure" => :erlang.float_to_binary(pressure, decimals: 0)
+      "pressure" => :erlang.float_to_binary(pressure, decimals: 0),
+      "pressure_trend" => Atom.to_string(trend)
     }
 
-    # Small offset so identical-spot catches aren't all at the same pixel.
     jitter_lat = lat + (:rand.uniform() - 0.5) * 0.01
     jitter_lng = lng + (:rand.uniform() - 0.5) * 0.01
 
     attrs = %{
-      species: species,
+      species: species_name,
       location: spot,
       latitude: jitter_lat,
       longitude: jitter_lng,

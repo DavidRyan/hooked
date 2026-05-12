@@ -255,7 +255,10 @@ fun SharedTransitionScope.CatchGridContent(
         }
 
         IntelligenceRibbon(
-            onTap = { navigate(Screens.Insights) }
+            onTap = { headline ->
+                val starter = headline?.takeIf { it.isNotBlank() }?.let { "Tell me more: $it" }
+                navigate(Screens.Chat(starter))
+            }
         )
 
         Box(

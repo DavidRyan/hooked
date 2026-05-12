@@ -8,6 +8,7 @@ import io.modelcontextprotocol.kotlin.sdk.ServerCapabilities
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
 import kotlinx.io.asSource
@@ -19,6 +20,7 @@ fun main() = runBlocking {
     val userEmail = System.getenv("USER_EMAIL")
         ?: error("USER_EMAIL environment variable is required")
     val openWeatherApiKey = System.getenv("OPENWEATHER_API_KEY")
+    val tavilyApiKey = System.getenv("TAVILY_API_KEY")
 
     DatabaseConfig.connect()
 
@@ -59,10 +61,21 @@ fun main() = runBlocking {
     server.registerGetMonthlyBreakdownTool(userId)
     server.registerGetPersonalRecordsTool(userId)
     server.registerComparePeriodsTool(userId)
+    server.registerGetConditionalBreakdownTool(userId)
+    server.registerGetLocationProfileTool(userId)
+    server.registerFindOutlierCatchesTool(userId)
+    server.registerEvaluateWindowTool(userId)
+    server.registerCompareLocationsTool(userId)
+    server.registerGetDawnDuskIndexTool(userId)
 
     // Weather tools
     server.registerGetCatchWeatherTool(userId)
     server.registerGetLiveWeatherTool(openWeatherApiKey)
+
+    // Non-history knowledge tools (work even with no catches in DB)
+    server.registerGetSolunarTool()
+    server.registerGetSpeciesEcologyTool()
+    server.registerWebSearchTool(tavilyApiKey)
 
     // Resources
     server.registerFishingProfileResource(userId, userEmail)
@@ -71,7 +84,14 @@ fun main() = runBlocking {
         inputStream = System.`in`.asSource().buffered(),
         outputStream = System.out.asSink().buffered()
     )
+
+    // Server.connect() in mcp-kotlin-sdk 0.8.3 returns once the session is wired up
+    // and continues processing in the background. Keep main alive until the session
+    // ends, otherwise the JVM exits immediately after registering tools.
+    val done = CompletableDeferred<Unit>()
+    server.onClose { done.complete(Unit) }
     server.connect(transport)
+    done.await()
 
     System.err.println("[hooked-mcp] Server shut down.")
 }

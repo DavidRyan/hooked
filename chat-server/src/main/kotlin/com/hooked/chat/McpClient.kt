@@ -1,10 +1,10 @@
 package com.hooked.chat
 
-import io.modelcontextprotocol.kotlin.sdk.Client
-import io.modelcontextprotocol.kotlin.sdk.Implementation
-import io.modelcontextprotocol.kotlin.sdk.TextContent
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import io.modelcontextprotocol.kotlin.sdk.client.Client
 import io.modelcontextprotocol.kotlin.sdk.client.StdioClientTransport
+import io.modelcontextprotocol.kotlin.sdk.types.Implementation
+import io.modelcontextprotocol.kotlin.sdk.types.TextContent
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
@@ -15,7 +15,8 @@ class McpClient(private val config: Config) {
         val jarPath: String,
         val userEmail: String,
         val databaseUrl: String,
-        val openWeatherKey: String?
+        val openWeatherKey: String?,
+        val tavilyKey: String?
     )
 
     private lateinit var process: Process
@@ -27,6 +28,7 @@ class McpClient(private val config: Config) {
                 environment()["USER_EMAIL"] = config.userEmail
                 environment()["DATABASE_URL"] = config.databaseUrl
                 config.openWeatherKey?.let { environment()["OPENWEATHER_API_KEY"] = it }
+                config.tavilyKey?.let { environment()["TAVILY_API_KEY"] = it }
                 redirectErrorStream(false)  // MCP server writes diagnostics to stderr
             }.start()
 

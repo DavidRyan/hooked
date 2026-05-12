@@ -7,6 +7,8 @@ import com.hooked.catches.presentation.CatchGridViewModel
 import com.hooked.catches.presentation.CatchDetailsViewModel
 import com.hooked.catches.presentation.SubmitCatchViewModel
 import com.hooked.catches.presentation.StatsViewModel
+import com.hooked.chat.ChatSocketClient
+import com.hooked.chat.ChatViewModel
 import com.hooked.catches.domain.usecases.GetCatchesUseCase
 import com.hooked.catches.domain.usecases.GetCatchDetailsUseCase
 import com.hooked.catches.domain.usecases.SubmitCatchUseCase
@@ -54,6 +56,7 @@ val presentationModule = module {
     viewModel { SubmitCatchViewModel(get(), get()) }
     viewModel { StatsViewModel(get(), get()) }
     viewModel { SubmitSkunkViewModel(get(), get()) }
+    viewModelOf(::ChatViewModel)
 } + authPresentationModule
 
 val dataModule = module {
@@ -108,6 +111,8 @@ val dataModule = module {
     single<SkunkRepository> {
         SkunkRepositoryImpl(get())
     }
+
+    single { ChatSocketClient(httpClient = get(), tokenStorage = get()) }
 } + authDataModule
 
 val useCaseModule = module {

@@ -17,10 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.hooked.auth.presentation.LoginScreen
 import com.hooked.auth.presentation.CreateAccountScreen
 import com.hooked.auth.presentation.OnboardingScreen
 import com.hooked.auth.presentation.ProfileScreen
+import com.hooked.chat.ChatScreen
 import com.hooked.catches.presentation.AnimationTestScreen
 import com.hooked.catches.presentation.CatchesScreen
 import com.hooked.core.presentation.toast.ToastHost
@@ -298,6 +300,10 @@ fun HookedApp(
                  }
                  composable<Screens.Map> {
                      com.hooked.catches.presentation.MapScreen()
+                 }
+                 composable<Screens.Chat> { entry ->
+                     val chatArgs: Screens.Chat = entry.toRoute()
+                     ChatScreen(starterPrompt = chatArgs.starterPrompt)
                  }
                 composable<Screens.Profile>(
                     enterTransition = {

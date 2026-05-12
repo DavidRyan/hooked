@@ -28,7 +28,8 @@ class MainActivity : ComponentActivity() {
         // Initialize app config from BuildConfig (populated from .env)
         AppConfig.initialize(
             mapboxAccessToken = BuildConfig.MAPBOX_ACCESS_TOKEN,
-            apiBaseUrl = BuildConfig.API_BASE_URL
+            apiBaseUrl = BuildConfig.API_BASE_URL,
+            chatBaseUrl = BuildConfig.CHAT_BASE_URL
         )
 
         // Register activity result launchers early

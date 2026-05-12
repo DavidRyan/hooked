@@ -186,10 +186,12 @@ android {
             applicationIdSuffix = ".local"
             // 10.0.2.2 is the Android emulator's alias for the host machine's localhost
             buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:4000/api\"")
+            buildConfigField("String", "CHAT_BASE_URL", "\"ws://10.0.2.2:8080\"")
         }
         create("prod") {
             dimension = "environment"
             buildConfigField("String", "API_BASE_URL", "\"https://hooked-backend.fly.dev/api\"")
+            buildConfigField("String", "CHAT_BASE_URL", "\"wss://hooked-chat.fly.dev\"")
         }
     }
     

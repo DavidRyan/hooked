@@ -9,4 +9,5 @@ package com.hooked.core.config
 expect object AppConfig {
     val MAPBOX_ACCESS_TOKEN: String
     val API_BASE_URL: String
+    val CHAT_BASE_URL: String
 }

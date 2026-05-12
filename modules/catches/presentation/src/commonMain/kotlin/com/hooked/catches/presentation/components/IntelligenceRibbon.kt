@@ -38,7 +38,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun IntelligenceRibbon(
-    onTap: () -> Unit,
+    onTap: (headline: String?) -> Unit,
     modifier: Modifier = Modifier,
     getRibbonInsight: GetRibbonInsightUseCase = koinInject()
 ) {
@@ -63,7 +63,13 @@ fun IntelligenceRibbon(
         enter = fadeIn(),
         exit = fadeOut()
     ) {
-        insight?.let { RibbonContent(insight = it, onTap = onTap, modifier = modifier) }
+        insight?.let { current ->
+            RibbonContent(
+                insight = current,
+                onTap = { onTap(current.headline) },
+                modifier = modifier
+            )
+        }
     }
 }
 
@@ -104,16 +110,12 @@ private fun RibbonContent(
             Text(
                 text = insight.headline,
                 style = MaterialTheme.typography.titleMedium,
-                color = Colors.text,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = Colors.text
             )
             Text(
                 text = insight.body,
                 style = MaterialTheme.typography.bodyMedium,
-                color = Colors.subtext1,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = Colors.subtext1
             )
         }
         Icon(

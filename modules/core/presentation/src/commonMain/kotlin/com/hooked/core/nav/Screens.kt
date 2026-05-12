@@ -20,6 +20,8 @@ sealed class Screens() {
     @Serializable
     object Map : Screens()
     @Serializable
+    data class Chat(val starterPrompt: String? = null) : Screens()
+    @Serializable
     object Insights : Screens()
     @Serializable
     object Profile : Screens()
@@ -32,6 +34,7 @@ sealed class Screens() {
         val topLevelRoutes: Set<String> = setOf(
             CatchGrid::class.qualifiedName!!,
             Map::class.qualifiedName!!,
+            Chat::class.qualifiedName!!,
             Insights::class.qualifiedName!!,
             Profile::class.qualifiedName!!
         )

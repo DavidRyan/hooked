@@ -1,10 +1,10 @@
 package com.hooked.chat
 
 import com.openai.core.JsonValue
-import com.openai.models.ChatCompletionTool
 import com.openai.models.FunctionDefinition
 import com.openai.models.FunctionParameters
-import io.modelcontextprotocol.kotlin.sdk.Tool
+import com.openai.models.chat.completions.ChatCompletionTool
+import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import kotlinx.serialization.json.*
 
 fun Tool.toOpenAiTool(): ChatCompletionTool =

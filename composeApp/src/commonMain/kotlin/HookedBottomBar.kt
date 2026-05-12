@@ -1,6 +1,7 @@
 package com.hooked
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocationOn
@@ -30,6 +31,7 @@ private data class BottomTab(
 private val tabs = listOf(
     BottomTab(Screens.CatchGrid, Screens.CatchGrid::class.qualifiedName!!, "Log", Icons.AutoMirrored.Filled.List),
     BottomTab(Screens.Map, Screens.Map::class.qualifiedName!!, "Map", Icons.Filled.LocationOn),
+    BottomTab(Screens.Chat(), Screens.Chat::class.qualifiedName!!, "Chat", Icons.AutoMirrored.Filled.Chat),
     BottomTab(Screens.Insights, Screens.Insights::class.qualifiedName!!, "Insights", Icons.Filled.Info),
     BottomTab(Screens.Profile, Screens.Profile::class.qualifiedName!!, "Profile", Icons.Filled.Person)
 )

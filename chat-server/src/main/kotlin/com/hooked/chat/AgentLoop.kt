@@ -1,9 +1,9 @@
 package com.hooked.chat
 
 import com.openai.client.OpenAIClient
-import com.openai.models.ChatCompletionCreateParams
-import com.openai.models.ChatCompletionTool
-import com.openai.models.ChatCompletionToolMessageParam
+import com.openai.models.chat.completions.ChatCompletionCreateParams
+import com.openai.models.chat.completions.ChatCompletionTool
+import com.openai.models.chat.completions.ChatCompletionToolMessageParam
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.encodeToString

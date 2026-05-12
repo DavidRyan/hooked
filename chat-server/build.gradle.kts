@@ -29,6 +29,9 @@ tasks.shadowJar {
     archiveBaseName.set("hooked-chat-server")
     archiveClassifier.set("")
     archiveVersion.set("")
+    manifest {
+        attributes["Main-Class"] = "com.hooked.chat.MainKt"
+    }
     mergeServiceFiles()
 }
 
