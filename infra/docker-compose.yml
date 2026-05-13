@@ -1,1 +1,6 @@
-// Placeholder for docker-compose.yml
+# The real compose file lives at the repo root so build contexts resolve cleanly
+# without ../../ paths. Run from the repo root:
+#
+#   docker compose up -d --build
+#
+# See /docker-compose.yml and /.env.example for the full stack definition.

@@ -1,0 +1,76 @@
+# Full-stack Hooked: Postgres + Phoenix backend + chat-server (with mcp-server bundled).
+#
+# Usage:
+#   cp .env.example .env       # fill in secrets
+#   docker compose up -d --build
+#   docker compose logs -f backend chat-server
+#
+# Each service is its own image so they can be deployed independently to Fly.io
+# later (one Fly app per service). Compose just gives us local orchestration.
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: hooked
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: hooked_prod
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hooked -d hooked_prod"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "ecto://hooked:${POSTGRES_PASSWORD}@postgres/hooked_prod"
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      JWT_SECRET: ${JWT_SECRET}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY}
+      MAPBOX_ACCESS_TOKEN: ${MAPBOX_ACCESS_TOKEN:-}
+      INATURALIST_ACCESS_TOKEN: ${INATURALIST_ACCESS_TOKEN:-}
+      GOOGLE_VISION_ACCESS_TOKEN: ${GOOGLE_VISION_ACCESS_TOKEN:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      PHX_HOST: ${PHX_HOST:-localhost}
+      PORT: 4000
+      POOL_SIZE: ${POOL_SIZE:-10}
+    ports:
+      - "${BACKEND_PORT:-4000}:4000"
+    # Run migrations then start the server. Phoenix release scripts live in
+    # /app/bin/migrate and /app/bin/server.
+    command: ["sh", "-c", "/app/bin/migrate && /app/bin/server"]
+    restart: unless-stopped
+
+  chat-server:
+    build:
+      context: .
+      dockerfile: chat-server/Dockerfile
+    depends_on:
+      - backend
+      - postgres
+    environment:
+      DATABASE_URL: "jdbc:postgresql://postgres:5432/hooked_prod?user=hooked&password=${POSTGRES_PASSWORD}"
+      HOOKED_API_URL: "http://backend:4000/api"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      OPENWEATHER_API_KEY: ${OPENWEATHER_API_KEY:-}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o}
+      PORT: 8080
+    ports:
+      - "${CHAT_PORT:-8080}:8080"
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

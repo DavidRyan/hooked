@@ -71,7 +71,79 @@ fun HookedApp(
                             startDestination = destination,
                             modifier = Modifier
                                 .background(HookedTheme.background)
-                                .padding(scaffoldPadding)
+                                .padding(scaffoldPadding),
+                            // Default transition: horizontal slide based on tab order
+                            // (Log → Map → Chat → Insights → Profile). Moving right
+                            // slides left; moving left slides right. Routes with their
+                            // own enter/exit (auth, submit, profile) override this.
+                            enterTransition = {
+                                val dir = tabDirection(
+                                    initialState.destination.route,
+                                    targetState.destination.route
+                                )
+                                when (dir) {
+                                    1 -> slideIntoContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(260)
+                                    )
+                                    -1 -> slideIntoContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(260)
+                                    )
+                                    else -> androidx.compose.animation.EnterTransition.None
+                                }
+                            },
+                            exitTransition = {
+                                val dir = tabDirection(
+                                    initialState.destination.route,
+                                    targetState.destination.route
+                                )
+                                when (dir) {
+                                    1 -> slideOutOfContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(260)
+                                    )
+                                    -1 -> slideOutOfContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(260)
+                                    )
+                                    else -> androidx.compose.animation.ExitTransition.None
+                                }
+                            },
+                            popEnterTransition = {
+                                val dir = tabDirection(
+                                    initialState.destination.route,
+                                    targetState.destination.route
+                                )
+                                when (dir) {
+                                    1 -> slideIntoContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(260)
+                                    )
+                                    -1 -> slideIntoContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(260)
+                                    )
+                                    else -> androidx.compose.animation.EnterTransition.None
+                                }
+                            },
+                            popExitTransition = {
+                                val dir = tabDirection(
+                                    initialState.destination.route,
+                                    targetState.destination.route
+                                )
+                                when (dir) {
+                                    1 -> slideOutOfContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Left,
+                                        animationSpec = tween(260)
+                                    )
+                                    -1 -> slideOutOfContainer(
+                                        AnimatedContentTransitionScope.SlideDirection.Right,
+                                        animationSpec = tween(260)
+                                    )
+                                    else -> androidx.compose.animation.ExitTransition.None
+                                }
+                            }
                         ) {
                 composable<Screens.AnimationTest> {
                     AnimationTestScreen()
@@ -344,4 +416,25 @@ fun HookedApp(
              }
          }
      }
+}
+
+// Tab order — must match HookedBottomBar. Returns:
+//   1  if moving right across tabs (slide content left)
+//  -1  if moving left across tabs (slide content right)
+//   0  if either side isn't a top-level tab (fall back to no animation)
+private val tabOrder: List<String> = listOf(
+    Screens.CatchGrid::class.qualifiedName!!,
+    Screens.Map::class.qualifiedName!!,
+    Screens.Chat::class.qualifiedName!!,
+    Screens.Insights::class.qualifiedName!!,
+    Screens.Profile::class.qualifiedName!!
+)
+
+private fun tabDirection(fromRaw: String?, toRaw: String?): Int {
+    val from = fromRaw?.substringBefore('?') ?: return 0
+    val to = toRaw?.substringBefore('?') ?: return 0
+    val fromIdx = tabOrder.indexOf(from)
+    val toIdx = tabOrder.indexOf(to)
+    if (fromIdx < 0 || toIdx < 0) return 0
+    return if (toIdx > fromIdx) 1 else if (toIdx < fromIdx) -1 else 0
 }

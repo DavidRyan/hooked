@@ -131,7 +131,16 @@ import org.koin.compose.viewmodel.koinViewModel
 
 sealed class CatchesScreenState {
     object Grid : CatchesScreenState()
-    data class Details(val catchId: String) : CatchesScreenState()
+    data class Details(
+        val catchId: String,
+        // Carried from the grid so the detail screen has something to render
+        // immediately, before the per-catch ViewModel finishes loading.
+        val seedSpecies: String? = null,
+        val seedLocation: String? = null,
+        val seedImageUrl: String? = null,
+        val seedDateCaught: String? = null,
+        val seedEnrichmentStatus: EnrichmentStatus? = null
+    ) : CatchesScreenState()
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
@@ -147,16 +156,23 @@ fun CatchesScreen(
     with(sharedTransitionScope) {
         AnimatedContent(
             targetState = stateManager.screenState,
+            // Instant swap — no enter, no exit, no size morph. Default SizeTransform
+            // animates the container between grid and detail sizes; we want neither.
             transitionSpec = {
-                fadeIn(animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS)) togetherWith
-                fadeOut(animationSpec = tween(AnimationConstants.TRANSITION_DURATION_MS))
+                (androidx.compose.animation.EnterTransition.None togetherWith
+                    androidx.compose.animation.ExitTransition.None)
+                    .using(
+                        androidx.compose.animation.SizeTransform(clip = false) { _, _ ->
+                            tween(0)
+                        }
+                    )
             },
             label = "catches_screen_transition"
         ) { state ->
             when (state) {
                 is CatchesScreenState.Grid -> {
                     CatchGridContent(
-                        onCatchClick = stateManager::navigateToDetails,
+                        onCatchClick = { model -> stateManager.navigateToDetails(model) },
                         navigate = navigate,
                         animatedVisibilityScope = this@AnimatedContent
                     )
@@ -164,6 +180,11 @@ fun CatchesScreen(
                 is CatchesScreenState.Details -> {
                     CatchDetailsContent(
                         catchId = state.catchId,
+                        seedSpecies = state.seedSpecies,
+                        seedLocation = state.seedLocation,
+                        seedImageUrl = state.seedImageUrl,
+                        seedDateCaught = state.seedDateCaught,
+                        seedEnrichmentStatus = state.seedEnrichmentStatus,
                         animationKey = stateManager.animationKey,
                         onBackClick = stateManager::navigateToGrid,
                         navigate = navigate,
@@ -178,20 +199,27 @@ fun CatchesScreen(
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun SharedTransitionScope.CatchGridContent(
-    onCatchClick: (String) -> Unit,
+    onCatchClick: (CatchModel) -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
     viewModel: CatchGridViewModel = koinViewModel(),
     toastManager: ToastManager = koinInject()
 ) {
     val state by viewModel.state.collectAsState()
-    
+
     LaunchedEffect(Unit) {
         viewModel.sendIntent(CatchGridIntent.LoadCatches)
         viewModel.effect.collectLatest { effect ->
             when (effect) {
                 is CatchGridEffect.NavigateToCatchDetails -> {
-                    onCatchClick(effect.catchId)
+                    // Resolve the model from current state so the detail screen
+                    // gets seed values (species, location, image) immediately.
+                    val model = state.catches.firstOrNull { it.id == effect.catchId }
+                    com.hooked.core.logging.Logger.info(
+                        "CatchGridNav",
+                        "nav effect catchId=${effect.catchId} model=${model?.let { "name=${it.name},loc=${it.location}" } ?: "NULL"}"
+                    )
+                    if (model != null) onCatchClick(model)
                 }
                 is CatchGridEffect.ShowError -> {
                     toastManager.showError(effect.message)
@@ -352,6 +380,11 @@ fun SharedTransitionScope.CatchDetailsContent(
     onBackClick: () -> Unit,
     navigate: (Screens) -> Unit,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    seedSpecies: String? = null,
+    seedLocation: String? = null,
+    seedImageUrl: String? = null,
+    seedDateCaught: String? = null,
+    seedEnrichmentStatus: EnrichmentStatus? = null,
     viewModel: CatchDetailsViewModel = koinViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -373,77 +406,57 @@ fun SharedTransitionScope.CatchDetailsContent(
     }
     
     LaunchedEffect(animationKey) {
-        showDetails = false
-        showAppBar = false
-        viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
-        delay(AnimationConstants.DETAILS_ANIMATION_DELAY_MS)
+        // Show the details + app bar immediately — no artificial delay. The
+        // EnrichmentBanner still slide-animates on its own, but the rest of
+        // the content paints at frame 1.
         showDetails = true
         showAppBar = true
+        viewModel.sendIntent(CatchDetailsIntent.LoadCatchDetails(catchId))
     }
     
+    // Always render the Column. Use ViewModel data when available, otherwise fall
+    // back to seed values carried from the grid tile so species/location/image
+    // show immediately on tap rather than after the network load.
+    val details = state.catchDetails
+    val effectivePhotoUrl = details?.photoUrl ?: seedImageUrl
+    val effectiveSpecies = details?.species ?: seedSpecies
+    val effectiveLocation = details?.location ?: seedLocation
+    val effectiveEnrichmentStatus = details?.enrichmentStatus
+        ?: seedEnrichmentStatus
+        ?: EnrichmentStatus.Pending
+
     Box(
         modifier = Modifier
             .background(HookedTheme.background)
             .fillMaxSize()
     ) {
-        if (state.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    CircularProgressIndicator(
-                        color = HookedTheme.primary,
-                        modifier = Modifier.size(48.dp),
-                        strokeWidth = 4.dp
-                    )
-                    Text(
-                        text = "Loading catch details...",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                }
-            }
-        } else {
-            state.catchDetails?.let { details ->
+        run {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .animateContentSize(
-                            animationSpec = AnimationSpecs.contentSizeSpring
-                        ),
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     CatchHero(
                         catchId = catchId,
-                        photoUrl = details.photoUrl,
-                        species = details.species,
-                        location = details.location,
-                        weatherDescription = details.weatherData?.get("description"),
-                        tempFahrenheit = details.weatherData
+                        photoUrl = effectivePhotoUrl,
+                        species = effectiveSpecies,
+                        location = effectiveLocation,
+                        weatherDescription = details?.weatherData?.get("description"),
+                        tempFahrenheit = details?.weatherData
                             ?.get("temp")
                             ?.toFloatOrNull(),
                         animatedVisibilityScope = animatedVisibilityScope
                     )
 
-                    AnimatedVisibility(
-                        visible = showDetails,
-                        enter = slideInVertically(
-                            initialOffsetY = { -it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
-                            )
-                        ) + fadeIn()
-                    ) {
-                        EnrichmentBanner(status = details.enrichmentStatus)
-                    }
+                    // Render the banner directly — no AnimatedVisibility wrapper.
+                    // The previous slide-in caused the Column below to reflow as the
+                    // banner expanded its space, which read as content "popping in"
+                    // at exactly the moment the banner settled. The banner still has
+                    // its own shimmer + icon-scale animations internally.
+                    EnrichmentBanner(status = effectiveEnrichmentStatus)
 
-                    details.timestamp
+                    details?.timestamp
                         ?.takeIf { it > 0 }
                         ?.let { ts ->
                             Text(
@@ -454,26 +467,28 @@ fun SharedTransitionScope.CatchDetailsContent(
                             )
                         }
 
-                    StatStrip(weatherData = details.weatherData)
+                    // Render directly — both components no-op when weatherData is null,
+                    // and appear instantly when it arrives. No fade wrappers.
+                    val weatherData = details?.weatherData
+                    StatStrip(weatherData = weatherData)
 
                     MapCard(
-                        latitude = details.latitude,
-                        longitude = details.longitude,
-                        location = details.location
+                        latitude = details?.latitude,
+                        longitude = details?.longitude,
+                        location = effectiveLocation
                     )
 
-                    ConditionsNarrative(weatherData = details.weatherData)
+                    ConditionsNarrative(weatherData = weatherData)
 
                     SunSection(
                         sunriseHour = 6.5f,
                         sunsetHour = 19.5f,
-                        catchHour = catchHourFrom(details.timestamp),
+                        catchHour = catchHourFrom(details?.timestamp),
                         modifier = Modifier.padding(horizontal = 20.dp)
                     )
 
                     Spacer(Modifier.size(24.dp))
                 }
-            }
         }
         
         AnimatedVisibility(

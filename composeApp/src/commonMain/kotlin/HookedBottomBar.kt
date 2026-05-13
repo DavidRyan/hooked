@@ -38,7 +38,10 @@ private val tabs = listOf(
 
 @Composable
 fun HookedBottomBar(navController: NavController) {
-    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val rawRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    // Typed routes with data-class args (e.g. Screens.Chat) include "?param={value}" suffixes.
+    // Strip the query so we can match against the bare qualifiedName.
+    val currentRoute = rawRoute?.substringBefore('?')
     if (currentRoute !in Screens.topLevelRoutes) return
 
     NavigationBar(

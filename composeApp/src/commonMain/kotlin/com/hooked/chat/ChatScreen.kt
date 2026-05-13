@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.hooked.catches.presentation.TypewriterText
 import com.hooked.chat.model.ChatEffect
 import com.hooked.chat.model.ChatIntent
 import com.hooked.core.presentation.toast.ToastManager
@@ -120,8 +121,13 @@ fun ChatScreen(
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(state.messages, key = { it.id }) { msg ->
-                        MessageBubble(message = msg)
+                    itemsIndexed(state.messages, key = { _, msg -> msg.id }) { index, msg ->
+                        // Typewriter only the latest assistant message — once a newer
+                        // message arrives this falls back to plain Text so scrolling
+                        // back through history doesn't replay animations.
+                        val isLatestAssistant = index == state.messages.lastIndex &&
+                            msg.role == ChatRole.Assistant
+                        MessageBubble(message = msg, animateIn = isLatestAssistant)
                     }
                     if (state.isAssistantThinking) {
                         item("thinking") { ThinkingIndicator(toolName = state.activeToolCall) }
@@ -140,7 +146,7 @@ fun ChatScreen(
 }
 
 @Composable
-private fun MessageBubble(message: ChatMessage) {
+private fun MessageBubble(message: ChatMessage, animateIn: Boolean = false) {
     val isUser = message.role == ChatRole.User
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -156,11 +162,21 @@ private fun MessageBubble(message: ChatMessage) {
                 .background(if (isUser) Colors.primary else Colors.surface1)
                 .padding(horizontal = 14.dp, vertical = 10.dp)
         ) {
-            Text(
-                text = message.content,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isUser) Colors.onPrimary else Colors.text
-            )
+            if (animateIn) {
+                TypewriterText(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isUser) Colors.onPrimary else Colors.text,
+                    delayMillis = 12,
+                    enableHaptics = false
+                )
+            } else {
+                Text(
+                    text = message.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (isUser) Colors.onPrimary else Colors.text
+                )
+            }
         }
     }
 }

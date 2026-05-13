@@ -82,28 +82,11 @@ defmodule HookedApi.Services.FishingInsightsService do
   end
 
   defp format_single_skunk(skunk) do
-    weather_info =
-      case skunk.weather_data do
-        nil ->
-          "Weather: No data available"
-
-        weather ->
-          """
-          Weather Data:
-          - Temperature: #{weather["temperature"]}°F (feels like #{weather["feels_like"]}°F)
-          - Condition: #{weather["weather_description"]} (#{weather["weather_condition"]})
-          - Humidity: #{weather["humidity"]}%
-          - Pressure: #{weather["pressure"]} hPa
-          - Wind: #{weather["wind_speed"]} mph from #{weather["wind_direction"]}°
-          - Clouds: #{weather["clouds"]}%
-          """
-      end
-
     """
     NO CATCH at #{skunk.location || "Unknown location"}
     Date: #{skunk.fished_at}
     #{if skunk.notes, do: "Notes: #{skunk.notes}", else: ""}
-    #{weather_info}
+    #{format_weather(skunk.weather_data)}
     """
   end
 
@@ -115,30 +98,83 @@ defmodule HookedApi.Services.FishingInsightsService do
   end
 
   defp format_single_catch(user_catch) do
-    weather_info =
-      case user_catch.weather_data do
-        nil ->
-          "Weather: No data available"
-
-        weather ->
-          """
-          Weather Data:
-          - Temperature: #{weather["temperature"]}°F (feels like #{weather["feels_like"]}°F)
-          - Condition: #{weather["weather_description"]} (#{weather["weather_condition"]})
-          - Humidity: #{weather["humidity"]}%
-          - Pressure: #{weather["pressure"]} hPa
-          - Wind: #{weather["wind_speed"]} mph from #{weather["wind_direction"]}°
-          - Clouds: #{weather["clouds"]}%
-          - Sunrise: #{weather["sunrise"]}
-          - Sunset: #{weather["sunset"]}
-          - Data Source: #{weather["data_source"]} (#{weather["data_type"]})
-          """
-      end
-
     """
     #{user_catch.species || "Unknown species"} at #{user_catch.location}
     Date: #{user_catch.caught_at}
-    #{weather_info}
+    #{format_weather(user_catch.weather_data)}
     """
   end
+
+  # Normalize weather data for prompt insertion. Supports both the OpenWeather
+  # shape (`main.temp`, `weather[0].description`, `wind.speed`, `clouds.all`) and
+  # the older flat shape (`temperature`, `weather_description`, etc.). Returns a
+  # multiline string; gracefully omits fields that aren't present.
+  defp format_weather(nil), do: "Weather: No data available"
+
+  defp format_weather(weather) when is_map(weather) do
+    w = extract_weather(weather)
+    parts =
+      [
+        if(w.temp, do: "Temperature: #{format_num(w.temp)}°F" <> (if w.feels_like, do: " (feels like #{format_num(w.feels_like)}°F)", else: "")),
+        if(w.description || w.condition, do: "Condition: #{w.description || w.condition}#{if w.description && w.condition && w.condition != w.description, do: " (#{w.condition})", else: ""}"),
+        if(w.humidity, do: "Humidity: #{format_num(w.humidity)}%"),
+        if(w.pressure, do: "Pressure: #{format_num(w.pressure)} hPa"),
+        if(w.wind_speed, do: "Wind: #{format_num(w.wind_speed)} mph#{if w.wind_dir, do: " from #{format_num(w.wind_dir)}°", else: ""}"),
+        if(w.clouds_pct, do: "Clouds: #{format_num(w.clouds_pct)}%"),
+        if(w.sunrise, do: "Sunrise: #{w.sunrise}"),
+        if(w.sunset, do: "Sunset: #{w.sunset}")
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    if parts == [] do
+      "Weather: No data available"
+    else
+      "Weather Data:\n" <> Enum.map_join(parts, "\n", &("- " <> &1))
+    end
+  end
+
+  defp format_weather(_), do: "Weather: No data available"
+
+  defp extract_weather(w) do
+    main = pick_map(w["main"])
+    wind = pick_map(w["wind"])
+    clouds = pick_map(w["clouds"])
+    weather_arr = if is_list(w["weather"]), do: List.first(w["weather"]), else: nil
+    weather0 = pick_map(weather_arr)
+
+    %{
+      temp: numeric(main["temp"]) || numeric(w["temp"]) || numeric(w["temperature"]),
+      feels_like: numeric(main["feels_like"]) || numeric(w["feels_like"]),
+      humidity: numeric(main["humidity"]) || numeric(w["humidity"]),
+      pressure: numeric(main["pressure"]) || numeric(w["pressure"]),
+      wind_speed: numeric(wind["speed"]) || numeric(w["wind_speed"]),
+      wind_dir: numeric(wind["deg"]) || numeric(w["wind_direction"]),
+      clouds_pct: numeric(clouds["all"]) || numeric(w["cloud_cover"]),
+      description: string(weather0["description"]) || string(w["weather_description"]) || string(w["description"]),
+      condition: string(weather0["main"]) || string(w["weather_condition"]),
+      sunrise: string(w["sunrise"]),
+      sunset: string(w["sunset"])
+    }
+  end
+
+  defp pick_map(m) when is_map(m), do: m
+  defp pick_map(_), do: %{}
+
+  defp numeric(n) when is_number(n), do: n
+
+  defp numeric(s) when is_binary(s) do
+    case Float.parse(s) do
+      {val, _} -> val
+      :error -> nil
+    end
+  end
+
+  defp numeric(_), do: nil
+
+  defp string(s) when is_binary(s) and s != "", do: s
+  defp string(_), do: nil
+
+  defp format_num(n) when is_integer(n), do: Integer.to_string(n)
+  defp format_num(n) when is_float(n), do: :erlang.float_to_binary(n, decimals: 1)
+  defp format_num(n), do: to_string(n)
 end

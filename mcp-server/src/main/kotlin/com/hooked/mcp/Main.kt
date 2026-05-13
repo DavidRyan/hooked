@@ -71,6 +71,7 @@ fun main() = runBlocking {
     // Weather tools
     server.registerGetCatchWeatherTool(userId)
     server.registerGetLiveWeatherTool(openWeatherApiKey)
+    server.registerGetWeatherForecastTool(openWeatherApiKey)
 
     // Non-history knowledge tools (work even with no catches in DB)
     server.registerGetSolunarTool()
